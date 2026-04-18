@@ -399,7 +399,7 @@ function updateTime() {
 	let jd = getJulianDay(astro.year, astro.month, astro.day, astro.localtime)
 	UI.dayOfWeekValue.textContent = ["Sunday", "Monday",
 		"Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][
-				mod(Math.floor(jd + astro.timeZone / 24 + 0.5), 7)]
+				mod(Math.floor(jd + astro.timeZone / 24 + 1.5), 7)]
 	let jc = (jd - 2451545) / 36525
 	astro.julianCentury = jc
 	astro.ayanamsa = getAyanamsa(jc)
