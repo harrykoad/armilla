@@ -269,44 +269,44 @@ function toDMS(degree, range = 360, offset = 0, decimal = 2) {
 	let d = Math.floor(t)
 	let m = Math.floor(60 * (t - d))
 	let s = 60 * (60 * (t - d) - m)
-    let f = 10 ** decimal
-    s = Math.round(s * f) / f
+	let f = 10 ** decimal
+	s = Math.round(s * f) / f
 	s === 60 ? (s = 0, m += 1) : null;
 	m === 60 ? (m = 0, d += 1) : null;
 	return [mod(sign * d, range, offset), sign * m, sign * s]}
 
 function formatTime(degree) {
-    let [h, m, s] = toDMS(degree / 15, 24)
-    h = String(h).padStart(2, "0")
-    m = String(m).padStart(2, "0")
-    return h + ":" + m}
+	let [h, m, s] = toDMS(degree / 15, 24)
+	h = String(h).padStart(2, "0")
+	m = String(m).padStart(2, "0")
+	return h + ":" + m}
 
 function formatHourAngle(degree, decimal) {
-    let [h, m, s] = toDMS(degree / 15, 24, 0, decimal)
+	let [h, m, s] = toDMS(degree / 15, 24, 0, decimal)
 	return h + "ʰ " + m + "ᵐ " + s.toFixed(decimal) + "ˢ"}
 
 function formatAngleDecimal(degree, decimal) {
 	return mod(degree, 360).toFixed(decimal) + "°"}
 
 function formatAngleDMS(degree, decimal) {
-    let [d, m, s] = toDMS(degree, 360, 0, decimal)
+	let [d, m, s] = toDMS(degree, 360, 0, decimal)
 	return d + "° " + m + "\' " + s.toFixed(decimal) + "\""}
 
 function formatSignedAngleDecimal(degree, decimal) {
-    let t = mod(degree, 360, -180, decimal)
-    let f = 10 ** decimal
-    let a = Math.round(Math.abs(t) * f) / f
-    if(a === 0) return (0).toFixed(decimal)
-    return (t > 0 ? "+" : "−") + a.toFixed(decimal) + "°"}
+	let t = mod(degree, 360, -180, decimal)
+	let f = 10 ** decimal
+	let a = Math.round(Math.abs(t) * f) / f
+	if(a === 0) return (0).toFixed(decimal)
+	return (t > 0 ? "+" : "−") + a.toFixed(decimal) + "°"}
 
 function formatSignedAngleDMS(degree, decimal) {
-    let t = mod(degree, 360, -180, decimal)
-    let [d, m, s] = toDMS(Math.abs(t), 360, -180, decimal)
+	let t = mod(degree, 360, -180, decimal)
+	let [d, m, s] = toDMS(Math.abs(t), 360, -180, decimal)
 	let sign = t < 0 ? "−" : (t > 0 ? "+" : "")
 	return sign + d + "° " + m + "\' " + s.toFixed(decimal) + "\""}
 
 function getJulianDay(year, month, day, localtime) {
-    let [h, m, s] = toDMS(localtime / 15, 24)
+	let [h, m, s] = toDMS(localtime / 15, 24)
 	let a = Math.floor((14 - month) / 12)
 	let Y = year + 4800 - a
 	let M = month + 12 * a - 3
@@ -340,15 +340,15 @@ function toXYZ(theta, phi) {
 	return [c * Math.cos(theta), c * Math.sin(theta), Math.sin(phi)]}
 
 function toTP(xyz) {
-    let p = Math.asin(clip(xyz[2], -1, 1)) / DEGREE
-    if(Math.abs(xyz[2]) === 1) return [0, p]
-    let t = mod(Math.atan2(xyz[1], xyz[0]) / DEGREE, 360)
-    return [t, p]}
+	let p = Math.asin(clip(xyz[2], -1, 1)) / DEGREE
+	if(Math.abs(xyz[2]) === 1) return [0, p]
+	let t = mod(Math.atan2(xyz[1], xyz[0]) / DEGREE, 360)
+	return [t, p]}
 
 function normalize(vector) {
-    let r = Math.hypot(vector[0], vector[1], vector[2])
-    if(r === 0) return [0, 0, 0]
-    return [vector[0] / r, vector[1] / r, vector[2] / r]}
+	let r = Math.hypot(vector[0], vector[1], vector[2])
+	if(r === 0) return [0, 0, 0]
+	return [vector[0] / r, vector[1] / r, vector[2] / r]}
 
 function dot(m, v) {return [
 	m[0]*v[0] + m[1]*v[1] + m[2]*v[2],   m[3]*v[0] + m[4]*v[1] + m[5]*v[2],   m[6]*v[0] + m[7]*v[1] + m[8]*v[2]]}
@@ -359,26 +359,26 @@ function mul(a, b) {return [
 	a[6]*b[0] + a[7]*b[3] + a[8]*b[6],   a[6]*b[1] + a[7]*b[4] + a[8]*b[7],   a[6]*b[2] + a[7]*b[5] + a[8]*b[8]]}
 
 function rotateX(angle) {
-    angle *= DEGREE;
-    let c = Math.cos(angle), s = Math.sin(angle)
-    return [1, 0, 0,   0, c, -s,   0, s, c]}
+	angle *= DEGREE;
+	let c = Math.cos(angle), s = Math.sin(angle)
+	return [1, 0, 0,   0, c, -s,   0, s, c]}
 
 function rotateY(angle) {
-    angle *= DEGREE;
-    let c = Math.cos(angle), s = Math.sin(angle)
-    return [c, 0, s,   0, 1, 0,   -s, 0, c]}
+	angle *= DEGREE;
+	let c = Math.cos(angle), s = Math.sin(angle)
+	return [c, 0, s,   0, 1, 0,   -s, 0, c]}
 
 function rotateZ(angle) {
-    angle *= DEGREE;
-    let c = Math.cos(angle), s = Math.sin(angle)
-    return [c, -s, 0,   s, c, 0,   0, 0, 1]}
+	angle *= DEGREE;
+	let c = Math.cos(angle), s = Math.sin(angle)
+	return [c, -s, 0,   s, c, 0,   0, 0, 1]}
 
 function updateTransforms() {
-    transform.fromNirayana = mul(rotateX(astro.obliquity), rotateZ(-astro.ayanamsa))
-    transform.toNirayana = mul(rotateZ(astro.ayanamsa), rotateX(-astro.obliquity))
-    transform.fromEquatorialJ2000 = mul(rotateZ(astro.ayanamsaJ2000), rotateX(-astro.obliquityJ2000))
-    transform.fromHorizontal = mul(rotateZ(90 + astro.sidereal), rotateX(90 - astro.latitude))
-    transform.toHorizontal = mul(rotateX(-(90 - astro.latitude)), rotateZ(-(90 + astro.sidereal)))}
+	transform.fromNirayana = mul(rotateX(astro.obliquity), rotateZ(-astro.ayanamsa))
+	transform.toNirayana = mul(rotateZ(astro.ayanamsa), rotateX(-astro.obliquity))
+	transform.fromEquatorialJ2000 = mul(rotateZ(astro.ayanamsaJ2000), rotateX(-astro.obliquityJ2000))
+	transform.fromHorizontal = mul(rotateZ(90 + astro.sidereal), rotateX(90 - astro.latitude))
+	transform.toHorizontal = mul(rotateX(-(90 - astro.latitude)), rotateZ(-(90 + astro.sidereal)))}
 
 const fromNirayana = p => dot(transform.fromNirayana, p)
 const toNirayana = p => dot(transform.toNirayana, p)
@@ -387,11 +387,11 @@ const fromHorizontal = p => dot(transform.fromHorizontal, p)
 const toHorizontal = p => dot(transform.toHorizontal, p)
 
 function getObserverVector(sidereal) {
-    let p = astro.latitude * DEGREE
-    let t = sidereal * DEGREE
-    let sp = Math.sin(p), cp = Math.cos(p)
-    let r = wgs84.a / Math.sqrt(1 - wgs84.e2 * sp * sp)
-    return toNirayana([r * cp * Math.cos(t), r * cp * Math.sin(t),
+	let p = astro.latitude * DEGREE
+	let t = sidereal * DEGREE
+	let sp = Math.sin(p), cp = Math.cos(p)
+	let r = wgs84.a / Math.sqrt(1 - wgs84.e2 * sp * sp)
+	return toNirayana([r * cp * Math.cos(t), r * cp * Math.sin(t),
 		r * (1 - wgs84.e2) * sp].map(n => n / KM_PER_AU))}
 
 function updateTime() {
@@ -484,7 +484,7 @@ function setLocation() {
 		render()
 	}, error => alert("Location access failed."))}
 
-function changeOrientation(point, fromMode, toMode) {
+function changeSystem(point, fromMode, toMode) {
 	if(fromMode === "horizontal") point = fromHorizontal(point)
 	else if(fromMode === "ecliptic") point = fromNirayana(point)
 	if(toMode === "horizontal") return toHorizontal(point)
@@ -492,24 +492,24 @@ function changeOrientation(point, fromMode, toMode) {
 	else return point}
 
 function updateViewTransforms() {
-    let m = mul(rotateY(view.pitch), rotateZ(view.yaw))
-    if (view.orienting) m = mul(rotateX(view.roll), m)
-    viewTransform.toScreen = m
-    let n = mul(rotateZ(-view.yaw), rotateY(-view.pitch))
-    if (view.orienting) n = mul(n, rotateX(-view.roll))
-    viewTransform.fromScreen = n}
+	let m = mul(rotateY(view.pitch), rotateZ(view.yaw))
+	if (view.orienting) m = mul(rotateX(view.roll), m)
+	viewTransform.toScreen = m
+	let n = mul(rotateZ(-view.yaw), rotateY(-view.pitch))
+	if (view.orienting) n = mul(n, rotateX(-view.roll))
+	viewTransform.fromScreen = n}
 
 function toScreen(point, fromMode, toMode) {
-    return dot(viewTransform.toScreen, changeOrientation(point, fromMode, toMode))}
+	return dot(viewTransform.toScreen, changeSystem(point, fromMode, toMode))}
 
 function fromScreen(point, fromMode, toMode) {
-    return changeOrientation(dot(viewTransform.fromScreen, point), fromMode, toMode)}
+	return changeSystem(dot(viewTransform.fromScreen, point), fromMode, toMode)}
 
 function project(p) {
-    let camera3D = toScreen(p, "equatorial", mode.orientation)
-    let s = view.r0 * view.f / (view.f - camera3D[0])
-    let screen2D = [view.x0 + camera3D[1] * s, view.y0 - camera3D[2] * s]
-    return [camera3D, screen2D]}
+	let camera3D = toScreen(p, "equatorial", mode.orientation)
+	let s = view.r0 * view.f / (view.f - camera3D[0])
+	let screen2D = [view.x0 + camera3D[1] * s, view.y0 - camera3D[2] * s]
+	return [camera3D, screen2D]}
 
 function pushLines(points, color, width, dash = []) {
 	let segment = []
@@ -560,23 +560,23 @@ function pushGraticule(rotation, color) {
 
 function pushStars() {
 	let s = new Array(STARS.length)
-    if(!show.stars && !show.constellations && !show.zodiac) return
+	if(!show.stars && !show.constellations && !show.zodiac) return
 	let m = 0
-    for(let i = 0; i < STARS.length; i++) {
-        let p = STARS[i]
-        if(p[0] === 0 && p[1] === 0 && p[2] === 0) {s[i] = [0, 0, 0]; m++; continue}
-        let rp = fromNirayana(p)
-        s[i] = rp
-        if(show.stars) {
-            let [c3D, s2D] = project(rp)
-            let entry = {pos: s2D, mag: m}
+	for(let i = 0; i < STARS.length; i++) {
+		let p = STARS[i]
+		if(p[0] === 0 && p[1] === 0 && p[2] === 0) {s[i] = [0, 0, 0]; m++; continue}
+		let rp = fromNirayana(p)
+		s[i] = rp
+		if(show.stars) {
+			let [c3D, s2D] = project(rp)
+			let entry = {pos: s2D, mag: m}
 			if(c3D[0] >= view.z0) graphics.frontStars.push(entry)
 			else if(!show.sphere) graphics.backStars.push(entry)}}
-    if(show.constellations) {
-        for(let c of CONSTELLATIONS) {
-            for(let i = 0; i < c.length; i += 2)
-                pushLines([s[c[i]], s[c[i+1]]], "gray", 0.75)}}
-    if(show.zodiac) {
+	if(show.constellations) {
+		for(let c of CONSTELLATIONS) {
+			for(let i = 0; i < c.length; i += 2)
+				pushLines([s[c[i]], s[c[i+1]]], "gray", 0.75)}}
+	if(show.zodiac) {
 		for(let z of ZODIAC) {
 			let c = CONSTELLATIONS[z]
 			for(let i = 0; i < c.length; i += 2)
@@ -597,30 +597,30 @@ function pushAxes(axes, labels, rotation, color, size) {
 			graphics.backTexts.push(text)}}}
 
 function heliocentricDistance(trueAnomaly, a, e) {
-    return a * (1 - e * e) / (1 + e * Math.cos(trueAnomaly * DEGREE))}
+	return a * (1 - e * e) / (1 + e * Math.cos(trueAnomaly * DEGREE))}
 
 function trueAnomaly(meanAnomaly, e) {
-    let M = meanAnomaly * DEGREE
-    let E = M
-    for(let k = 0; k < 6; k++)
-        E -= (E - e * Math.sin(E) - M) / (1 - e * Math.cos(E))
-    return 2 * Math.atan2(
-        Math.sqrt(1 + e) * Math.sin(E / 2),
-        Math.sqrt(1 - e) * Math.cos(E / 2)) / DEGREE}
+	let M = meanAnomaly * DEGREE
+	let E = M
+	for(let k = 0; k < 6; k++)
+		E -= (E - e * Math.sin(E) - M) / (1 - e * Math.cos(E))
+	return 2 * Math.atan2(
+		Math.sqrt(1 + e) * Math.sin(E / 2),
+		Math.sqrt(1 - e) * Math.cos(E / 2)) / DEGREE}
 
 function helioEMBVector(julianCentury) {
-    let jc = julianCentury
+	let jc = julianCentury
 	let a =  1.00000018 - 0.00000003 * jc
-    let e =  0.01673163 - 0.00003661 * jc
+	let e =  0.01673163 - 0.00003661 * jc
 	let i = -0.00054346 - 0.01337178 * jc
 	let omg = 108.04266274 + 0.55919116 * jc
 	let OMG = - 5.11260389 - 0.24123856 * jc
-    let nu = trueAnomaly(mod(-2.46314313 + 35999.05511069 * jc, 360), e)
-    let r = heliocentricDistance(nu, a, e)
-    return dot(mul(rotateZ(OMG + astro.ayanamsaJ2000), mul(rotateX(i), rotateZ(nu + omg))), [r, 0, 0])}
+	let nu = trueAnomaly(mod(-2.46314313 + 35999.05511069 * jc, 360), e)
+	let r = heliocentricDistance(nu, a, e)
+	return dot(mul(rotateZ(OMG + astro.ayanamsaJ2000), mul(rotateX(i), rotateZ(nu + omg))), [r, 0, 0])}
 
 function geoMoonVectors(julianCentury) {
-    let jc = julianCentury
+	let jc = julianCentury
 	let lp = mod(218.3166328333 + jc * (1732559343.3328 - jc *
 		( 6.8700 - jc * (0.006604 - 0.00003169 * jc))) / 3600, 360) * DEGREE
 	let d =  mod(297.8501917222 + jc * (1602961601.0312 - jc *
@@ -670,43 +670,43 @@ function geoMoonVectors(julianCentury) {
 		0, 0, 14403, 0, 246158, 0, 8752, 0, -3699111, 0, 0, 0, 10321, 0, -2955968, 0, 0, 4130, 0, -170733, 0, 0,
 		-10445, 0, 0, 0, 0, 24208, 0, 0, 0, 30824, 0, 0, 2616, 2354, 0, 3258, -1897, 0, -3958, 0, -1571, 0, 0,
 		-21636, 0, 0, -34782, 0, 0, -11650, 0, 0, -1423]
-    let l = 0
-    let b = 0
-    let rMoon = 385000.56
-    for(let k = 0; k < n.length; k++) {
+	let l = 0
+	let b = 0
+	let rMoon = 385000.56
+	for(let k = 0; k < n.length; k++) {
 		let e = (1 - 0.002516 * jc - 0.0000074 * jc * jc) ** Math.abs(n[k][1])
 		let arg = n[k][0] * d + n[k][1] * m + n[k][2] * mp + n[k][3] * f
 		let s = Math.sin(arg)
 		l += lc[k] * e * s
 		b += bc[k] * e * s
 		rMoon += rc[k] * e * Math.cos(arg) / 1000}
-    let av = (119.75 +    131.849 * jc) * DEGREE
-    let aj = ( 53.09 + 479264.290 * jc) * DEGREE
-    let ae = (313.45 + 481266.484 * jc) * DEGREE
+	let av = (119.75 +	131.849 * jc) * DEGREE
+	let aj = ( 53.09 + 479264.290 * jc) * DEGREE
+	let ae = (313.45 + 481266.484 * jc) * DEGREE
 	l = (l + 3958 * Math.sin(av) + 1962 * Math.sin(lp - f) + 318 * Math.sin(aj)) / 1000000 + lp / DEGREE
 	b = (b - 2235 * Math.sin(lp) + 382 * Math.sin(ae) + 175 * Math.sin(av - f) + 175 * Math.sin(av + f) +
 		127 * Math.sin(lp - mp) - 115 * Math.sin(lp + mp)) / 1000000
-    rMoon /= KM_PER_AU
-    let vMoon = toXYZ(l, b)
-    vMoon = [vMoon[0] * rMoon, vMoon[1] * rMoon, vMoon[2] * rMoon]
-    let vRahu = toXYZ(mod(125.0445351389 - jc * (6967919.8851 - jc * (6.3593 + jc * (0.007625 - 0.00003586 * jc))) / 3600 -
+	rMoon /= KM_PER_AU
+	let vMoon = toXYZ(l, b)
+	vMoon = [vMoon[0] * rMoon, vMoon[1] * rMoon, vMoon[2] * rMoon]
+	let vRahu = toXYZ(mod(125.0445351389 - jc * (6967919.8851 - jc * (6.3593 + jc * (0.007625 - 0.00003586 * jc))) / 3600 -
 		1.4979 * Math.sin(2 * (d - f)) - 0.1500 * Math.sin(m) - 0.1226 * Math.sin(2 * d)
-        + 0.1176 * Math.sin(2 * f) - 0.0801 * Math.sin(2 * (mp - f)), 360), 0)
-    vRahu = [vRahu[0] * rMoon, vRahu[1] * rMoon, vRahu[2] * rMoon]
-    return [vMoon, vRahu].map(p => dot(rotateZ(astro.ayanamsaJ2000), p))}
+		+ 0.1176 * Math.sin(2 * f) - 0.0801 * Math.sin(2 * (mp - f)), 360), 0)
+	vRahu = [vRahu[0] * rMoon, vRahu[1] * rMoon, vRahu[2] * rMoon]
+	return [vMoon, vRahu].map(p => dot(rotateZ(astro.ayanamsaJ2000), p))}
 
 function helioPlanetsVectors(julianCentury) {
-    let jc = julianCentury
-    let a = [0.38709843,
-        0.72332102 - 0.00000026 * jc,  1.52371243 + 0.00000097 * jc,  5.20248019 - 0.00002864 * jc,
-        9.54149883 - 0.00003065 * jc, 19.18797948 - 0.00020455 * jc, 30.06952752 + 0.00006447 * jc]
-    let e = [0.20563661 + 0.00002123 * jc,
-        0.00676399 - 0.00005107 * jc, 0.09336511 + 0.00009149 * jc, 0.04853590 + 0.00018026 * jc,
-        0.05550825 - 0.00032044 * jc, 0.04685740 - 0.00001550 * jc, 0.00895439 + 0.00000818 * jc]
-    let i = [7.00559432 - 0.00590158 * jc,
-        3.39777545 + 0.00043494 * jc, 1.85181869 - 0.00724757 * jc, 1.29861416 - 0.00322699 * jc,
-        2.49424102 + 0.00451969 * jc, 0.77298127 - 0.00180155 * jc, 1.77005520 + 0.00022400 * jc]
-    let mu = [174.79394829 + 149472.5154661 * jc,
+	let jc = julianCentury
+	let a = [0.38709843,
+		0.72332102 - 0.00000026 * jc,  1.52371243 + 0.00000097 * jc,  5.20248019 - 0.00002864 * jc,
+		9.54149883 - 0.00003065 * jc, 19.18797948 - 0.00020455 * jc, 30.06952752 + 0.00006447 * jc]
+	let e = [0.20563661 + 0.00002123 * jc,
+		0.00676399 - 0.00005107 * jc, 0.09336511 + 0.00009149 * jc, 0.04853590 + 0.00018026 * jc,
+		0.05550825 - 0.00032044 * jc, 0.04685740 - 0.00001550 * jc, 0.00895439 + 0.00000818 * jc]
+	let i = [7.00559432 - 0.00590158 * jc,
+		3.39777545 + 0.00043494 * jc, 1.85181869 - 0.00724757 * jc, 1.29861416 - 0.00322699 * jc,
+		2.49424102 + 0.00451969 * jc, 0.77298127 - 0.00180155 * jc, 1.77005520 + 0.00022400 * jc]
+	let mu = [174.79394829 + 149472.5154661 * jc,
 		50.21215137 + 58517.75880612 * jc, 19.34931620 + 19139.84710618 * jc,
 		 20.05983908 + jc * (3034.72172561 - 0.00012452 * jc) +
 			0.3614771452160488 * Math.cos(1.402241562493016 + 38.35125 * jc),
@@ -716,40 +716,40 @@ function helioPlanetsVectors(julianCentury) {
 			0.9931980417905146 * Math.cos(2.9625334422741805 - 7.67025 * jc),
 		257.54130563 + jc * ( 218.45505376 - 0.00041348 * jc) +
 			0.6909773184182193 * Math.cos(0.1476104320021216 + 7.67025 * jc)].map(p => mod(p, 360))
-    let omg = [29.11810076 + 0.28154195 * jc,
-         55.09494217 + 0.32953822 * jc, -73.63065768 + 0.72076056 * jc, -86.01787410 + 0.05174577 * jc,
-        -20.77862639 + 0.79194480 * jc,  98.47154226 + 0.03527286 * jc, -85.10477129 + 0.01616240 * jc]
-    let OMG = [48.33961819 - 0.12214182 * jc,
-         76.67261496 - 0.27274174 * jc,  49.71320984 - 0.26852431 * jc, 100.29282654 + 0.13024619 * jc,
-        113.63998702 - 0.25015002 * jc,  73.96250215 + 0.05739699 * jc, 131.78635853 - 0.00606302 * jc]
-    let vec = []
-    for(let k = 0; k < 7; k++) {
-        let nu = trueAnomaly(mu[k], e[k])
-        let r = heliocentricDistance(nu, a[k], e[k])
+	let omg = [29.11810076 + 0.28154195 * jc,
+		 55.09494217 + 0.32953822 * jc, -73.63065768 + 0.72076056 * jc, -86.01787410 + 0.05174577 * jc,
+		-20.77862639 + 0.79194480 * jc,  98.47154226 + 0.03527286 * jc, -85.10477129 + 0.01616240 * jc]
+	let OMG = [48.33961819 - 0.12214182 * jc,
+		 76.67261496 - 0.27274174 * jc,  49.71320984 - 0.26852431 * jc, 100.29282654 + 0.13024619 * jc,
+		113.63998702 - 0.25015002 * jc,  73.96250215 + 0.05739699 * jc, 131.78635853 - 0.00606302 * jc]
+	let vec = []
+	for(let k = 0; k < 7; k++) {
+		let nu = trueAnomaly(mu[k], e[k])
+		let r = heliocentricDistance(nu, a[k], e[k])
 		vec.push(dot(mul(rotateZ(OMG[k] + astro.ayanamsaJ2000), mul(rotateX(i[k]), rotateZ(nu + omg[k]))), [r, 0, 0]))}
-    return vec}
+	return vec}
 
 function centerViewOnSun() {
 	let jc = astro.julianCentury
 	let he = helioEMBVector(jc)
-    let gm = geoMoonVectors(jc)[0]
+	let gm = geoMoonVectors(jc)[0]
 	let to = astro.observerVector
-    let mc = -82.34295832198312
+	let mc = -82.34295832198312
 	let [t, p] = toTP(normalize(toHorizontal(fromNirayana([gm[0] / mc - he[0] - to[0],
 		gm[1] / mc - he[1] - to[1], gm[2] / mc - he[2] - to[2]]))))
-    view.yaw = mod(-t, 360)
-    view.pitch = p}
+	view.yaw = mod(-t, 360)
+	view.pitch = p}
 
 centerViewOnSun()
 
 function solarSystemVectors(julianCentury) {
-    let he = helioEMBVector(julianCentury)
-    let gm = geoMoonVectors(julianCentury)
-    let hp = helioPlanetsVectors(julianCentury)
-    let mc = -82.34295832198312
+	let he = helioEMBVector(julianCentury)
+	let gm = geoMoonVectors(julianCentury)
+	let hp = helioPlanetsVectors(julianCentury)
+	let mc = -82.34295832198312
 	let gs = [gm[0][0] / mc - he[0], gm[0][1] / mc - he[1], gm[0][2] / mc - he[2]]
-    let gp = hp.map(p => [p[0] + gs[0], p[1] + gs[1], p[2] + gs[2]])
-	return [/* Moon */gm[0], /*    Sun */gs,    /* Mercury */gp[0], /*   Venus */gp[1], /* Mars */gp[2],
+	let gp = hp.map(p => [p[0] + gs[0], p[1] + gs[1], p[2] + gs[2]])
+	return [/* Moon */gm[0], /*	Sun */gs,	/* Mercury */gp[0], /*   Venus */gp[1], /* Mars */gp[2],
 		/*  Jupiter */gp[3], /* Saturn */gp[4], /*  Uranus */gp[5], /* Neptune */gp[6], /* Rahu */gm[1]]}
 
 function analemmaVectors() {
@@ -766,7 +766,7 @@ function analemmaVectors() {
 	return pts.map(fromHorizontal)}
 
 function pushSolarSystem() {
-    let v = solarSystemVectors(astro.julianCentury)
+	let v = solarSystemVectors(astro.julianCentury)
 	if(mode.orientation === "horizontal") {
 		let to = astro.observerVector
 		v = v.map((p, i, arr) => i === arr.length - 1 ? p : [p[0] - to[0], p[1] - to[1], p[2] - to[2]])}
@@ -822,27 +822,43 @@ function pushSolarSystem() {
 				graphics.backPoints.push(point)
 				graphics.backTexts.push(text)}}}
 
-    let obj = [
-        {pos: v[8], name: "Neptune", color: "rgb(0,128,255)", show: show.planets},
-        {pos: v[7], name: "Uranus", color: "rgb(0,255,128)", show: show.planets},
-        {pos: v[6], name: "Saturn", color: "purple", show: show.planets},
-        {pos: v[5], name: "Jupiter", color: "orange", show: show.planets},
-        {pos: v[4], name: "Mars", color: "magenta", show: show.planets},
-        {pos: v[3], name: "Venus", color: "cyan", show: show.planets},
-        {pos: v[2], name: "Mercury", color: "green", show: show.planets},
-        {pos: v[1], name: "Sun", color: "red", show: show.sun},
-        {pos: v[0], name: "Moon", color: "yellow", show: show.moon}]
-    for(let o of obj) {
+	let obj = [
+		{pos: v[8], name: "Neptune", color: "rgb(0,128,255)", show: show.planets},
+		{pos: v[7], name: "Uranus", color: "rgb(0,255,128)", show: show.planets},
+		{pos: v[6], name: "Saturn", color: "purple", show: show.planets},
+		{pos: v[5], name: "Jupiter", color: "orange", show: show.planets},
+		{pos: v[4], name: "Mars", color: "magenta", show: show.planets},
+		{pos: v[3], name: "Venus", color: "cyan", show: show.planets},
+		{pos: v[2], name: "Mercury", color: "green", show: show.planets},
+		{pos: v[1], name: "Sun", color: "red", show: show.sun},
+		{pos: v[0], name: "Moon", color: "yellow", show: show.moon}]
+	for(let o of obj) {
 		if(!o.show) continue
-        let [c3D, s2D] = project(o.pos)
-        let point = {pos: s2D, size: 6, color: o.color, border: 2, edge: c}
-        let text = {pos: [s2D[0], s2D[1]], text: o.name, color: c}
-        if(c3D[0] >= view.z0) {
-            graphics.frontPoints.push(point)
-            graphics.frontTexts.push(text)}
-        else if(!show.sphere) {
-            graphics.backPoints.push(point)
-            graphics.backTexts.push(text)}}}
+		let [c3D, s2D] = project(o.pos)
+		let point = {pos: s2D, size: 6, color: o.color, border: 2, edge: c}
+		let text = {pos: [s2D[0], s2D[1]], text: o.name, color: c}
+		if(c3D[0] >= view.z0) {
+			graphics.frontPoints.push(point)
+			graphics.frontTexts.push(text)}
+		else if(!show.sphere) {
+			graphics.backPoints.push(point)
+			graphics.backTexts.push(text)}}}
+
+function pushLagna() {
+	let m = mul(transform.toHorizontal, transform.fromNirayana)
+	let l = mod(Math.atan2(-m[6], m[7]) / DEGREE, 360)
+	let p = normalize(dot(m, toXYZ(l, 0)))
+	if(p[0] < 0) p = [-p[0], -p[1], -p[2]]
+	let [c3D, s2D] = project(fromHorizontal(p))
+	let c = mode.darkTheme ? "white" : "black"
+	let point = {pos: s2D, size: 6, color: horizontal_major_color, border: 2, edge: c}
+	let text = {pos: [s2D[0], s2D[1]], text: "Lagna", color: c}
+	if(c3D[0] >= view.z0) {
+		graphics.frontPoints.push(point)
+		graphics.frontTexts.push(text)}
+	else if(!show.sphere) {
+		graphics.backPoints.push(point)
+		graphics.backTexts.push(text)}}
 
 function drawLines(lines) {
 	for(let l of lines) {
@@ -886,25 +902,25 @@ function drawPoints(points) {
 			ctx.stroke()}}}
 
 function drawTexts(texts) {
-    ctx.font = "16px sans-serif"
-    ctx.textAlign = "center"
-    ctx.textBaseline = "middle"
-    for(let t of texts) {
-        let x = t.pos[0]
-        let y = t.pos[1]
-        let dx = x - view.x0
-        let dy = y - view.y0
-        let len = Math.hypot(dx, dy)
-        if(len < 1e-6) {dx = 0; dy = -1; len = 1}
-        dx /= len
-        dy /= len
-        let m = ctx.measureText(t.text)
-        let r = 10
-        let xt = x + dx * (r + m.width / 2)
-        let yt = y + dy * (r +
+	ctx.font = "16px sans-serif"
+	ctx.textAlign = "center"
+	ctx.textBaseline = "middle"
+	for(let t of texts) {
+		let x = t.pos[0]
+		let y = t.pos[1]
+		let dx = x - view.x0
+		let dy = y - view.y0
+		let len = Math.hypot(dx, dy)
+		if(len < 1e-6) {dx = 0; dy = -1; len = 1}
+		dx /= len
+		dy /= len
+		let m = ctx.measureText(t.text)
+		let r = 10
+		let xt = x + dx * (r + m.width / 2)
+		let yt = y + dy * (r +
 			(m.actualBoundingBoxAscent + m.actualBoundingBoxDescent) / 2)
-        ctx.fillStyle = t.color
-        ctx.fillText(t.text, xt, yt)}}
+		ctx.fillStyle = t.color
+		ctx.fillText(t.text, xt, yt)}}
 
 function drawSphere() {
 	let r = view.r0 * view.f / Math.sqrt(view.f * view.f - 1)
@@ -952,17 +968,17 @@ function drawCrosshair() {
 	UI.altitudeValue.textContent = formatSignedAngleDMS(alt, 2)}
 
 function resize() {
-    let dpr = window.devicePixelRatio || 1
-    view.w = window.innerWidth
-    view.h = window.innerHeight
-    UI.sky.width = view.w * dpr
-    UI.sky.height = view.h * dpr
-    UI.sky.style.width = view.w + "px"
-    UI.sky.style.height = view.h + "px"
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-    view.x0 = 0.5 * view.w
-    view.y0 = 0.5 * view.h
-    view.r0 = 0.45 * Math.min(view.w, view.h)}
+	let dpr = window.devicePixelRatio || 1
+	view.w = window.innerWidth
+	view.h = window.innerHeight
+	UI.sky.width = view.w * dpr
+	UI.sky.height = view.h * dpr
+	UI.sky.style.width = view.w + "px"
+	UI.sky.style.height = view.h + "px"
+	ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+	view.x0 = 0.5 * view.w
+	view.y0 = 0.5 * view.h
+	view.r0 = 0.45 * Math.min(view.w, view.h)}
 
 function render() {
 	if(update.view) {updateViewTransforms(); update.view = false}
@@ -1001,13 +1017,14 @@ function render() {
 	if(show.eclipticAxes) {
 		pushAxes(AXES, ["VE", "AE", "SS", "WS", "NEP", "SEP"], 
 			p => dot(rotateX(astro.obliquity), p), ecliptic_major_color, 5)
-		pushAxes([AXES[0]], ["FPA"], fromNirayana, ecliptic_major_color, 7)}
+		pushAxes([AXES[0]], ["FPA"], fromNirayana, ecliptic_major_color, 5)}
 	if(show.equatorialAxes)
 		pushAxes(AXES, ["VE", "AE", "6ʰ", "18ʰ", "NCP", "SCP"], 
 			p => p, equatorial_major_color, 5)
-	if(show.horizontalAxes)
+	if(show.horizontalAxes) {
 		pushAxes(AXES, ["East", "West", "North", "South", "Zenith", "Nadir"], 
 			fromHorizontal, horizontal_major_color, 5)
+		pushLagna()}
 
 	if(show.stars || show.constellations || show.zodiac) pushStars()
 	if(show.sun || show.moon || show.planets || show.moonsOrbit || show.eclipses) pushSolarSystem()
@@ -1100,13 +1117,13 @@ UI.darkThemeCheckbox.addEventListener("change", () => {
 	render()})
 
 UI.drawCheckbox.addEventListener("change", () => {
-    mode.draw = UI.drawCheckbox.checked
-    UI.sky.style.cursor = mode.draw ? "crosshair" : "grab"
-    if(!mode.draw) {
-        input.drawing = false
-        input.drawPath = []
-        update.canvas = true
-        render()}})
+	mode.draw = UI.drawCheckbox.checked
+	UI.sky.style.cursor = mode.draw ? "crosshair" : "grab"
+	if(!mode.draw) {
+		input.drawing = false
+		input.drawPath = []
+		update.canvas = true
+		render()}})
 
 for (let s in show) {
 	let e = UI[s + "Checkbox"]
@@ -1151,10 +1168,10 @@ UI.dayOfYearSlider.addEventListener("input", () => {
 	render()})
 
 UI.timeSlider.addEventListener("input", () => {
-    astro.localtime = parseFloat(UI.timeSlider.value)
-    UI.timeValue.textContent = formatTime(astro.localtime)
+	astro.localtime = parseFloat(UI.timeSlider.value)
+	UI.timeValue.textContent = formatTime(astro.localtime)
 	update.params = true
-    render()})
+	render()})
 
 UI.nowButton.addEventListener("click", () => {
 	setDateTime()
@@ -1181,16 +1198,16 @@ UI.hereButton.addEventListener("click", () => setLocation())
 
 UI.sky.addEventListener("pointerdown", e => {
 	if(mode.draw) {
-        input.drawing = true
-        input.drawPath.push([[e.clientX, e.clientY]])
-        return}
-    if(view.orienting) return
-    if(e.pointerType === "touch") input.activePointers.set(e.pointerId, e)
-    input.dragging = true
-    input.lastX = e.clientX
-    input.lastY = e.clientY
+		input.drawing = true
+		input.drawPath.push([[e.clientX, e.clientY]])
+		return}
+	if(view.orienting) return
+	if(e.pointerType === "touch") input.activePointers.set(e.pointerId, e)
+	input.dragging = true
+	input.lastX = e.clientX
+	input.lastY = e.clientY
 
-    UI.sky.setPointerCapture(e.pointerId)})
+	UI.sky.setPointerCapture(e.pointerId)})
 
 window.addEventListener("pointermove", e => {
 	if(view.orienting) return
@@ -1237,20 +1254,20 @@ window.addEventListener("pointermove", e => {
 
 window.addEventListener("pointerup", e => {
 	if(view.orienting) return
-    if(mode.draw) input.drawing = false
-    input.activePointers.delete(e.pointerId)
-    if(input.activePointers.size < 2) input.pinchStartDist = null
-    input.dragging = false
-    UI.sky.releasePointerCapture(e.pointerId)})
+	if(mode.draw) input.drawing = false
+	input.activePointers.delete(e.pointerId)
+	if(input.activePointers.size < 2) input.pinchStartDist = null
+	input.dragging = false
+	UI.sky.releasePointerCapture(e.pointerId)})
 
 function zoomInOut(scale) {
-    view.r0 *= scale
-    let base = Math.min(view.w, view.h)
-    let rMin = 0.45 * base
-    let rMax = 20 * base
-    view.r0 = Math.max(rMin, Math.min(rMax, view.r0))
-    update.canvas = true
-    render()}
+	view.r0 *= scale
+	let base = Math.min(view.w, view.h)
+	let rMin = 0.45 * base
+	let rMax = 20 * base
+	view.r0 = Math.max(rMin, Math.min(rMax, view.r0))
+	update.canvas = true
+	render()}
 
 UI.sky.addEventListener("wheel", e => {
 	if(mode.draw || view.orienting) return
@@ -1268,7 +1285,7 @@ function initializeStars() {
 		/* Magnitide 0.XX or Brighter */
 		- 6142,+30775,- 9425,   - 2072,+19750,-26064,   -12250,-10244,-28613,   + 4099,-25211,+20525,   + 4276,+22357,+23570,
 		-25682,-17268,+10766,   + 6391,+31796,- 4674,   -13700,+29615,+ 2984,   +16145,+ 7333,-27554,   +  684,+32486,+ 4224,
-		-13891,- 8332,-28483,   +15047,-28666,+ 5051,   +11269,+29326,+ 9311,        0,     0,     0,
+		-13891,- 8332,-28483,   +15047,-28666,+ 5051,   +11269,+29326,+ 9311,		0,	 0,	 0,
 		
 		/* Magnitide 1.XX */
 		-29952,-11677,- 6343,   -11299,-27079,-14586,   -12829,+25924,+15396,   +27437,- 7654,-16196,   -14726,- 1717,-29221,
@@ -1278,7 +1295,7 @@ function initializeStars() {
 		+19756,-10479,-23949,   -11893,+18753,-24095,   +13270,+16434,+25050,   + 2847,-26891,-18505,   -15044,+ 3770,+28864,
 		- 8629,+28054,-14566,   -19053,- 9660,+24847,   - 2368,-23848,-22346,   +   48,+23191,+23149,   - 3592,-11164,-30596,
 		+10669,-14464,-27398,   -12463,+14249,-26745,   - 9685,+13514,-28236,   - 3082,+31018,-10102,   -25491,+19989,- 4933,
-			0,     0,     0,
+			0,	 0,	 0,
 
 		/* Magnitide 2.XX */
 		+  332,+  259,+32764,   +25548,+15836,+13046,   - 5149,+31009,+ 9251,   +30604,+ 5892,-10118,   +28614,+ 1048,+15931,
@@ -1304,7 +1321,7 @@ function initializeStars() {
 		- 7701,- 9090,-30524,   -12035,+30108,+ 4724,   -24944,- 6222,+20317,   -14839,-25406,-14423,   +26007,-19677,- 3181,
 		- 3027,+30118,+12547,   + 9167,-29180,-11755,   +12752,+21616,+21067,   -12350,-26848,-14154,   +10222,-20734,+23223,
 		+13488,+14065,+26342,   - 4495,+20300,-25325,   +28781,-15662,-  183,   +26731,- 9334,+16493,   +16167,+27454,- 7654,
-		-24995,+16567,+13209,   -31149,- 4082,- 9315,   + 8957,-30526,+ 7851,        0,     0,     0,
+		-24995,+16567,+13209,   -31149,- 4082,- 9315,   + 8957,-30526,+ 7851,		0,	 0,	 0,
 		
 		/* Magnitide 3.XX */
 		+ 2976,+30416,+11819,   -22810,+ 5092,+22966,   -28355,-10170,-12893,   - 7558,-24672,-20195,   - 5652,+29122,+13916,
@@ -1376,7 +1393,7 @@ function initializeStars() {
 		-11281,+10222,-29016,   -31817,+ 5050,+ 5988,   -19981,- 1017,-25950,   -14563,-23072,-18146,   + 8902,-23225,-21331,
 		+21932,- 9166,-22553,   +28504,- 9464,+13100,   +30370,- 4950,-11261,   +  943,+25394,+20687,   - 4046,+11613,-30372,
 		-17197,+20476,-18939,   -17325,+17229,+21833,   +17854,+ 5491,-26922,   - 2110,+32502,- 3581,   -12547,+25780,-15863,
-		+   92,-32724,+ 1676,   - 8241,+ 3652,-31503,   +18431,-13640,+23408,        0,     0,     0,
+		+   92,-32724,+ 1676,   - 8241,+ 3652,-31503,   +18431,-13640,+23408,		0,	 0,	 0,
 		
 		/* Magnitide 4.XX or Fainter */
 		+26478,+15288,-11784,   - 9376,+ 9178,-30026,   -17259,- 4191,-27536,   -17515,- 6831,+26837,   -19692,-16813,-20080,
@@ -1420,7 +1437,7 @@ function initializeStars() {
 		- 6787,+32027,+ 1379,   -22905,+18440,+14458,   -28927,+15391,-  213,   -20991,+16217,-19237,   -23597,+12622,+18909,
 		-27896,-14101,+ 9830,   -12508,-28128,-11227,   +  809,+18226,-27218,   -13387,+26250,-14332,   +24212,-21331,+ 5694,
 		+14941,-12552,-26323,   +24289,-12862,-17841,   +22551,-11259,+20937,   +12747,- 5455,-29689,   +22064,- 7974,+22875,
-		+32651,- 2563,+ 1018,   +13548,-    5,-29835,   +14752,+ 2044,-29187,   +10481,+26442,-16268,   - 4650,+32165,+ 4182,
+		+32651,- 2563,+ 1018,   +13548,-	5,-29835,   +14752,+ 2044,-29187,   +10481,+26442,-16268,   - 4650,+32165,+ 4182,
 		-10557,-12964,-28181,   -17526,-25394,+11030,   - 4122,-25791,+19786,   +26335,- 7986,-17786,   +26977,+ 8721,+16428,
 		-16926,-11148,+25747,   + 1116,-22753,-23552,   +13261,-15250,-25793,   - 8713,-20325,-24180,   +22115,- 9105,+22399,
 		+24119,+ 5326,+21531,   - 1913,+ 7131,+31924,   -21217,+15668,+19443,   + 7917,+13541,-28769,   -18654,+17621,+20377,
@@ -1450,90 +1467,90 @@ function initializeStars() {
 			return fromEquatorialJ2000([x, y, z])})}
 
 function initializeConstellations() {return [
-	/* And */[ 54,228,    58, 64,    58,228,    58,452,    58,658,   228,658,   228,659,   322,621,   345,646,   452,738,   458,592,   564,659,   564,677,   592,646,   621,738,   646,658],
+	/* And */[ 54,228,	58, 64,	58,228,	58,452,	58,658,   228,658,   228,659,   322,621,   345,646,   452,738,   458,592,   564,659,   564,677,   592,646,   621,738,   646,658],
 	/* Ant */[631,711,   631,753],
 	/* Aps */[416,456,   456,608,   456,790,   608,790],
-	/* Aql */[ 11,119,    11,372,   119,251,   167,251,   167,273,   167,534,   222,457,   222,669,   251,273,   251,457,   273,535,   273,669],
+	/* Aql */[ 11,119,	11,372,   119,251,   167,251,   167,273,   167,534,   222,457,   222,669,   251,273,   251,457,   273,535,   273,669],
 	/* Aqr */[154,162,   154,396,   154,643,   162,445,   162,595,   162,795,   229,545,   229,683,   358,683,   386,545,   386,595,   386,612,   445,569,   506,683,   544,569,   569,795,   612,683],
 	/* Ara */[134,143,   134,238,   143,354,   143,551,   192,392,   192,551,   238,331,   331,392],
-	/* Ari */[ 51,108,    51,338,   108,460],
-	/* Aur */[  4, 42,     4,181,     4,203,     4,376,    30,107,    30,112,    42,107,    42,376,   112,203,   181,389,   203,389],
-	/* Boo */[  5, 95,     5,113,     5,317,     5,402,    95,281,   113,713,   184,283,   184,317,   184,597,   281,283,   550,597,   550,733,   597,733],
+	/* Ari */[ 51,108,	51,338,   108,460],
+	/* Aur */[  4, 42,	 4,181,	 4,203,	 4,376,	30,107,	30,112,	42,107,	42,376,   112,203,   181,389,   203,389],
+	/* Boo */[  5, 95,	 5,113,	 5,317,	 5,402,	95,281,   113,713,   184,283,   184,317,   184,597,   281,283,   550,597,   550,733,   597,733],
 	/* Cae */[696,810,   696,811,   745,810],
 	/* Cam */[537,650,   537,702,   623,686,   650,760,   650,792,   686,760,   739,792],
 	/* Cap */[144,357,   144,385,   189,321,   189,590,   321,563,   357,563,   385,575,   575,590],
-	/* Car */[  1, 29,    29,233,    35,276,    45, 76,    46, 76,    46,276,    76,248,   123,233,   123,249,   123,757,   248,249,   249,408,   408,481,   481,762,   757,762],
-	/* Cas */[ 65, 75,    65,111,    75, 77,   111,246],
-	/* Cen */[  2, 10,    10, 78,    59,257,    59,549,    66, 78,    66, 96,    66,478,    78, 96,    82,197,    82,423,    96,280,    96,450,    99,467,    99,478,   125,474,   125,768,   195,501,   257,280,   257,474,   423,450,   423,667,   478,501,   549,667],
-	/* Cep */[ 90,217,    90,266,    90,536,   216,217,   216,290,   217,290,   245,558,   245,598,   266,602,   290,558,   536,598],
-	/* Cet */[ 53,285,    53,306,    97,277,    97,782,   275,306,   275,332,   277,554,   277,633,   285,373,   332,373,   373,802,   554,802,   629,633,   629,782],
+	/* Car */[  1, 29,	29,233,	35,276,	45, 76,	46, 76,	46,276,	76,248,   123,233,   123,249,   123,757,   248,249,   249,408,   408,481,   481,762,   757,762],
+	/* Cas */[ 65, 75,	65,111,	75, 77,   111,246],
+	/* Cen */[  2, 10,	10, 78,	59,257,	59,549,	66, 78,	66, 96,	66,478,	78, 96,	82,197,	82,423,	96,280,	96,450,	99,467,	99,478,   125,474,   125,768,   195,501,   257,280,   257,474,   423,450,   423,667,   478,501,   549,667],
+	/* Cep */[ 90,217,	90,266,	90,536,   216,217,   216,290,   217,290,   245,558,   245,598,   266,602,   290,558,   536,598],
+	/* Cet */[ 53,285,	53,306,	97,277,	97,782,   275,306,   275,332,   277,554,   277,633,   285,373,   332,373,   373,802,   554,802,   629,633,   629,782],
 	/* Cha */[552,567,   567,700,   567,800,   618,700,   618,800],
 	/* Cir */[208,557,   208,728],
-	/* CMa */[  0, 39,     0, 47,     0,672,    23, 39,    23,429,    39, 89,    47,494,   429,494,   555,571,   555,672,   571,672],
+	/* CMa */[  0, 39,	 0, 47,	 0,672,	23, 39,	23,429,	39, 89,	47,494,   429,494,   555,571,   555,672,   571,672],
 	/* CMi */[  7,151],
 	/* Cnc */[293,484,   484,625,   484,778,   532,778],
 	/* Col */[109,190,   109,454,   190,488,   190,664,   438,664],
 	/* Com */[620,652,   620,655],
 	/* CrA */[568,574,   568,807,   574,748,   748,763],
-	/* CrB */[ 70,350,    70,424,   350,593,   424,754,   585,754,   585,806],
+	/* CrB */[ 70,350,	70,424,   350,593,   424,754,   585,754,   585,806],
 	/* Crt */[316,560,   316,561,   316,793,   560,705,   561,705,   561,784,   779,793],
-	/* Cru */[ 18, 27,    19,131],
+	/* Cru */[ 18, 27,	19,131],
 	/* Crv */[102,166,   102,175,   110,166,   110,175,   175,542],
 	/* CVn */[152,619],
-	/* Cyg */[ 20, 74,    20,490,    20,523,    74, 93,    74,159,    74,477,    93,213,   159,395,   188,477,   213,490,   395,412,   395,523],
+	/* Cyg */[ 20, 74,	20,490,	20,523,	74, 93,	74,159,	74,477,	93,213,   159,395,   188,477,   213,490,   395,412,   395,523],
 	/* Del */[344,403,   344,543,   344,691,   403,627,   627,691],
 	/* Dor */[224,390,   224,624,   224,783,   390,654,   390,771,   390,783,   654,771],
-	/* Dra */[ 73,132,    73,380,   122,209,   122,528,   132,799,   187,380,   187,437,   187,609,   209,609,   235,348,   235,528,   318,609,   348,469,   380,799,   415,469],
+	/* Dra */[ 73,132,	73,380,   122,209,   122,528,   132,799,   187,380,   187,437,   187,609,   209,609,   235,348,   235,528,   318,609,   348,469,   380,799,   415,469],
 	/* Equ */[491,717,   717,786],
 	/* Eri */[  8,368,   130,531,   164,541,   164,689,   214,576,   214,622,   296,375,   296,689,   312,498,   312,594,   368,616,   375,470,   378,565,   378,630,   413,498,   413,726,   470,617,   483,531,   483,541,   565,707,   576,789,   594,750,   603,630,   603,765,   616,789,   617,707,   622,750,   726,764,   764,765],
 	/* For */[410,701,   701,781],
-	/* Gem */[ 16,556,    52,527,   149,673,   155,173,   155,232,   173,583,   173,673,   232,596,   244,319,   302,319,   302,527,   302,556,   315,556,   334,673,   406,556,   406,673],
-	/* Gru */[ 34, 62,    34,504,    62,288,    62,504,   177,706,   288,580,   504,794,   706,794],
+	/* Gem */[ 16,556,	52,527,   149,673,   155,173,   155,232,   173,583,   173,673,   232,596,   244,319,   302,319,   302,527,   302,556,   315,556,   334,673,   406,556,   406,673],
+	/* Gru */[ 34, 62,	34,504,	62,288,	62,504,   177,706,   288,580,   504,794,   706,794],
 	/* Her */[129,142,   129,250,   129,379,   142,284,   142,480,   198,250,   198,480,   198,675,   201,284,   201,480,   201,730,   264,362,   264,675,   284,601,   362,435,   379,747,   417,434,   434,730,   475,601,   475,615,   615,758,   747,797],
 	/* Hor */[447,818,   805,814,   814,816,   816,817,   817,818],
-	/* Hya */[ 48,473,    48,572,   171,226,   171,640,   191,422,   191,560,   194,256,   194,466,   226,688,   256,584,   256,660,   304,640,   304,705,   335,422,   335,752,   466,473,   560,705,   572,752,   584,699,   639,660,   639,699],
+	/* Hya */[ 48,473,	48,572,   171,226,   171,640,   191,422,   191,560,   194,256,   194,466,   226,688,   256,584,   256,660,   304,640,   304,705,   335,422,   335,752,   466,473,   560,705,   572,752,   584,699,   639,660,   639,699],
 	/* Hyi */[133,145,   133,223,   145,223],
 	/* Ind */[193,718,   193,735,   349,682,   349,735,   682,718],
 	/* Lac */[404,662,   404,692,   579,720,   662,722,   662,744,   662,756,   692,756,   720,737,   722,737,   737,744],
-	/* Leo */[ 22,294,    63, 98,    63,242,    72, 98,    72,271,    72,294,    98,242,   165,294,   165,462,   165,648,   242,294,   242,500,   271,462,   462,709,   500,548,   648,709],
+	/* Leo */[ 22,294,	63, 98,	63,242,	72, 98,	72,271,	72,294,	98,242,   165,294,   165,462,   165,648,   242,294,   242,500,   271,462,   462,709,   500,548,   648,709],
 	/* Lep */[101,139,   101,231,   101,308,   139,205,   139,327,   205,231,   231,635,   231,690,   308,369,   327,399,   369,776,   399,776],
 	/* Lib */[103,124,   103,482,   124,230,   124,482,   330,351,   330,482],
 	/* LMi */[407,600,   407,788,   600,712,   712,740,   712,788],
 	/* Lup */[ 79,260,   114,215,   128,215,   128,253,   128,269,   253,451,   260,269,   260,451,   269,313,   269,502,   313,502],
 	/* Lyn */[196,421,   421,742,   510,613,   510,742,   613,761,   665,697,   665,761],
-	/* Lyr */[  3,656,     3,808,   221,295,   221,637,   295,656,   637,656,   656,808],
+	/* Lyr */[  3,656,	 3,808,   221,295,   221,637,   295,656,   637,656,   656,808],
 	/* Mon */[489,666,   512,767,   589,666,   589,708,   589,767,   681,708,   681,727,   708,727,   727,777],
 	/* Mus */[116,186,   116,433,   116,553,   186,336,   336,433,   342,553],
 	/* Nor */[529,736,   529,769,   736,787,   769,787],
 	/* Oct */[382,586,   382,651,   586,651],
-	/* Oph */[ 60,126,    60,211,    88,100,    88,126,    88,227,   100,211,   100,642,   100,770,   121,218,   121,476,   126,384,   211,476,   218,770,   227,636,   239,384,   626,642,   626,714,   714,746],
-	/* Ori */[  6,254,     9, 28,     9, 32,     9,255,     9,581,    28, 71,    28,210,    28,255,    31, 32,    31, 71,    32, 55,    71,254,   210,356,   210,663,   356,365,   365,703,   559,773,   559,775,   581,687,   581,704,   663,773,   678,687,   678,766,   704,766],
-	/* Pav */[ 44,311,    44,611,   265,311,   265,611,   311,497,   311,530,   311,605,   311,680,   325,653,   605,668,   653,668,   653,680],
-	/* Peg */[ 54, 91,    54,135,    85,300,    91, 94,    91,163,    91,292,    94,135,    94,267,   163,644,   267,300,   292,505,   397,505,   397,591],
-	/* Per */[ 36,160,    36,179,    36,546,    61,157,    61,258,    61,405,   148,446,   148,547,   157,179,   157,547,   160,387,   160,487,   179,526,   387,487,   405,546,   487,546,   526,588,   540,570,   546,570,   588,751,   634,751],
-	/* Phe */[ 86,236,    86,459,   236,270,   236,459,   236,511,   270,486,   486,511],
+	/* Oph */[ 60,126,	60,211,	88,100,	88,126,	88,227,   100,211,   100,642,   100,770,   121,218,   121,476,   126,384,   211,476,   218,770,   227,636,   239,384,   626,642,   626,714,   714,746],
+	/* Ori */[  6,254,	 9, 28,	 9, 32,	 9,255,	 9,581,	28, 71,	28,210,	28,255,	31, 32,	31, 71,	32, 55,	71,254,   210,356,   210,663,   356,365,   365,703,   559,773,   559,775,   581,687,   581,704,   663,773,   678,687,   678,766,   704,766],
+	/* Pav */[ 44,311,	44,611,   265,311,   265,611,   311,497,   311,530,   311,605,   311,680,   325,653,   605,668,   653,668,   653,680],
+	/* Peg */[ 54, 91,	54,135,	85,300,	91, 94,	91,163,	91,292,	94,135,	94,267,   163,644,   267,300,   292,505,   397,505,   397,591],
+	/* Per */[ 36,160,	36,179,	36,546,	61,157,	61,258,	61,405,   148,446,   148,547,   157,179,   157,547,   160,387,   160,487,   179,526,   387,487,   405,546,   487,546,   526,588,   540,570,   546,570,   588,751,   634,751],
+	/* Phe */[ 86,236,	86,459,   236,270,   236,459,   236,511,   270,486,   486,511],
 	/* Pic */[219,715,   448,715],
-	/* PsA */[ 17,599,    17,606,   599,719,   606,731,   645,719,   645,731,   657,719,   657,809,   719,809],
+	/* PsA */[ 17,599,	17,606,   599,719,   606,731,   645,719,   645,731,   657,719,   657,809,   719,809],
 	/* Psc */[340,628,   340,774,   363,638,   363,801,   419,628,   419,693,   539,587,   539,685,   587,638,   587,723,   632,685,   632,796,   693,796,   723,801,   732,774,   732,791,   774,791],
-	/* Pup */[  1,206,    35, 68,    68,136,   118,206,   118,772,   136,241,   241,698,   241,716,   513,716,   513,772,   698,772],
+	/* Pup */[  1,206,	35, 68,	68,136,   118,206,   118,772,   136,241,   241,698,   241,716,   513,716,   513,772,   698,772],
 	/* Pyx */[ 68,509,   359,509,   359,533],
 	/* Ret */[243,427,   243,694,   427,741,   694,803,   741,803],
 	/* Scl */[649,749,   671,684,   684,749],
-	/* Sco */[ 15,137,    15,158,    26,115,    26,212,    41,176,    41,237,    80,137,    80,172,    81,105,    81,153,    81,158,    84,115,    84,176,   105,582,   153,463,   172,337,   237,337],
+	/* Sco */[ 15,137,	15,158,	26,115,	26,212,	41,176,	41,237,	80,137,	80,172,	81,105,	81,153,	81,158,	84,115,	84,176,   105,582,   153,463,   172,337,   237,337],
 	/* Sct */[444,610,   444,780,   610,785,   780,785],
 	/* SerCap */[106,366,   106,578,   121,310,   310,366,   352,441,   352,578,   352,729,   441,566,   566,729],
 	/* SerCau */[ 88,305,   220,239,   220,759,   239,305],
 	/* Sex */[710,812,   710,813,   812,815],
 	/* Sge */[291,426,   426,670,   426,676],
-	/* Sgr */[ 37,104,    37,117,    37,199,    37,343,    57,204,    57,240,   104,204,   104,240,   117,138,   117,204,   117,343,   138,204,   138,436,   156,299,   156,394,   156,798,   299,394,   485,798],
-	/* Tau */[ 12,169,    12,259,    30,301,   259,346,   262,346,   262,374,   301,388,   333,374,   333,647,   346,388,   374,471],
+	/* Sgr */[ 37,104,	37,117,	37,199,	37,343,	57,204,	57,240,   104,204,   104,240,   117,138,   117,204,   117,343,   138,204,   138,436,   156,299,   156,394,   156,798,   299,394,   485,798],
+	/* Tau */[ 12,169,	12,259,	30,301,   259,346,   262,346,   262,374,   301,388,   333,374,   333,647,   346,388,   374,471],
 	/* Tel */[287,573,   287,734],
-	/* TrA */[ 43,141,    43,150,   141,150],
+	/* TrA */[ 43,141,	43,150,   141,150],
 	/* Tri */[178,261,   178,525,   261,525],
 	/* Tuc */[146,524,   146,721,   524,725,   607,724,   607,725,   721,724],
-	/* UMa */[ 33, 69,    33,234,    38, 83,    38,234,    38,347,    40, 69,    83, 87,    83,400,    87,234,    87,361,   170,185,   170,361,   185,272,   200,320,   207,320,   207,743,   247,347,   247,400,   286,361,   286,409,   347,400,   400,743],
-	/* UMi */[ 50,661,    56,182,    56,641,   182,804,   604,641,   604,661,   641,804],
-	/* Vel */[ 35, 45,    35, 67,    45, 92,    67,323,    92,303,   120,303,   120,431,   323,431],
+	/* UMa */[ 33, 69,	33,234,	38, 83,	38,234,	38,347,	40, 69,	83, 87,	83,400,	87,234,	87,361,   170,185,   170,361,   185,272,   200,320,   207,320,   207,743,   247,347,   247,400,   286,361,   286,409,   347,400,   400,743],
+	/* UMi */[ 50,661,	56,182,	56,641,   182,804,   604,641,   604,661,   641,804],
+	/* Vel */[ 35, 45,	35, 67,	45, 92,	67,323,	92,303,   120,303,   120,431,   323,431],
 	/* Vir */[ 14,674,   140,263,   252,282,   252,562,   252,614,   263,282,   282,468,   282,674,   329,468,   329,538,   377,614,   455,562,   468,577,   538,577],
 	/* Vol */[391,508,   391,679,   393,519,   393,679,   508,679,   519,679],
 	/* Vul */[695,755]]}
