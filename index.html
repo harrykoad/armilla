@@ -16,24 +16,35 @@ body{color-scheme: dark light; font-family: sans-serif; margin: 0; overflow: hid
 canvas{cursor: grab; display: block; touch-action: none}
 canvas:active{cursor: grabbing}
 #leftPanel, #rightPanel{color: white; font-size: 12px; position: absolute; top: 10px; width: 200px;
-	user-select: none; -moz-user-select: none; -ms-user-select: none; -webkit-user-select: none}
+	user-select: none; -moz-user-select: none; -ms-user-select: none; -webkit-user-select: none;
+	max-height: calc(100vh - 20px);
+	overflow-y: auto;
+	overflow-x: hidden;
+
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+
+	cursor: grab;
+}
+#leftPanel::-webkit-scrollbar, #rightPanel::-webkit-scrollbar {display: none}
+#leftPanel input[type="checkbox"], #rightPanel input[type="checkbox"] {cursor: pointer}
 #leftPanel{left: 10px}
 #rightPanel{right: 10px}
 .box{background: black; border-radius: 10px; border: 1px solid gray; margin-bottom: 10px; padding: 8px}
 .columns{column-gap: 0; display: grid; grid-template-columns: 45% 55%; margin-top: 2px; row-gap: 2px}
 #orientationDropdown{background: black; border-radius: 5px; border: 1px solid gray;
-	color: white; margin-bottom: 5px; padding: 2px 4px}
-.checkboxLabel{align-items: center; display: flex; gap: 2px}
+	color: white; font-size: 12px; padding: 2px 4px}
 .colorLegend{border-radius: 50%; border: 1.5px solid white; display: inline-block; height: 12.5px;
 	margin-bottom: 5px; margin-right: 5px; vertical-align: middle; width: 12.5px}
 .horizontalLine{border-top: 1px solid gray; display: inline-block; height: 0; vertical-align: middle;
 	width: 100%}
 input[type="checkbox"]{accent-color: currentColor}
-input[type="range"]{accent-color: currentColor; height: 15px; width: 100%}
+input[type="range"]{accent-color: currentColor; cursor: pointer; height: 15px; width: 100%}
+.row{align-items:center; display:flex; justify-content:flex-start}
 .sliderContainer{display: flex; flex-direction: column}
 .sliderMarks{color: gray; display: flex; font-size: 10px; height: 10px; justify-content: space-between}
 .button{background: #3b3b3b; border-radius: 6px; border: 1px solid gray; color: white; cursor: pointer;
-	font-size: 11px; height: 18px; padding: 0; text-align: center; width: 50px}
+	font-size: 11px; height: 18px; padding: 0; text-align: center; width: 40px}
 </style>
 
 </head>
@@ -44,24 +55,24 @@ input[type="range"]{accent-color: currentColor; height: 15px; width: 100%}
 
 <div class="box">
 
-<label>&nbsp;Orientation&nbsp;
-<select id="orientationDropdown" style="background: #3b3b3b; color: white">
+<div class="row">&nbsp;Orientation&nbsp;
+<select id="orientationDropdown" style="background: #3b3b3b; color: white; cursor: pointer">
 	<option value="ecliptic">Ecliptic</option>
 	<option value="equatorial">Equatorial</option>
 	<option value="horizontal" selected>Horizontal</option>
-</select></label>
-<label class="checkboxLabel"><input type="checkbox" id="darkThemeCheckbox" checked>Black Background</label>
-<label class="checkboxLabel"><input type="checkbox" id="drawCheckbox">Draw (Disable Movement)</label>
+</select></div>
+<div class="row"><input type="checkbox" id="darkThemeCheckbox" checked>&nbsp;Black Background</div>
+<div class="row"><input type="checkbox" id="drawCheckbox">&nbsp;Draw (Disable Movement)</div>
 
 <span class="horizontalLine"></span>
 
-<label class="checkboxLabel"><input type="checkbox" id="sphereCheckbox" checked>Celestial Sphere</label>
+<div class="row"><input type="checkbox" id="sphereCheckbox" checked>&nbsp;Celestial Sphere</div>
 
 <div class="columns">
-<label class="checkboxLabel"><input type="checkbox" id="starsCheckbox" checked>Stars</label>
-<label class="checkboxLabel"><input type="checkbox" id="constellationsCheckbox" checked>Constellations</label>
-<label class="checkboxLabel"><input type="checkbox" id="milkyWayCheckbox" checked>Milky Way</label>
-<label class="checkboxLabel"><input type="checkbox" id="zodiacCheckbox" checked>Zodiac</label>
+<div class="row"><input type="checkbox" id="starsCheckbox" checked>&nbsp;Stars</div>
+<div class="row"><input type="checkbox" id="constellationsCheckbox" checked>&nbsp;Constellations</div>
+<div class="row"><input type="checkbox" id="milkyWayCheckbox" checked>&nbsp;Milky Way</div>
+<div class="row"><input type="checkbox" id="zodiacCheckbox" checked>&nbsp;Zodiac</div>
 </div>
 
 </div>
@@ -70,15 +81,15 @@ input[type="range"]{accent-color: currentColor; height: 15px; width: 100%}
 <b><span class="colorLegend" id="eclipticLegend"></span>Ecliptic System (Nirāyana)</b>
 
 <div class="columns">
-<label class="checkboxLabel"><input type="checkbox" id="eclipticCheckbox" checked>Ecliptic</label>
-<label class="checkboxLabel"><input type="checkbox" id="eclipticMeridianCheckbox">0° Meridian</label>
-<label class="checkboxLabel"><input type="checkbox" id="eclipticAxesCheckbox" checked>Axes</label>
-<label class="checkboxLabel"><input type="checkbox" id="eclipticGraticuleCheckbox">Graticule</label>
+<div class="row"><input type="checkbox" id="eclipticCheckbox" checked>&nbsp;Ecliptic</div>
+<div class="row"><input type="checkbox" id="eclipticMeridianCheckbox">&nbsp;0° Meridian</div>
+<div class="row"><input type="checkbox" id="eclipticAxesCheckbox" checked>&nbsp;Axes</div>
+<div class="row"><input type="checkbox" id="eclipticGraticuleCheckbox">&nbsp;Graticule</div>
 </div>
 
 <span class="horizontalLine"></span>
 
-<label class="checkboxLabel"><input type="checkbox" id="precessionCirclesCheckbox">Precession Circles</label>
+<div class="row"><input type="checkbox" id="precessionCirclesCheckbox">&nbsp;Precession Circles</div>
 
 </div>
 
@@ -86,15 +97,15 @@ input[type="range"]{accent-color: currentColor; height: 15px; width: 100%}
 <b><span class="colorLegend" id="equatorialLegend"></span>Equatorial System</b>
 
 <div class="columns">
-<label class="checkboxLabel"><input type="checkbox" id="equatorCheckbox" checked>Equator</label>
-<label class="checkboxLabel"><input type="checkbox" id="equatorialMeridianCheckbox">0ʰ Meridian</label>
-<label class="checkboxLabel"><input type="checkbox" id="equatorialAxesCheckbox" checked>Axes</label>
-<label class="checkboxLabel"><input type="checkbox" id="equatorialGraticuleCheckbox">Graticule</label>
+<div class="row"><input type="checkbox" id="equatorCheckbox" checked>&nbsp;Equator</div>
+<div class="row"><input type="checkbox" id="equatorialMeridianCheckbox">&nbsp;0ʰ Meridian</div>
+<div class="row"><input type="checkbox" id="equatorialAxesCheckbox" checked>&nbsp;Axes</div>
+<div class="row"><input type="checkbox" id="equatorialGraticuleCheckbox">&nbsp;Graticule</div>
 </div>
 
 <span class="horizontalLine"></span>
 
-<label class="checkboxLabel"><input type="checkbox" id="circumpolarCirclesCheckbox">Circumpolar Circles</label>
+<div class="row"><input type="checkbox" id="circumpolarCirclesCheckbox">&nbsp;Circumpolar Circles</div>
 
 </div>
 
@@ -102,27 +113,27 @@ input[type="range"]{accent-color: currentColor; height: 15px; width: 100%}
 <b><span class="colorLegend" id="horizontalLegend"></span>Horizontal System</b>
 
 <div class="columns">
-<label class="checkboxLabel"><input type="checkbox" id="horizonCheckbox" checked>Horizon</label>
-<label class="checkboxLabel"><input type="checkbox" id="horizontalMeridianCheckbox">0° Meridian</label>
-<label class="checkboxLabel"><input type="checkbox" id="horizontalAxesCheckbox" checked>Axes</label>
-<label class="checkboxLabel"><input type="checkbox" id="horizontalGraticuleCheckbox" checked>Graticule</label>
+<div class="row"><input type="checkbox" id="horizonCheckbox" checked>&nbsp;Horizon</div>
+<div class="row"><input type="checkbox" id="horizontalMeridianCheckbox">&nbsp;0° Meridian</div>
+<div class="row"><input type="checkbox" id="horizontalAxesCheckbox" checked>&nbsp;Axes</div>
+<div class="row"><input type="checkbox" id="horizontalGraticuleCheckbox" checked>&nbsp;Graticule</div>
 </div>
 
 <span class="horizontalLine"></span>
 
-<label class="checkboxLabel"><input type="checkbox" id="observerMeridianCheckbox" checked>Observer's Meridian</label>
+<div class="row"><input type="checkbox" id="observerMeridianCheckbox" checked>&nbsp;Observer's Meridian</div>
 
 </div>
 
 <div class="box">
 
 <div class="columns">
-<label class="checkboxLabel"><input type="checkbox" id="sunCheckbox" checked>Sun</label>
-<label class="checkboxLabel"><input type="checkbox" id="analemmaCheckbox">Analemma</label>
-<label class="checkboxLabel"><input type="checkbox" id="moonCheckbox" checked>Moon</label>
-<label class="checkboxLabel"><input type="checkbox" id="moonsOrbitCheckbox">Moon's Orbit</label>
-<label class="checkboxLabel"><input type="checkbox" id="planetsCheckbox">Planets</label>
-<label class="checkboxLabel"><input type="checkbox" id="eclipsesCheckbox">Eclipses</label>
+<div class="row"><input type="checkbox" id="sunCheckbox" checked>&nbsp;Sun</div>
+<div class="row"><input type="checkbox" id="analemmaCheckbox">&nbsp;Analemma</div>
+<div class="row"><input type="checkbox" id="moonCheckbox" checked>&nbsp;Moon</div>
+<div class="row"><input type="checkbox" id="moonsOrbitCheckbox">&nbsp;Moon's Orbit</div>
+<div class="row"><input type="checkbox" id="planetsCheckbox">&nbsp;Planets</div>
+<div class="row"><input type="checkbox" id="eclipsesCheckbox">&nbsp;Eclipses</div>
 </div>
 
 </div>
@@ -133,60 +144,54 @@ input[type="range"]{accent-color: currentColor; height: 15px; width: 100%}
 
 <div class="box">
 
-<label>Year (Gregorian): <span id="yearValue">N/A</span></label>
+<div class="row">Year (Gregorian):&nbsp;<span id="yearValue">N/A</span></div>
 <input type="range" id="yearSlider" min="-4999" max="5000" step="1" value="2000">
 <div class="sliderMarks" id="yearMarks"><span>5000 BC</span><span>1 BC | AD 1</span><span>AD 5000</span></div>
 
 <span class="horizontalLine"></span>
 
-<label>Month & Day: <span id="dayOfYearValue">N/A</span></label>
+<div class="row">Month & Day:&nbsp;<span id="dayOfYearValue">N/A</span></div>
 <input type="range" id="dayOfYearSlider" min="1" max="365" step="1" value="1">
 <div class="sliderMarks" id="dateMarks"><span>Jan 1</span><span>Dec 31</span></div>
 
 <span class="horizontalLine"></span>
 
-<label>Local Time: <span id="timeValue">N/A</span></label>
+<div class="row">Local Time:&nbsp;<span id="timeValue">N/A</span></div>
 <input type="range" id="timeSlider" min="0" max="359.75" step="0.25" value="180">
 <div class="sliderMarks" id="timeMarks"><span>00:00</span><span>12:00</span><span>23:59</span></div>
 
 <span class="horizontalLine"></span>
 
-<label>DoW: <span id="dayOfWeekValue">N/A</span></label>
-<button id="nowButton" class="button" style="float:right">NOW</button></label>
+<div class="row">
+DoW:&nbsp;<span id="dayOfWeekValue">N/A</span>
+<div style="display:flex; gap:5px; margin-left:auto">
+<button id="nowButton" class="button">NOW</button>
+<!--<button id="setDateTimeButton" class="button">SET</button>-->
+</div>
+</div>
 
 </div>
 
 <div class="box">
 
-<label>Latitude: <span id="latitudeValue">8.64° N</span></label>
+<div class="row">Latitude:&nbsp;<span id="latitudeValue">8.64° N</span></div>
 <input type="range" id="latitudeSlider" min="-90" max="90" step="0.01" value="8.64">
 <div class="sliderMarks" id="latitudeMarks"><span>90° S</span><span>0°</span><span>90° N</span></div>
 
 <span class="horizontalLine"></span>
 
-<label>Longitude: <span id="longitudeValue">99.90° E</span></label>
+<div class="row">Longitude:&nbsp;<span id="longitudeValue">99.90° E</span></div>
 <input type="range" id="longitudeSlider" min="-180" max="180" step="0.01" value="99.90">
 <div class="sliderMarks" id="longitudeMarks"><span>180° W</span><span>0°</span><span>180° E</span></div>
 
 <span class="horizontalLine"></span>
 
-<label>Time Zone: <span id="timeZoneValue">UTC+7</span></label>
-<button id="hereButton" class="button" style="float:right">HERE</button>
-
+<div class="row">
+Zone:&nbsp;<span id="timeZoneValue">UTC+7</span>
+<div style="display:flex; gap:5px; margin-left:auto">
+<button id="hereButton" class="button">HERE</button>
+<!--<button id="setLatLonButton" class="button">SET</button>-->
 </div>
-
-<div class="box">
-
-<div class="columns" style="grid-template-columns: 50% 50%">
-<label style="text-align:right">Ayanāṃśa:&nbsp;</label><span id="ayanamsaValue">N/A</span>
-<label style="text-align:right">Obliquity:&nbsp;</label><span id="obliquityValue">N/A</span>
-</div>
-
-<span class="horizontalLine"></span>
-
-<div class="columns" style="grid-template-columns: 50% 50%">
-<label style="text-align:right">Julian Day:&nbsp;</label><span id="julianDayValue">N/A</span>
-<label style="text-align:right">Sidereal Time:&nbsp;</label><span id="siderealValue">N/A</span>
 </div>
 
 </div>
@@ -194,22 +199,38 @@ input[type="range"]{accent-color: currentColor; height: 15px; width: 100%}
 <div class="box">
 
 <div class="columns" style="grid-template-columns: 50% 50%">
-<label style="text-align:right">Ecliptic Lon.:&nbsp;</label><span id="eclipticLongitudeValue">N/A</span>
-<label style="text-align:right">Ecliptic Lat.:&nbsp;</label><span id="eclipticLatitudeValue">N/A</span>
+<div class="row" style="margin-left:auto">Ayanāṃśa:&nbsp;</div><span id="ayanamsaValue">N/A</span>
+<div class="row" style="margin-left:auto">Obliquity:&nbsp;</div><span id="obliquityValue">N/A</span>
 </div>
 
 <span class="horizontalLine"></span>
 
 <div class="columns" style="grid-template-columns: 50% 50%">
-<label style="text-align:right">Right Asc.:&nbsp;</label><span id="rightAscensionValue">N/A</span>
-<label style="text-align:right">Declination:&nbsp;</label><span id="declinationValue">N/A</span>
+<div class="row" style="margin-left:auto">Julian Day:&nbsp;</div><span id="julianDayValue">N/A</span>
+<div class="row" style="margin-left:auto">Sidereal Time:&nbsp;</div><span id="siderealValue">N/A</span>
+</div>
+
+</div>
+
+<div class="box">
+
+<div class="columns" style="grid-template-columns: 50% 50%">
+<div class="row" style="margin-left:auto">Ecliptic Lon.:&nbsp;</div><span id="eclipticLongitudeValue">N/A</span>
+<div class="row" style="margin-left:auto">Ecliptic Lat.:&nbsp;</div><span id="eclipticLatitudeValue">N/A</span>
 </div>
 
 <span class="horizontalLine"></span>
 
 <div class="columns" style="grid-template-columns: 50% 50%">
-<label style="text-align:right">Azimuth:&nbsp;</label><span id="azimuthValue">N/A</span>
-<label style="text-align:right">Altitude:&nbsp;</label><span id="altitudeValue">N/A</span>
+<div class="row" style="margin-left:auto">Right Asc.:&nbsp;</div><span id="rightAscensionValue">N/A</span>
+<div class="row" style="margin-left:auto">Declination:&nbsp;</div><span id="declinationValue">N/A</span>
+</div>
+
+<span class="horizontalLine"></span>
+
+<div class="columns" style="grid-template-columns: 50% 50%">
+<div class="row" style="margin-left:auto">Azimuth:&nbsp;</div><span id="azimuthValue">N/A</span>
+<div class="row" style="margin-left:auto">Altitude:&nbsp;</div><span id="altitudeValue">N/A</span>
 </div>
 
 </div>
@@ -1052,6 +1073,32 @@ const ZODIAC = [6, 76, 37, 21, 45, 84, 47, 69, 75, 11, 4, 64]
 resize()
 render()
 
+function setupPanel(panel) {
+  let isDown = false;
+  let startY;
+  let scrollTop;
+  panel.addEventListener("mousedown", (e) => {
+	if (e.target.closest("input, button, select, textarea")) return;
+    isDown = true;
+    panel.style.cursor = "grabbing";
+    startY = e.pageY - panel.offsetTop;
+    scrollTop = panel.scrollTop});
+  document.addEventListener("mouseup", () => {
+    isDown = false;
+    panel.style.cursor = "grab"});
+  panel.addEventListener("mouseleave", () => {
+    isDown = false;
+    panel.style.cursor = "grab"});
+  panel.addEventListener("mousemove", (e) => {
+    if (!isDown) return;
+    e.preventDefault();
+    const y = e.pageY - panel.offsetTop;
+    const walk = (y - startY);
+    panel.scrollTop = scrollTop - walk})}
+
+setupPanel(document.getElementById("leftPanel"));
+setupPanel(document.getElementById("rightPanel"));
+
 UI.orientationDropdown.onchange = () => {
 	view.orienting = true
 	input.dragging = false
@@ -1062,15 +1109,15 @@ UI.orientationDropdown.onchange = () => {
 	let newMode = UI.orientationDropdown.value
 	if(oldMode === newMode) return
 
-	let label = UI.analemmaCheckbox.parentElement
+	let a = UI.analemmaCheckbox.parentElement
 	if(newMode === "horizontal") {
 		UI.analemmaCheckbox.disabled = false
-		label.style.color = mode.darkTheme ? "white" : "black"}
+		a.style.color = mode.darkTheme ? "white" : "black"}
 	else {
 		UI.analemmaCheckbox.disabled = true
 		UI.analemmaCheckbox.checked = false
 		show.analemma = false
-		label.style.color = "gray"}
+		a.style.color = "gray"}
 
 	let a0 = 0; a1 = 0
 	let p = toScreen([0, 0, 1], newMode, oldMode)
@@ -1111,8 +1158,12 @@ UI.darkThemeCheckbox.addEventListener("change", () => {
 	UI.orientationDropdown.style.color = ["white", "black"][i]
 	UI.nowButton.style.background = ["#3b3b3b", "#efefef"][i]
 	UI.nowButton.style.color = ["white", "black"][i]
+	//UI.setDateTimeButton.style.background = ["#3b3b3b", "#efefef"][i]
+	//UI.setDateTimeButton.style.color = ["white", "black"][i]
 	UI.hereButton.style.background = ["#3b3b3b", "#efefef"][i]
 	UI.hereButton.style.color = ["white", "black"][i]
+	//UI.setLatLonButton.style.background = ["#3b3b3b", "#efefef"][i]
+	//UI.setLatLonButton.style.color = ["white", "black"][i]
 	update.canvas = true
 	render()})
 
