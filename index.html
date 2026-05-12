@@ -10,28 +10,21 @@
 <meta name="copyright" content="© 2026 Peeravit Koad. Walailak University, Nakhon Si Thammarat, THAILAND.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Armilla 1.0 Beta</title>
-
 <style>
 body{color-scheme: dark light; font-family: sans-serif; margin: 0; overflow: hidden; touch-action: none}
 canvas{cursor: grab; display: block; touch-action: none}
 canvas:active{cursor: grabbing}
-#leftPanel, #rightPanel{color: white; font-size: 12px; position: absolute; top: 10px; width: 200px;
+#leftPanel, #rightPanel{color: white; cursor: grab; font-size: 12px; max-height: calc(100vh - 20px);
+	overflow-x: hidden; overflow-y: auto; position: absolute; top: 10px; width: 200px; scrollbar-width: none;
 	user-select: none; -moz-user-select: none; -ms-user-select: none; -webkit-user-select: none;
-	max-height: calc(100vh - 20px);
-	overflow-y: auto;
-	overflow-x: hidden;
-
-	scrollbar-width: none;
-	-ms-overflow-style: none;
-
-	cursor: grab;
-}
+	-ms-overflow-style: none}
 #leftPanel::-webkit-scrollbar, #rightPanel::-webkit-scrollbar {display: none}
 #leftPanel input[type="checkbox"], #rightPanel input[type="checkbox"] {cursor: pointer}
 #leftPanel{left: 10px}
 #rightPanel{right: 10px}
 .box{background: black; border-radius: 10px; border: 1px solid gray; margin-bottom: 10px; padding: 8px}
 .columns{column-gap: 0; display: grid; grid-template-columns: 45% 55%; margin-top: 2px; row-gap: 2px}
+.row{align-items:center; display:flex; justify-content:flex-start}
 #orientationDropdown{background: black; border-radius: 5px; border: 1px solid gray;
 	color: white; font-size: 12px; padding: 2px 4px}
 .colorLegend{border-radius: 50%; border: 1.5px solid white; display: inline-block; height: 12.5px;
@@ -40,13 +33,20 @@ canvas:active{cursor: grabbing}
 	width: 100%}
 input[type="checkbox"]{accent-color: currentColor}
 input[type="range"]{accent-color: currentColor; cursor: pointer; height: 15px; width: 100%}
-.row{align-items:center; display:flex; justify-content:flex-start}
+input[type="radio"] {accent-color: white}
 .sliderContainer{display: flex; flex-direction: column}
 .sliderMarks{color: gray; display: flex; font-size: 10px; height: 10px; justify-content: space-between}
-.button{background: #3b3b3b; border-radius: 6px; border: 1px solid gray; color: white; cursor: pointer;
-	font-size: 11px; height: 18px; padding: 0; text-align: center; width: 40px}
+.shortButton, .setButton{background: #3b3b3b; border-radius: 6px; border: 1px solid gray; color: white;
+	cursor: pointer; font-size: 11px; height: 20px; padding: 0; text-align: center; width: 40px}
+.longButton{background: #3b3b3b; border-radius: 6px; border: 1px solid gray; color: white;
+	cursor: pointer; font-size: 11px; height: 20px; padding: 0; text-align: center; width: 80px}
+.modalBackground{align-items: center; background: rgba(255, 255, 255, 0.5); color: white; display: none;
+	height: 100%; justify-content: center; left: 0; position: fixed; top: 0; width: 100%; z-index: 10000}
+.modal{background: black; border-radius: 10px; border: 1px solid gray; color: white;
+	font-size: 12px; padding: 10px; text-align: center; user-select: none;
+	-webkit-user-select: none; -moz-user-select: none; -ms-user-select: none}
+.textInput {border: 1px solid gray; border-radius: 5px; font-size: 12px; padding: 2px 4px; text-align: center}
 </style>
-
 </head>
 
 <body>
@@ -54,88 +54,75 @@ input[type="range"]{accent-color: currentColor; cursor: pointer; height: 15px; w
 <div id="leftPanel">
 
 <div class="box">
-
-<div class="row">&nbsp;Orientation&nbsp;
-<select id="orientationDropdown" style="background: #3b3b3b; color: white; cursor: pointer">
-	<option value="ecliptic">Ecliptic</option>
-	<option value="equatorial">Equatorial</option>
-	<option value="horizontal" selected>Horizontal</option>
-</select></div>
-<div class="row"><input type="checkbox" id="darkThemeCheckbox" checked>&nbsp;Black Background</div>
-<div class="row"><input type="checkbox" id="drawCheckbox">&nbsp;Draw (Disable Movement)</div>
-
-<span class="horizontalLine"></span>
-
-<div class="row"><input type="checkbox" id="sphereCheckbox" checked>&nbsp;Celestial Sphere</div>
-
-<div class="columns">
-<div class="row"><input type="checkbox" id="starsCheckbox" checked>&nbsp;Stars</div>
-<div class="row"><input type="checkbox" id="constellationsCheckbox" checked>&nbsp;Constellations</div>
-<div class="row"><input type="checkbox" id="milkyWayCheckbox" checked>&nbsp;Milky Way</div>
-<div class="row"><input type="checkbox" id="zodiacCheckbox" checked>&nbsp;Zodiac</div>
-</div>
-
+	<div class="row">&nbsp;Orientation&nbsp;
+		<select id="orientationDropdown" style="background: #3b3b3b; color: white; cursor: pointer">
+			<option value="ecliptic">Ecliptic</option>
+			<option value="equatorial">Equatorial</option>
+			<option value="horizontal" selected>Horizontal</option>
+		</select>
+	</div>
+	<div class="row"><input type="checkbox" id="darkThemeCheckbox" checked>&nbsp;Black Background</div>
+	<div class="row"><input type="checkbox" id="drawCheckbox">&nbsp;Draw (Disable Movement)</div>
+	<span class="horizontalLine"></span>
+	<div class="row"><input type="checkbox" id="sphereCheckbox" checked>&nbsp;Celestial Sphere</div>
+	<div class="columns">
+		<div class="row"><input type="checkbox" id="starsCheckbox" checked>&nbsp;Stars</div>
+		<div class="row"><input type="checkbox" id="constellationsCheckbox" checked>&nbsp;Constellations</div>
+		<div class="row"><input type="checkbox" id="milkyWayCheckbox" checked>&nbsp;Milky Way</div>
+		<div class="row"><input type="checkbox" id="zodiacCheckbox" checked>&nbsp;Zodiac</div>
+	</div>
 </div>
 
 <div class="box">
-<b><span class="colorLegend" id="eclipticLegend"></span>Ecliptic System (Nirāyana)</b>
-
-<div class="columns">
-<div class="row"><input type="checkbox" id="eclipticCheckbox" checked>&nbsp;Ecliptic</div>
-<div class="row"><input type="checkbox" id="eclipticMeridianCheckbox">&nbsp;0° Meridian</div>
-<div class="row"><input type="checkbox" id="eclipticAxesCheckbox" checked>&nbsp;Axes</div>
-<div class="row"><input type="checkbox" id="eclipticGraticuleCheckbox">&nbsp;Graticule</div>
-</div>
-
-<span class="horizontalLine"></span>
-
-<div class="row"><input type="checkbox" id="precessionCirclesCheckbox">&nbsp;Precession Circles</div>
-
+	<span class="colorLegend" id="eclipticLegend"></span><b>Ecliptic System (Nirāyana)</b>
+	<div class="columns">
+		<div class="row"><input type="checkbox" id="eclipticCheckbox" checked>&nbsp;Ecliptic</div>
+		<div class="row"><input type="checkbox" id="eclipticMeridianCheckbox">&nbsp;0° Meridian</div>
+		<div class="row"><input type="checkbox" id="eclipticAxesCheckbox" checked>&nbsp;Axes</div>
+		<div class="row"><input type="checkbox" id="eclipticGraticuleCheckbox">&nbsp;Graticule</div>
+	</div>
+	<span class="horizontalLine"></span>
+	<div class="row"><input type="checkbox" id="precessionCirclesCheckbox">&nbsp;Precession Circles</div>
 </div>
 
 <div class="box">
-<b><span class="colorLegend" id="equatorialLegend"></span>Equatorial System</b>
-
-<div class="columns">
-<div class="row"><input type="checkbox" id="equatorCheckbox" checked>&nbsp;Equator</div>
-<div class="row"><input type="checkbox" id="equatorialMeridianCheckbox">&nbsp;0ʰ Meridian</div>
-<div class="row"><input type="checkbox" id="equatorialAxesCheckbox" checked>&nbsp;Axes</div>
-<div class="row"><input type="checkbox" id="equatorialGraticuleCheckbox">&nbsp;Graticule</div>
-</div>
-
-<span class="horizontalLine"></span>
-
-<div class="row"><input type="checkbox" id="circumpolarCirclesCheckbox">&nbsp;Circumpolar Circles</div>
-
+	<span class="colorLegend" id="equatorialLegend"></span><b>Equatorial System</b>
+	<div class="columns">
+		<div class="row"><input type="checkbox" id="equatorCheckbox" checked>&nbsp;Equator</div>
+		<div class="row"><input type="checkbox" id="equatorialMeridianCheckbox">&nbsp;0ʰ Meridian</div>
+		<div class="row"><input type="checkbox" id="equatorialAxesCheckbox" checked>&nbsp;Axes</div>
+		<div class="row"><input type="checkbox" id="equatorialGraticuleCheckbox">&nbsp;Graticule</div>
+	</div>
+	<span class="horizontalLine"></span>
+	<div class="row"><input type="checkbox" id="circumpolarCirclesCheckbox">&nbsp;Circumpolar Circles</div>
 </div>
 
 <div class="box">
-<b><span class="colorLegend" id="horizontalLegend"></span>Horizontal System</b>
-
-<div class="columns">
-<div class="row"><input type="checkbox" id="horizonCheckbox" checked>&nbsp;Horizon</div>
-<div class="row"><input type="checkbox" id="horizontalMeridianCheckbox">&nbsp;0° Meridian</div>
-<div class="row"><input type="checkbox" id="horizontalAxesCheckbox" checked>&nbsp;Axes</div>
-<div class="row"><input type="checkbox" id="horizontalGraticuleCheckbox" checked>&nbsp;Graticule</div>
-</div>
-
-<span class="horizontalLine"></span>
-
-<div class="row"><input type="checkbox" id="observerMeridianCheckbox" checked>&nbsp;Observer's Meridian</div>
-
+	<span class="colorLegend" id="horizontalLegend"></span><b>Horizontal System</b>
+	<div class="columns">
+		<div class="row"><input type="checkbox" id="horizonCheckbox" checked>&nbsp;Horizon</div>
+		<div class="row"><input type="checkbox" id="horizontalMeridianCheckbox">&nbsp;0° Meridian</div>
+		<div class="row"><input type="checkbox" id="horizontalAxesCheckbox" checked>&nbsp;Axes</div>
+		<div class="row"><input type="checkbox" id="horizontalGraticuleCheckbox" checked>&nbsp;Graticule</div>
+	</div>
+	<span class="horizontalLine"></span>
+	<div class="row"><input type="checkbox" id="observerMeridianCheckbox" checked>&nbsp;Observer's Meridian</div>
 </div>
 
 <div class="box">
-
-<div class="columns">
-<div class="row"><input type="checkbox" id="sunCheckbox" checked>&nbsp;Sun</div>
-<div class="row"><input type="checkbox" id="analemmaCheckbox">&nbsp;Analemma</div>
-<div class="row"><input type="checkbox" id="moonCheckbox" checked>&nbsp;Moon</div>
-<div class="row"><input type="checkbox" id="moonsOrbitCheckbox">&nbsp;Moon's Orbit</div>
-<div class="row"><input type="checkbox" id="planetsCheckbox">&nbsp;Planets</div>
-<div class="row"><input type="checkbox" id="eclipsesCheckbox">&nbsp;Eclipses</div>
-</div>
-
+	<div class="columns">
+		<div class="row"><input type="checkbox" id="sunCheckbox" checked>&nbsp;Sun</div>
+		<div class="row"><input type="checkbox" id="analemmaCheckbox">&nbsp;Analemma</div>
+		<div class="row"><input type="checkbox" id="moonCheckbox" checked>&nbsp;Moon</div>
+		<div class="row"><input type="checkbox" id="moonsOrbitCheckbox">&nbsp;Moon's Orbit</div>
+		<div class="row"><input type="checkbox" id="planetsCheckbox">&nbsp;Planets</div>
+		<div class="row"><input type="checkbox" id="eclipsesCheckbox">&nbsp;Eclipses</div>
+	</div>
+	<span class="horizontalLine"></span>
+	<div class="columns">
+		<div class="row"><input type="checkbox" id="haloCheckbox">&nbsp;Halo</div>
+		<div class="row"><input type="checkbox" id="rainbowCheckbox">&nbsp;Rainbow</div>
+	</div>
 </div>
 
 </div>
@@ -143,98 +130,100 @@ input[type="range"]{accent-color: currentColor; cursor: pointer; height: 15px; w
 <div id="rightPanel">
 
 <div class="box">
-
-<div class="row">Year (Gregorian):&nbsp;<span id="yearValue">N/A</span></div>
-<input type="range" id="yearSlider" min="-4999" max="5000" step="1" value="2000">
-<div class="sliderMarks" id="yearMarks"><span>5000 BC</span><span>1 BC | AD 1</span><span>AD 5000</span></div>
-
-<span class="horizontalLine"></span>
-
-<div class="row">Month & Day:&nbsp;<span id="dayOfYearValue">N/A</span></div>
-<input type="range" id="dayOfYearSlider" min="1" max="365" step="1" value="1">
-<div class="sliderMarks" id="dateMarks"><span>Jan 1</span><span>Dec 31</span></div>
-
-<span class="horizontalLine"></span>
-
-<div class="row">Local Time:&nbsp;<span id="timeValue">N/A</span></div>
-<input type="range" id="timeSlider" min="0" max="359.75" step="0.25" value="180">
-<div class="sliderMarks" id="timeMarks"><span>00:00</span><span>12:00</span><span>23:59</span></div>
-
-<span class="horizontalLine"></span>
-
-<div class="row">
-DoW:&nbsp;<span id="dayOfWeekValue">N/A</span>
-<div style="display:flex; gap:5px; margin-left:auto">
-<button id="nowButton" class="button">NOW</button>
-<!--<button id="setDateTimeButton" class="button">SET</button>-->
-</div>
-</div>
-
+	<div class="row">Latitude:&nbsp;<span id="latitudeValue">8.64° N</span></div>
+	<input type="range" id="latitudeSlider" min="-90" max="90" step="0.01" value="8.64">
+	<div class="sliderMarks" id="latitudeMarks"><span>90° S</span><span>0°</span><span>90° N</span></div>
+	<span class="horizontalLine"></span>
+	<div class="row">Longitude:&nbsp;<span id="longitudeValue">99.90° E</span></div>
+	<input type="range" id="longitudeSlider" min="-180" max="180" step="0.01" value="99.90">
+	<div class="sliderMarks" id="longitudeMarks"><span>180° W</span><span>0°</span><span>180° E</span></div>
+	<span class="horizontalLine"></span>
+	<div class="row">Zone:&nbsp;<span id="timeZoneValue">UTC+7</span>
+		<div style="display:flex; gap:5px; margin-left:auto">
+			<button id="hereButton" class="shortButton">Here</button>
+			<button id="setLatLonButton" class="setButton">Set</button>
+		</div>
+	</div>
 </div>
 
 <div class="box">
-
-<div class="row">Latitude:&nbsp;<span id="latitudeValue">8.64° N</span></div>
-<input type="range" id="latitudeSlider" min="-90" max="90" step="0.01" value="8.64">
-<div class="sliderMarks" id="latitudeMarks"><span>90° S</span><span>0°</span><span>90° N</span></div>
-
-<span class="horizontalLine"></span>
-
-<div class="row">Longitude:&nbsp;<span id="longitudeValue">99.90° E</span></div>
-<input type="range" id="longitudeSlider" min="-180" max="180" step="0.01" value="99.90">
-<div class="sliderMarks" id="longitudeMarks"><span>180° W</span><span>0°</span><span>180° E</span></div>
-
-<span class="horizontalLine"></span>
-
-<div class="row">
-Zone:&nbsp;<span id="timeZoneValue">UTC+7</span>
-<div style="display:flex; gap:5px; margin-left:auto">
-<button id="hereButton" class="button">HERE</button>
-<!--<button id="setLatLonButton" class="button">SET</button>-->
-</div>
-</div>
-
+	<div class="row">Year (Gregorian):&nbsp;<span id="yearValue">N/A</span></div>
+	<input type="range" id="yearSlider" min="-4999" max="5000" step="1" value="2000">
+	<div class="sliderMarks" id="yearMarks"><span>5000 BC</span><span>1 BC | AD 1</span><span>AD 5000</span></div>
+	<span class="horizontalLine"></span>
+	<div class="row">Month & Day:&nbsp;<span id="dayOfYearValue">N/A</span></div>
+	<input type="range" id="dayOfYearSlider" min="1" max="365" step="1" value="1">
+	<div class="sliderMarks" id="dateMarks"><span>Jan 1</span><span>Dec 31</span></div>
+	<span class="horizontalLine"></span>
+	<div class="row">Local Time:&nbsp;<span id="timeValue">N/A</span></div>
+	<input type="range" id="timeSlider" min="0" max="359.75" step="0.25" value="180">
+	<div class="sliderMarks" id="timeMarks"><span>00:00</span><span>12:00</span><span>23:59</span></div>
+	<span class="horizontalLine"></span>
+	<div class="row">DoW:&nbsp;<span id="dayOfWeekValue">N/A</span>
+		<div style="display:flex; gap:5px; margin-left:auto">
+			<button id="nowButton" class="shortButton">Now</button>
+			<button id="setDateTimeButton" class="setButton">Set</button>
+		</div>
+	</div>
 </div>
 
 <div class="box">
-
-<div class="columns" style="grid-template-columns: 50% 50%">
-<div class="row" style="margin-left:auto">Ayanāṃśa:&nbsp;</div><span id="ayanamsaValue">N/A</span>
-<div class="row" style="margin-left:auto">Obliquity:&nbsp;</div><span id="obliquityValue">N/A</span>
-</div>
-
-<span class="horizontalLine"></span>
-
-<div class="columns" style="grid-template-columns: 50% 50%">
-<div class="row" style="margin-left:auto">Julian Day:&nbsp;</div><span id="julianDayValue">N/A</span>
-<div class="row" style="margin-left:auto">Sidereal Time:&nbsp;</div><span id="siderealValue">N/A</span>
-</div>
-
+	<div class="columns" style="grid-template-columns: 50% 50%">
+		<div class="row" style="margin-left:auto">Ayanāṃśa:&nbsp;</div><span id="ayanamsaValue">N/A</span>
+		<div class="row" style="margin-left:auto">Obliquity:&nbsp;</div><span id="obliquityValue">N/A</span>
+	</div>
+	<span class="horizontalLine"></span>
+	<div class="columns" style="grid-template-columns: 50% 50%">
+		<div class="row" style="margin-left:auto">Julian Day:&nbsp;</div><span id="julianDayValue">N/A</span>
+		<div class="row" style="margin-left:auto">Sidereal Time:&nbsp;</div><span id="siderealValue">N/A</span>
+	</div>
 </div>
 
 <div class="box">
-
-<div class="columns" style="grid-template-columns: 50% 50%">
-<div class="row" style="margin-left:auto">Ecliptic Lon.:&nbsp;</div><span id="eclipticLongitudeValue">N/A</span>
-<div class="row" style="margin-left:auto">Ecliptic Lat.:&nbsp;</div><span id="eclipticLatitudeValue">N/A</span>
-</div>
-
-<span class="horizontalLine"></span>
-
-<div class="columns" style="grid-template-columns: 50% 50%">
-<div class="row" style="margin-left:auto">Right Asc.:&nbsp;</div><span id="rightAscensionValue">N/A</span>
-<div class="row" style="margin-left:auto">Declination:&nbsp;</div><span id="declinationValue">N/A</span>
-</div>
-
-<span class="horizontalLine"></span>
-
-<div class="columns" style="grid-template-columns: 50% 50%">
-<div class="row" style="margin-left:auto">Azimuth:&nbsp;</div><span id="azimuthValue">N/A</span>
-<div class="row" style="margin-left:auto">Altitude:&nbsp;</div><span id="altitudeValue">N/A</span>
+	<div class="columns" style="grid-template-columns: 50% 50%">
+		<div class="row" style="margin-left:auto">Ecliptic Lon.:&nbsp;</div><span id="eclipticLongitudeValue">N/A</span>
+		<div class="row" style="margin-left:auto">Ecliptic Lat.:&nbsp;</div><span id="eclipticLatitudeValue">N/A</span>
+	</div>
+	<span class="horizontalLine"></span>
+	<div class="columns" style="grid-template-columns: 50% 50%">
+		<div class="row" style="margin-left:auto">Right Asc.:&nbsp;</div><span id="rightAscensionValue">N/A</span>
+		<div class="row" style="margin-left:auto">Declination:&nbsp;</div><span id="declinationValue">N/A</span>
+	</div>
+	<span class="horizontalLine"></span>
+	<div class="columns" style="grid-template-columns: 50% 50%">
+		<div class="row" style="margin-left:auto">Azimuth:&nbsp;</div><span id="azimuthValue">N/A</span>
+		<div class="row" style="margin-left:auto">Altitude:&nbsp;</div><span id="altitudeValue">N/A</span>
+	</div>
 </div>
 
 </div>
 
+<div id="modalBackground" class="modalBackground">
+	<div id="observerSettings" class="modal">
+		<div style="margin-bottom:10px"><b>Observer Settings</b></div>
+		<canvas id="worldMap" width="360" height="180" style="border:1px solid gray; margin-bottom:10px; cursor:crosshair"></canvas>
+		<div class="row" style="display:flex; justify-content:center; margin-bottom:5px">
+			Latitude:&nbsp;<input type="text" id="latitudeInput" class="textInput" value="N/A" style="width:45px">&nbsp;°&nbsp;&nbsp;&nbsp;
+			Longitude:&nbsp;<input type="text" id="longitudeInput" class="textInput" value="N/A" style="width:50px">&nbsp;°
+		</div>
+		<span class="horizontalLine"></span>
+		<div class="row" style="display:flex; justify-content:center; margin-bottom:5px; margin-top:5px">Year:
+			<input type="radio" id="eraAD" name="era" value="AD" checked>AD&nbsp;
+			<input type="text" id="yearInput" class="textInput" value="N/A" style="width:40px">
+			<input type="radio" id="eraBC" name="era" value="BC">BC&nbsp;&nbsp;&nbsp;
+			Month:&nbsp;<input type="text" id="monthInput" class="textInput" value="N/A" style="width:20px">&nbsp;&nbsp;&nbsp;
+			Day:&nbsp;<input type="text" id="dayInput" class="textInput" value="N/A" style="width:20px">
+		</div>
+		<div class="row" style="display:flex; justify-content:center; margin-bottom:15px">
+			Local Time:&nbsp;<input type="text" id="hourInput" class="textInput" value="N/A" style="width:20px">
+			&nbsp;:&nbsp;<input type="text" id="minuteInput" class="textInput" value="N/A" style="width:20px">&nbsp;&nbsp;&nbsp;
+			Julian Day:&nbsp;<input type="text" id="julianDayInput" class="textInput" value="N/A" style="width:90px">
+		</div>
+		<div style="display:flex; justify-content:center">
+			<button id="modalOKButton" class="longButton">OK</button>&nbsp;&nbsp;&nbsp;
+			<button id="modalCancelButton" class="longButton">Cancel</button>
+		</div>
+	</div>
 </div>
 
 <canvas id="sky"></canvas>
@@ -249,13 +238,14 @@ const show = {sphere: true, stars: true, milkyWay: true, constellations: true, z
 	ecliptic: true, eclipticAxes: true, eclipticMeridian: false, eclipticGraticule: false, precessionCircles: false,
 	equator: true, equatorialAxes: true, equatorialMeridian: false, equatorialGraticule: false, circumpolarCircles: false,
 	horizon: true, horizontalAxes: true, horizontalMeridian: false, horizontalGraticule: true, observerMeridian: false,
-	sun: true, moon: true, planets: false, analemma: false, moonsOrbit: false, eclipses: false}
-const update = {params: true, view: true, sphere: true, canvas: true}
-const astro = {year: 2000, month: 1, day: 1, localtime: 180, dayOfYear: 1, totalDays: 366,
-	latitude: 8.64, longitude: 99.90, timeZone: 7, julianCentury: 0, sidereal: 0,
+	sun: true, moon: true, planets: false, analemma: false, moonsOrbit: false, eclipses: false, halo: false, rainbow: false}
+const update = {time: true, view: true, sky: true}
+const astro = {latitude: 8.64, longitude: 99.90, timeZone: 7, year: 2000, month: 1, day: 1,
+	localTime: 180, dayOfYear: 1, totalDays: 366, julianDay: 0, julianCentury: 0, sidereal: 0,
 	ayanamsa: 0, ayanamsaJ2000: 0, obliquity: 0, obliquityJ2000: 0, observerVector: [0, 0, 0]}
 const transform = {fromNirayana: null, toNirayana: null, fromEquatorialJ2000: null,
-	fromHorizontal: null, toHorizontal: null};
+	fromHorizontal: null, toHorizontal: null}
+const cache = {stars: null, graticule: {}, solarSystem: null, analemma: null}
 const wgs84 = {f: 1 / 298.257223563, a: 6378.137, /* f * (2 - f) */e2: 0.00669438}
 const graphics = {backLines: [], backStars: [], backPoints: [], backTexts: [],
 	frontLines: [], frontStars: [], frontPoints: [], frontTexts: []}
@@ -292,53 +282,60 @@ function toDMS(degree, range = 360, offset = 0, decimal = 2) {
 	let s = 60 * (60 * (t - d) - m)
 	let f = 10 ** decimal
 	s = Math.round(s * f) / f
-	s === 60 ? (s = 0, m += 1) : null;
-	m === 60 ? (m = 0, d += 1) : null;
+	s === 60 ? (s = 0, m += 1) : null
+	m === 60 ? (m = 0, d += 1) : null
 	return [mod(sign * d, range, offset), sign * m, sign * s]}
-
-function formatTime(degree) {
-	let [h, m, s] = toDMS(degree / 15, 24)
-	h = String(h).padStart(2, "0")
-	m = String(m).padStart(2, "0")
-	return h + ":" + m}
 
 function formatHourAngle(degree, decimal) {
 	let [h, m, s] = toDMS(degree / 15, 24, 0, decimal)
 	return h + "ʰ " + m + "ᵐ " + s.toFixed(decimal) + "ˢ"}
-
-function formatAngleDecimal(degree, decimal) {
-	return mod(degree, 360).toFixed(decimal) + "°"}
 
 function formatAngleDMS(degree, decimal) {
 	let [d, m, s] = toDMS(degree, 360, 0, decimal)
 	return d + "° " + m + "\' " + s.toFixed(decimal) + "\""}
 
 function formatSignedAngleDecimal(degree, decimal) {
-	let t = mod(degree, 360, -180, decimal)
+	let t = mod(degree, 360, -180)
 	let f = 10 ** decimal
 	let a = Math.round(Math.abs(t) * f) / f
 	if(a === 0) return (0).toFixed(decimal)
 	return (t > 0 ? "+" : "−") + a.toFixed(decimal) + "°"}
 
 function formatSignedAngleDMS(degree, decimal) {
-	let t = mod(degree, 360, -180, decimal)
+	let t = mod(degree, 360, -180)
 	let [d, m, s] = toDMS(Math.abs(t), 360, -180, decimal)
 	let sign = t < 0 ? "−" : (t > 0 ? "+" : "")
 	return sign + d + "° " + m + "\' " + s.toFixed(decimal) + "\""}
 
-function getJulianDay(year, month, day, localtime) {
-	let [h, m, s] = toDMS(localtime / 15, 24)
+function getJulianDay(year, month, day, localTime, timeZone) {
+	let [h, m, s] = toDMS(localTime / 15, 24)
 	let a = Math.floor((14 - month) / 12)
 	let Y = year + 4800 - a
 	let M = month + 12 * a - 3
 	return Math.floor(Y / 4) - Math.floor(Y / 100) + Math.floor(Y / 400) +
 		365 * Y + Math.floor((153 * M + 2) / 5) + day - 32045.5 + 
-		(h - astro.timeZone) / 24 + m / 1440 + s / 86400}
+		(h - timeZone) / 24 + m / 1440 + s / 86400}
 
-function getSidereal(julianCentury) {
+function getGregorian(julianDay, longitude) {
+	let jd = julianDay + Math.round(longitude / 15) / 24 + 0.5
+	let z = Math.floor(jd)
+	let A = Math.floor((z - 1867216.25) / 36524.25)
+	let a = z + 1 + A - Math.floor(A / 4)
+	let b = a + 1524
+	let c = Math.floor((b - 122.1) / 365.25)
+	let d = Math.floor(365.25 * c)
+	let e = Math.floor((b - d) / 30.6001)
+	let dayDecimal = jd - z + b - d - Math.floor(30.6001 * e)
+	let day = Math.floor(dayDecimal)
+	let month = e < 14 ? e - 1 : e - 13
+	let year = month > 2 ? c - 4716 : c - 4715
+	let localTime = (dayDecimal - day) * 360
+	return [year, month, day, localTime]}
+
+function getSidereal(julianCentury, longitude) {
 	let jc = julianCentury
 	return mod(mod(280.46061837504 + 13184999.4888224000575 * jc, 360) +
-		astro.longitude + (0.014506 + jc * (4612.156534 + jc * (1.3915817 - jc *
+		longitude + (0.014506 + jc * (4612.156534 + jc * (1.3915817 - jc *
 		(0.00000044 + jc * (0.000029956 + jc * 0.0000000368))))) / 3600, 360)}
 
 function getAyanamsa(julianCentury) {
@@ -380,21 +377,21 @@ function mul(a, b) {return [
 	a[6]*b[0] + a[7]*b[3] + a[8]*b[6],   a[6]*b[1] + a[7]*b[4] + a[8]*b[7],   a[6]*b[2] + a[7]*b[5] + a[8]*b[8]]}
 
 function rotateX(angle) {
-	angle *= DEGREE;
+	angle *= DEGREE
 	let c = Math.cos(angle), s = Math.sin(angle)
 	return [1, 0, 0,   0, c, -s,   0, s, c]}
 
 function rotateY(angle) {
-	angle *= DEGREE;
+	angle *= DEGREE
 	let c = Math.cos(angle), s = Math.sin(angle)
 	return [c, 0, s,   0, 1, 0,   -s, 0, c]}
 
 function rotateZ(angle) {
-	angle *= DEGREE;
+	angle *= DEGREE
 	let c = Math.cos(angle), s = Math.sin(angle)
 	return [c, -s, 0,   s, c, 0,   0, 0, 1]}
 
-function updateTransforms() {
+function updateSkyTransforms() {
 	transform.fromNirayana = mul(rotateX(astro.obliquity), rotateZ(-astro.ayanamsa))
 	transform.toNirayana = mul(rotateZ(astro.ayanamsa), rotateX(-astro.obliquity))
 	transform.fromEquatorialJ2000 = mul(rotateZ(astro.ayanamsaJ2000), rotateX(-astro.obliquityJ2000))
@@ -407,6 +404,12 @@ const fromEquatorialJ2000 = p => dot(transform.fromEquatorialJ2000, p)
 const fromHorizontal = p => dot(transform.fromHorizontal, p)
 const toHorizontal = p => dot(transform.toHorizontal, p)
 
+function setLocalTimeValue() {
+	let [h, m, s] = toDMS(astro.localTime / 15, 24)
+	h = String(h).padStart(2, "0")
+	m = String(m).padStart(2, "0")
+	UI.timeValue.textContent = h + ":" + m}
+
 function getObserverVector(sidereal) {
 	let p = astro.latitude * DEGREE
 	let t = sidereal * DEGREE
@@ -415,23 +418,50 @@ function getObserverVector(sidereal) {
 	return toNirayana([r * cp * Math.cos(t), r * cp * Math.sin(t),
 		r * (1 - wgs84.e2) * sp].map(n => n / KM_PER_AU))}
 
-function updateTime() {
-	UI.timeValue.textContent = formatTime(astro.localtime)
-	let jd = getJulianDay(astro.year, astro.month, astro.day, astro.localtime)
-	UI.dayOfWeekValue.textContent = ["Sunday", "Monday",
-		"Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][
-				mod(Math.floor(jd + astro.timeZone / 24 + 1.5), 7)]
-	let jc = (jd - 2451545) / 36525
+function updateTimeParams() {
+	setLocalTimeValue()
+	astro.julianDay = getJulianDay(astro.year, astro.month, astro.day, astro.localTime, astro.timeZone)
+	UI.dayOfWeekValue.textContent = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][
+		mod(Math.floor(astro.julianDay + astro.timeZone / 24 + 1.5), 7)]
+	let jc = (astro.julianDay - 2451545) / 36525
 	astro.julianCentury = jc
 	astro.ayanamsa = getAyanamsa(jc)
 	astro.obliquity = getObliquity(jc)
-	astro.sidereal = getSidereal(jc)
+	astro.sidereal = getSidereal(jc, astro.longitude)
 	UI.ayanamsaValue.textContent = formatSignedAngleDecimal(astro.ayanamsa, 5)
 	UI.obliquityValue.textContent = formatSignedAngleDecimal(astro.obliquity, 5)
-	UI.julianDayValue.textContent = jd.toFixed(5)
+	UI.julianDayValue.textContent = astro.julianDay > 0 ? astro.julianDay.toFixed(5) : "−" +
+		Math.abs(astro.julianDay).toFixed(5)
 	UI.siderealValue.textContent = formatHourAngle(astro.sidereal, 2)
-	updateTransforms()
+	updateSkyTransforms()
 	astro.observerVector = getObserverVector(astro.sidereal)}
+
+function setLatitudeValue() {
+	let al = Math.abs(astro.latitude)
+	UI.latitudeValue.textContent = al < 0.005 ? "0.00°" : al.toFixed(2) + "° " + (astro.latitude > 0 ? "N" : "S")}
+
+function setLongitudeValue() {
+	let al = Math.abs(astro.longitude)
+	UI.longitudeValue.textContent = al < 0.005 ? "0.00°" : Math.abs(al - 180) < 0.005 ? "180.00°" :
+		al.toFixed(2) + "° " + (astro.longitude > 0 ? "E" : "W")}
+
+function setTimeZoneValue() {
+	let tz = astro.timeZone
+	UI.timeZoneValue.textContent = tz === 0 ? "UTC" : "UTC" + (tz >= 0 ? "+" : "−") + Math.abs(tz)}
+
+function setYearValue() {
+	let y = astro.year
+	UI.yearValue.textContent = y > 0 ? "AD " + y : Math.abs(y - 1) + " BC"}
+
+function setDayOfYearValue() {
+	UI.dayOfYearValue.textContent = ["January", "February", "March", "April", "May", "June", "July",
+		"August", "September", "October", "November", "December"][astro.month - 1] + " " + astro.day}
+
+function getDayOfYear() {
+	let doy = astro.day
+	let days = [31, astro.totalDays === 366 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+	for(let i = 0; i < astro.month - 1; i++) doy += days[i]
+	return doy}
 
 function updateDayOfYear() {
 	let days = [31, astro.totalDays === 366 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
@@ -439,21 +469,18 @@ function updateDayOfYear() {
 	astro.month = 1
 	while(d > days[astro.month - 1]) {d -= days[astro.month - 1]; astro.month++}
 	astro.day = d
-	UI.dayOfYearValue.textContent = ["January", "February", "March", "April", "May",
-		"June", "July", "August", "September", "October", "November", "December"][
-				astro.month - 1] + " " + astro.day
-	updateTime()}
+	setDayOfYearValue()
+	updateTimeParams()}
 
 function getTotalDays() {
 	return (astro.year % 4 === 0 && astro.year % 100 !== 0) || (astro.year % 400 === 0) ? 366 : 365}
 
 function updateYear() {
-	UI.yearValue.textContent = astro.year > 0 ? "AD " + astro.year : Math.abs(astro.year - 1) + " BC"
+	setYearValue()
 	let td = getTotalDays()
 	if(astro.dayOfYear > 59) {
 		let d = td - astro.totalDays
-		if(d !== 0) astro.dayOfYear += d > 0 ? 1 : -1
-	}
+		if(d !== 0) astro.dayOfYear += d > 0 ? 1 : -1}
 	astro.totalDays = td
 	UI.dayOfYearSlider.max = astro.totalDays
 	updateDayOfYear()}
@@ -463,47 +490,16 @@ function setDateTime() {
 	astro.year = dt.getFullYear()
 	UI.yearSlider.value = astro.year
 	astro.totalDays = getTotalDays()
-	let days = [31, astro.totalDays === 366 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+	UI.dayOfYearSlider.max = astro.totalDays
 	astro.month = dt.getMonth() + 1
 	astro.day = dt.getDate()
-	astro.dayOfYear = astro.day
-	for(let i = 0; i < astro.month - 1; i++) astro.dayOfYear += days[i]
+	astro.dayOfYear = getDayOfYear()
 	UI.dayOfYearSlider.value = astro.dayOfYear
-	astro.localtime = Math.round(15 * (dt.getHours() + dt.getMinutes() / 60))
-	UI.timeSlider.value = astro.localtime
+	astro.localTime = Math.floor(4 * 15 * (dt.getHours() + dt.getMinutes() / 60)) / 4
+	UI.timeSlider.value = astro.localTime
 	updateYear()}
 
 setDateTime()
-
-function formatLatitude() {
-	let l = astro.latitude
-	if(Math.abs(l) < 0.005) return "0.00°"
-	return Math.abs(l).toFixed(2) + "° " + (l > 0 ? "N" : "S")}
-
-function formatLongitude() {
-	let l = astro.longitude
-	if(Math.abs(l) < 0.005) return "0.00°"
-	if(Math.abs(Math.abs(l) - 180) < 0.005) return "180.00°"
-	return Math.abs(l).toFixed(2) + "° " + (l > 0 ? "E" : "W")}
-
-function formatTimeZone() {
-	if(astro.timeZone === 0) return "UTC"
-	return "UTC" + (astro.timeZone >= 0 ? "+" : "−") + Math.abs(astro.timeZone)}
-
-function setLocation() {
-	navigator.geolocation.getCurrentPosition(pos => {
-		astro.latitude = Math.round(mod(pos.coords.latitude, 180, -90) * 100) / 100
-		astro.longitude = Math.round(mod(pos.coords.longitude, 360, -180) * 100) / 100
-		UI.latitudeSlider.value = astro.latitude
-		UI.longitudeSlider.value = astro.longitude
-		UI.latitudeValue.textContent = formatLatitude()
-		UI.longitudeValue.textContent = formatLongitude()
-		astro.timeZone = Math.round(astro.longitude / 15)
-		UI.timeZoneValue.textContent = formatTimeZone()
-		updateTime()
-		update.params = true
-		render()
-	}, error => alert("Location access failed."))}
 
 function changeSystem(point, fromMode, toMode) {
 	if(fromMode === "horizontal") point = fromHorizontal(point)
@@ -576,18 +572,33 @@ for(let p = -90; p <= 90; p += 30) {
 	if(p === -90 || p === 90) continue
 	GRATICULE.push(parallel(p))}
 
-function pushGraticule(rotation, color) {
-	for(let pts of GRATICULE) pushLines(pts.map(rotation), color, 1)}
+function updateGraticuleCache(name, rotation) {
+	let key = name === "ecliptic" ? astro.ayanamsa.toFixed(10) + "|" + astro.obliquity.toFixed(10) :
+		name === "horizontal" ? astro.sidereal.toFixed(10) + "|" + astro.latitude.toFixed(10) : "equatorial"
+	if(cache.graticule[name] && cache.graticule[name].key === key) return
+	cache.graticule[name] = {key: key,
+		lines: GRATICULE.map(pts => pts.map(rotation))}}
+
+function pushGraticule(name, rotation, color) {
+	updateGraticuleCache(name, rotation)
+	for(let pts of cache.graticule[name].lines) pushLines(pts, color, 1)}
+
+function updateStarsCache() {
+	let key = astro.ayanamsa.toFixed(10) + "|" + astro.obliquity.toFixed(10)
+	if(cache.stars && cache.stars.key === key) return
+	cache.stars = {key: key,
+		vectors: STARS.map(p => {
+			if(p[0] === 0 && p[1] === 0 && p[2] === 0) return [0, 0, 0]
+			return fromNirayana(p)})}}
 
 function pushStars() {
-	let s = new Array(STARS.length)
 	if(!show.stars && !show.constellations && !show.zodiac) return
+	updateStarsCache()
+	let s = cache.stars.vectors
 	let m = 0
-	for(let i = 0; i < STARS.length; i++) {
-		let p = STARS[i]
-		if(p[0] === 0 && p[1] === 0 && p[2] === 0) {s[i] = [0, 0, 0]; m++; continue}
-		let rp = fromNirayana(p)
-		s[i] = rp
+	for(let i = 0; i < s.length; i++) {
+		let rp = s[i]
+		if(rp[0] === 0 && rp[1] === 0 && rp[2] === 0) {m++; continue}
 		if(show.stars) {
 			let [c3D, s2D] = project(rp)
 			let entry = {pos: s2D, mag: m}
@@ -623,7 +634,7 @@ function heliocentricDistance(trueAnomaly, a, e) {
 function trueAnomaly(meanAnomaly, e) {
 	let M = meanAnomaly * DEGREE
 	let E = M
-	for(let k = 0; k < 6; k++)
+	for(let k = 0; k < 5; k++)
 		E -= (E - e * Math.sin(E) - M) / (1 - e * Math.cos(E))
 	return 2 * Math.atan2(
 		Math.sqrt(1 + e) * Math.sin(E / 2),
@@ -770,24 +781,39 @@ function solarSystemVectors(julianCentury) {
 	let mc = -82.34295832198312
 	let gs = [gm[0][0] / mc - he[0], gm[0][1] / mc - he[1], gm[0][2] / mc - he[2]]
 	let gp = hp.map(p => [p[0] + gs[0], p[1] + gs[1], p[2] + gs[2]])
-	return [/* Moon */gm[0], /*	Sun */gs,	/* Mercury */gp[0], /*   Venus */gp[1], /* Mars */gp[2],
-		/*  Jupiter */gp[3], /* Saturn */gp[4], /*  Uranus */gp[5], /* Neptune */gp[6], /* Rahu */gm[1]]}
+	return [/* Moon */gm[0], /*	Sun */gs, /* Mercury */gp[0], /* Venus */gp[1], /* Mars */gp[2],
+		/* Jupiter */gp[3], /* Saturn */gp[4], /* Uranus */gp[5], /* Neptune */gp[6], /* Rahu */gm[1]]}
 
 function analemmaVectors() {
 	let pts = []
 	let mc = -82.34295832198312
-	let jd0 = getJulianDay(astro.year, 1, 1, astro.localtime)
+	let jd0 = getJulianDay(astro.year, 1, 1, astro.localTime, astro.timeZone)
 	for(let d = 0; d <= 366; d += 2) {
 		let jc = (jd0 + d - 2451545) / 36525
 		let gm = geoMoonVectors(jc)[0]
 		let he = helioEMBVector(jc)
-		let to = getObserverVector(getSidereal(jc))
+		let to = getObserverVector(getSidereal(jc, astro.longitude))
 		let ts = [gm[0] / mc - he[0] - to[0], gm[1] / mc - he[1] - to[1], gm[2] / mc - he[2] - to[2]]
-		pts.push(normalize(dot(mul(rotateX(-(90 - astro.latitude)), rotateZ(-(90 + getSidereal(jc)))), fromNirayana(ts))))}
+		pts.push(normalize(dot(mul(rotateX(-(90 - astro.latitude)),
+			rotateZ(-(90 + getSidereal(jc, astro.longitude)))), fromNirayana(ts))))}
 	return pts.map(fromHorizontal)}
 
+function updateAnalemmaCache() {
+	let key = [astro.year, astro.localTime.toFixed(10), astro.timeZone,
+		astro.longitude.toFixed(10), astro.latitude.toFixed(10),
+		astro.ayanamsa.toFixed(10), astro.obliquity.toFixed(10)].join("|")
+	if(cache.analemma && cache.analemma.key === key) return
+	cache.analemma = {key: key, vectors: analemmaVectors()}}
+
+function updateSolarSystemCache() {
+	let key = astro.julianCentury.toFixed(10)
+	if(cache.solarSystem && cache.solarSystem.key === key) return
+	cache.solarSystem = {key: key,
+		vectors: solarSystemVectors(astro.julianCentury)}}
+
 function pushSolarSystem() {
-	let v = solarSystemVectors(astro.julianCentury)
+	updateSolarSystemCache()
+	let v = cache.solarSystem.vectors.map(p => [p[0], p[1], p[2]])
 	if(mode.orientation === "horizontal") {
 		let to = astro.observerVector
 		v = v.map((p, i, arr) => i === arr.length - 1 ? p : [p[0] - to[0], p[1] - to[1], p[2] - to[2]])}
@@ -796,38 +822,51 @@ function pushSolarSystem() {
 	let OMG = toTP(v[9])[0]
 	v = v.map(p => normalize(fromNirayana(p)))
 
+	let [tM, pM] = toTP(v[0])
+	let fM = p => dot(mul(rotateZ(tM), rotateY(90 - pM)), p)
+	//let aM = [-v[0][0], -v[0][1], -v[0][2]]
+	//let [taM, paM] = toTP(aM)
+	//let faM = p => dot(mul(rotateZ(taM), rotateY(90 - paM)), p)
+	let [tS, pS] = toTP(v[1])
+	let fS = p => dot(mul(rotateZ(tS), rotateY(90 - pS)), p)
+	let aS = [-v[1][0], -v[1][1], -v[1][2]]
+	let [taS, paS] = toTP(aS)
+	let faS = p => dot(mul(rotateZ(taS), rotateY(90 - paS)), p)
 	if(show.eclipses) {
 		let moonR = 1737.4
 		let sunR = 695700
 		let mAR = Math.atan(moonR / moonD) / DEGREE
 		let sAR = Math.atan(sunR / sunD) / DEGREE
-		let [tM, pM] = toTP(v[0])
-		let [tS, pS] = toTP(v[1])
-		let a = [-v[1][0], -v[1][1], -v[1][2]]
-		let [tA, pA] = toTP(a)
 		let l = sunD * wgs84.a / (sunR - wgs84.a)
 		let uR = wgs84.a * (l - moonD) / l
 		if(uR < 0) uR = 0
 		let uAR = Math.atan(uR / moonD) / DEGREE
 		let pR = wgs84.a * (sunD + moonD) / sunD
 		let pAR = Math.atan(pR / moonD) / DEGREE
-		for(let c of [v[0], v[1], a]) {
+		for(let c of [v[0], v[1], aS]) {
 			let [c3D, s2D] = project(c)
-			let color = (c === v[0]) ? "#aaaa00" : "red"
-			let point = {pos: s2D, size: 5, color: color, border: 0}
+			let point = {pos: s2D, size: 5, color: (c === v[0]) ? "#aaaa00" : "red", border: 0}
 			if(c3D[0] >= view.z0) graphics.frontPoints.push(point)
 			else if(!show.sphere) graphics.backPoints.push(point)}
-		pushLines(parallel(90 - mAR).map(p => dot(mul(rotateZ(tM), rotateY(90 - pM)), p)), "#aaaa00", 2)
-		pushLines(parallel(90 - sAR).map(p => dot(mul(rotateZ(tS), rotateY(90 - pS)), p)), "red", 2)
-		let rA = p => dot(mul(rotateZ(tA), rotateY(90 - pA)), p)
+		pushLines(parallel(90 - mAR).map(fM), "#aaaa00", 2)
+		pushLines(parallel(90 - sAR).map(fS), "red", 2)
+		let rA = p => dot(mul(rotateZ(taS), rotateY(90 - paS)), p)
 		pushLines(parallel(90 - uAR).map(rA), "red", 2)
 		pushLines(parallel(90 - pAR).map(rA), "red", 2, [5, 5])}
-	let c = mode.darkTheme ? "white" : "black"
+	if(show.halo) {
+		//pushLines(parallel(90 - 21.89).map(fM), "#aaaa00", 2)
+		pushLines(parallel(90 - 21.89).map(fS), "red", 2)
+		pushLines(parallel(90 - 45.87).map(fS), "rgba(255, 0, 0, 0.75)", 2, [5, 5])}
+	if(show.rainbow) {
+		//pushLines(parallel(90 - 41.91).map(faM), "#aaaa00", 2)
+		pushLines(parallel(90 - 41.91).map(faS), "red", 2)
+		pushLines(parallel(90 - 51.19).map(faS), "rgba(255, 0, 0, 0.75)", 2, [5, 5])}
 
+	let c = mode.darkTheme ? "white" : "black"
 	if(show.moonsOrbit) {
 		let m = dot(mul(rotateZ(-OMG), rotateX(-astro.obliquity)), v[9])
 		let i = Math.abs(Math.atan2(m[2], m[1])) / DEGREE
-		i = Math.abs(i - 5.15) > 0.01 ? 5.15 : i;
+		i = Math.abs(i - 5.15) > 0.01 ? 5.15 : i
 		let r = p => fromNirayana(dot(mul(rotateZ(OMG), rotateX(i)), p))
 		pushLines(parallel(0).map(r), "#aaaa00", 2)
 		let pts = [{pos: v[9], name: "Rāhu"},
@@ -975,7 +1014,6 @@ function drawCrosshair() {
 	ctx.moveTo(view.x0 - r, view.y0 + r)
 	ctx.lineTo(view.x0 + r, view.y0 - r)
 	ctx.stroke()
-
 	let p = fromScreen([1, 0, 0], mode.orientation, "equatorial")
 	let [ra, dec] = toTP(p)
 	let [l, b] = toTP(toNirayana(p))
@@ -989,7 +1027,7 @@ function drawCrosshair() {
 	UI.altitudeValue.textContent = formatSignedAngleDMS(alt, 2)}
 
 function resize() {
-	let dpr = window.devicePixelRatio || 1
+	let dpr = 2 //window.devicePixelRatio || 1
 	view.w = window.innerWidth
 	view.h = window.innerHeight
 	UI.sky.width = view.w * dpr
@@ -1003,20 +1041,19 @@ function resize() {
 
 function render() {
 	if(update.view) {updateViewTransforms(); update.view = false}
-	if(update.params) {updateTime(); update.params = false; update.sphere = true}
-	if(update.sphere) {update.sphere = false; update.canvas = true}
-	if(!update.canvas) return
-	update.canvas = false
+	if(update.time) {updateTimeParams(); update.time = false; update.sky = true}
+	if(!update.sky) return
+	update.sky = false
 
 	for(let g in graphics) graphics[g].length = 0
 	
-	if(show.eclipticGraticule) pushGraticule(fromNirayana, ecliptic_minor_color)
-	if(show.equatorialGraticule) pushGraticule(p => p, equatorial_minor_color)
-	if(show.horizontalGraticule) pushGraticule(fromHorizontal, horizontal_minor_color)
+	if(show.eclipticGraticule) pushGraticule("ecliptic", fromNirayana, ecliptic_minor_color)
+	if(show.equatorialGraticule) pushGraticule("equatorial", p => p, equatorial_minor_color)
+	if(show.horizontalGraticule) pushGraticule("horizontal", fromHorizontal, horizontal_minor_color)
 	
 	if(show.milkyWay) {
 		let r = p => fromNirayana(fromEquatorialJ2000(
-				dot(mul(rotateZ(282.85948), mul(rotateX(62.87175), rotateZ(-32.93314))), p)))
+			dot(mul(rotateZ(282.85948), mul(rotateX(62.87175), rotateZ(-32.93314))), p)))
 		pushLines(parallel(0).map(r), "#aaaa00", 3, [3, 3])
 		pushAxes([AXES[0]], ["Sgr A*"], r, "#aaaa00", 5)}
 	if(show.precessionCircles) {
@@ -1033,7 +1070,7 @@ function render() {
 	if(show.horizon) pushLines(parallel(0).map(fromHorizontal), horizontal_major_color, 3)
 	if(show.horizontalMeridian) pushLines(meridian(90).map(fromHorizontal), horizontal_major_color, 3)
 	if(show.observerMeridian) pushLines(meridian(astro.sidereal), horizontal_major_color, 3)
-	if(show.analemma) pushLines(analemmaVectors(), "red", 2, [5, 5])
+	if(show.analemma) {updateAnalemmaCache(); pushLines(cache.analemma.vectors, "red", 2, [5, 5])}
 
 	if(show.eclipticAxes) {
 		pushAxes(AXES, ["VE", "AE", "SS", "WS", "NEP", "SEP"], 
@@ -1048,7 +1085,8 @@ function render() {
 		pushLagna()}
 
 	if(show.stars || show.constellations || show.zodiac) pushStars()
-	if(show.sun || show.moon || show.planets || show.moonsOrbit || show.eclipses) pushSolarSystem()
+	if(show.sun || show.moon || show.planets || show.moonsOrbit ||
+		show.eclipses || show.halo || show.rainbow) pushSolarSystem()
 
 	ctx.fillStyle = mode.darkTheme ? "black" : "white"
 	ctx.fillRect(0, 0, view.w, view.h)
@@ -1064,51 +1102,44 @@ function render() {
 	drawTexts(graphics.frontTexts)
 
 	drawPath()
-	drawCrosshair()
-}
+	drawCrosshair()}
 
 const STARS = initializeStars()
 const CONSTELLATIONS = initializeConstellations()
 const ZODIAC = [6, 76, 37, 21, 45, 84, 47, 69, 75, 11, 4, 64]
+const WORLDMAP = initializeWorldMap()
 resize()
 render()
 
-function setupPanel(panel) {
-  let isDown = false;
-  let startY;
-  let scrollTop;
-  panel.addEventListener("mousedown", (e) => {
-	if (e.target.closest("input, button, select, textarea")) return;
-    isDown = true;
-    panel.style.cursor = "grabbing";
-    startY = e.pageY - panel.offsetTop;
-    scrollTop = panel.scrollTop});
-  document.addEventListener("mouseup", () => {
-    isDown = false;
-    panel.style.cursor = "grab"});
-  panel.addEventListener("mouseleave", () => {
-    isDown = false;
-    panel.style.cursor = "grab"});
-  panel.addEventListener("mousemove", (e) => {
-    if (!isDown) return;
-    e.preventDefault();
-    const y = e.pageY - panel.offsetTop;
-    const walk = (y - startY);
-    panel.scrollTop = scrollTop - walk})}
-
-setupPanel(document.getElementById("leftPanel"));
-setupPanel(document.getElementById("rightPanel"));
+for(let panel of [UI.leftPanel, UI.rightPanel]) {
+	let isDown = false
+	let startY
+	let scrollTop
+	panel.onmousedown = e => {
+		if(e.target.closest("input, button, select, textarea")) return
+		isDown = true
+		panel.style.cursor = "grabbing"
+		startY = e.pageY - panel.offsetTop
+		scrollTop = panel.scrollTop}
+	panel.onmouseup = () => {
+		isDown = false
+		panel.style.cursor = "grab"}
+	panel.onmouseleave = () => {
+		isDown = false
+		panel.style.cursor = "grab"}
+	panel.onmousemove = e => {
+		if(!isDown) return
+		e.preventDefault()
+		panel.scrollTop = scrollTop - e.pageY + panel.offsetTop + startY}}
 
 UI.orientationDropdown.onchange = () => {
 	view.orienting = true
 	input.dragging = false
 	input.activePointers.clear()
 	input.pinchStartDist = null
-
 	let oldMode = mode.orientation
 	let newMode = UI.orientationDropdown.value
 	if(oldMode === newMode) return
-
 	let a = UI.analemmaCheckbox.parentElement
 	if(newMode === "horizontal") {
 		UI.analemmaCheckbox.disabled = false
@@ -1118,10 +1149,9 @@ UI.orientationDropdown.onchange = () => {
 		UI.analemmaCheckbox.checked = false
 		show.analemma = false
 		a.style.color = "gray"}
-
 	let a0 = 0; a1 = 0
 	let p = toScreen([0, 0, 1], newMode, oldMode)
-	if(p[1] !== 0 && p[2] !== 0) a1 = Math.atan2(p[1], p[2]) / DEGREE
+	if(p[1] !== 0 || p[2] !== 0) a1 = Math.atan2(p[1], p[2]) / DEGREE
 
 	function animate() {
 		a0 += 0.05
@@ -1129,71 +1159,63 @@ UI.orientationDropdown.onchange = () => {
 		let k = a0 * a0 * (3 - 2 * a0)
 		view.roll = a1 * k
 		update.view = true
-		update.canvas = true
+		update.sky = true
 		render()
 		if(a0 < 1) {requestAnimationFrame(animate); return}
-
 		let [t, p] = toTP(fromScreen([1, 0, 0], oldMode, newMode))
 		view.yaw = mod(-t, 360)
 		view.pitch = p
 		view.roll = 0
 		view.orienting = false
 		mode.orientation = newMode
-		
 		update.view = true
-		update.canvas = true
+		update.sky = true
 		render()}
 
 	animate()}
 
-UI.darkThemeCheckbox.addEventListener("change", () => {
+UI.darkThemeCheckbox.onchange = () => {
 	mode.darkTheme = UI.darkThemeCheckbox.checked
 	let i = mode.darkTheme ? 0 : 1
 	document.body.style.colorScheme = ["dark", "light"][i]
-	document.querySelectorAll(".box").forEach(b => b.style.background = ["black", "white"][i])
-	document.querySelectorAll(".colorLegend").forEach(l => l.style.borderColor = ["white","black"][i])
-	UI.leftPanel.style.color = ["white", "black"][i]
-	UI.rightPanel.style.color = ["white", "black"][i]
-	UI.orientationDropdown.style.background = ["#3b3b3b", "#efefef"][i]
-	UI.orientationDropdown.style.color = ["white", "black"][i]
-	UI.nowButton.style.background = ["#3b3b3b", "#efefef"][i]
-	UI.nowButton.style.color = ["white", "black"][i]
-	//UI.setDateTimeButton.style.background = ["#3b3b3b", "#efefef"][i]
-	//UI.setDateTimeButton.style.color = ["white", "black"][i]
-	UI.hereButton.style.background = ["#3b3b3b", "#efefef"][i]
-	UI.hereButton.style.color = ["white", "black"][i]
-	//UI.setLatLonButton.style.background = ["#3b3b3b", "#efefef"][i]
-	//UI.setLatLonButton.style.color = ["white", "black"][i]
-	update.canvas = true
-	render()})
+	document.querySelectorAll("#leftPanel, #rightPanel, .modal").forEach(e => e.style.color = ["white", "black"][i])
+	document.querySelectorAll(".box, .modal").forEach(e => e.style.background = ["black", "white"][i])
+	document.querySelectorAll(".colorLegend").forEach(e => e.style.borderColor = ["white","black"][i])
+	document.querySelectorAll('input[type="radio"]').forEach(e => {e.style.accentColor = ["white","black"][i]})
+	document.querySelectorAll("#orientationDropdown, .shortButton, .setButton, .longButton").forEach(e => {
+		e.style.background = ["#3b3b3b", "#efefef"][i]
+		e.style.color = ["white", "black"][i]})
+	UI.modalBackground.style.background = ["rgba(255, 255, 255, 0.5)", "rgba(0, 0, 0, 0.5)"][i]
+	update.sky = true
+	render()}
 
-UI.drawCheckbox.addEventListener("change", () => {
+UI.drawCheckbox.onchange = () => {
 	mode.draw = UI.drawCheckbox.checked
 	UI.sky.style.cursor = mode.draw ? "crosshair" : "grab"
 	if(!mode.draw) {
 		input.drawing = false
 		input.drawPath = []
-		update.canvas = true
-		render()}})
+		update.sky = true
+		render()}}
 
 for (let s in show) {
 	let e = UI[s + "Checkbox"]
 	e.checked = show[s]
-	e.addEventListener("change", () => {
+	e.onchange = () => {
 		show[s] = e.checked
-		update.canvas = true
-		render()})}
+		update.sky = true
+		render()}}
 
-function setupSlider(slider) {
-	slider.addEventListener("wheel", e => {
+document.querySelectorAll('input[type="range"]').forEach(s =>
+	s.addEventListener("wheel", e => {
 		e.preventDefault()
-		let min = parseFloat(slider.min)
-		let max = parseFloat(slider.max)
-		let current = parseFloat(slider.value)
+		let min = parseFloat(s.min)
+		let max = parseFloat(s.max)
+		let current = parseFloat(s.value)
 		let range = max - min
-		let baseStep = parseFloat(slider.step)
+		let baseStep = parseFloat(s.step)
 		let n = Math.round(Math.sqrt(range / baseStep))
-		let step = e.shiftKey ? (range / n) : baseStep
+		let step = e.shiftKey ? range / n : baseStep
 		let dir = Math.sign(e.deltaY)
 		if((dir > 0 && current <= min) || (dir < 0 && current >= max)) return
 		let value = min + Math.round((current - dir * step - min) / baseStep) * baseStep
@@ -1201,53 +1223,61 @@ function setupSlider(slider) {
 		if(value > max) value = max
 		value = parseFloat(value.toFixed(10))
 		if(value === current) return
-		slider.value = value
-		slider.dispatchEvent(new Event("input"))})}
+		s.value = value
+		s.dispatchEvent(new Event("input"))},
+		{passive: false}))
 
-document.querySelectorAll('input[type="range"]').forEach(setupSlider)
+UI.latitudeSlider.oninput = () => {
+	astro.latitude = parseFloat(UI.latitudeSlider.value)
+	setLatitudeValue()
+	update.time = true
+	render()}
 
-UI.yearSlider.addEventListener("input", () => {
+UI.longitudeSlider.oninput = () => {
+	astro.longitude = mod(parseFloat(UI.longitudeSlider.value), 360, -180)
+	setLongitudeValue()
+	astro.timeZone = Math.round(astro.longitude / 15)
+	setTimeZoneValue()
+	update.time = true
+	render()}
+
+UI.hereButton.onclick = () => navigator.geolocation.getCurrentPosition(pos => {
+	astro.latitude = Math.round(mod(pos.coords.latitude, 180, -90) * 100) / 100
+	UI.latitudeSlider.value = astro.latitude
+	setLatitudeValue()
+	astro.longitude = Math.round(mod(pos.coords.longitude, 360, -180) * 100) / 100
+	UI.longitudeSlider.value = astro.longitude
+	setLongitudeValue()
+	astro.timeZone = Math.round(astro.longitude / 15)
+	setTimeZoneValue()
+	updateTimeParams()
+	update.time = true
+	render()}, error => alert("Location access failed."))
+
+UI.yearSlider.oninput = () => {
 	astro.year = parseInt(UI.yearSlider.value)
 	updateYear()
-	update.params = true
-	render()})
+	update.time = true
+	render()}
 
-UI.dayOfYearSlider.addEventListener("input", () => {
+UI.dayOfYearSlider.oninput = () => {
 	astro.dayOfYear = parseInt(UI.dayOfYearSlider.value)
 	updateDayOfYear()
-	update.params = true
-	render()})
+	update.time = true
+	render()}
 
-UI.timeSlider.addEventListener("input", () => {
-	astro.localtime = parseFloat(UI.timeSlider.value)
-	UI.timeValue.textContent = formatTime(astro.localtime)
-	update.params = true
-	render()})
+UI.timeSlider.oninput = () => {
+	astro.localTime = parseFloat(UI.timeSlider.value)
+	setLocalTimeValue()
+	update.time = true
+	render()}
 
-UI.nowButton.addEventListener("click", () => {
+UI.nowButton.onclick = () => {
 	setDateTime()
-	update.params = true
-	render()})
+	update.sky = true
+	render()}
 
-UI.latitudeSlider.addEventListener("input", () => {
-	astro.latitude = mod(parseFloat(UI.latitudeSlider.value), 360, -180)
-	UI.latitudeValue.textContent = formatLatitude()
-	updateTime()
-	update.sphere = true
-	render()})
-
-UI.longitudeSlider.addEventListener("input", () => {
-	astro.longitude = mod(parseFloat(UI.longitudeSlider.value), 360, -180)
-	UI.longitudeValue.textContent = formatLongitude()
-	astro.timeZone = Math.round(astro.longitude / 15)
-	UI.timeZoneValue.textContent = formatTimeZone()
-	updateTime()
-	update.params = true
-	render()})
-
-UI.hereButton.addEventListener("click", () => setLocation())
-
-UI.sky.addEventListener("pointerdown", e => {
+UI.sky.onpointerdown = e => {
 	if(mode.draw) {
 		input.drawing = true
 		input.drawPath.push([[e.clientX, e.clientY]])
@@ -1257,26 +1287,30 @@ UI.sky.addEventListener("pointerdown", e => {
 	input.dragging = true
 	input.lastX = e.clientX
 	input.lastY = e.clientY
+	UI.sky.setPointerCapture(e.pointerId)}
 
-	UI.sky.setPointerCapture(e.pointerId)})
+function zoomInOut(scale) {
+	view.r0 *= scale
+	let base = Math.min(view.w, view.h)
+	let rMin = 0.45 * base
+	let rMax = 20 * base
+	view.r0 = Math.max(rMin, Math.min(rMax, view.r0))
+	update.sky = true
+	render()}
 
-window.addEventListener("pointermove", e => {
+window.onpointermove = e => {
 	if(view.orienting) return
-
 	if(mode.draw && input.drawing) {
 		let path = input.drawPath[input.drawPath.length - 1]
 		path.push([e.clientX, e.clientY])
-		update.canvas = true
+		update.sky = true
 		render()
 		return}
-
 	if(input.activePointers.has(e.pointerId)) input.activePointers.set(e.pointerId, e)
-
 	if(mode.draw && input.activePointers.size) {
 		input.activePointers.clear()
 		input.pinchStartDist = null
 		return}
-
 	if(input.activePointers.size === 2) {
 		let [p1, p2] = [...input.activePointers.values()]
 		let d = Math.hypot(p1.clientX - p2.clientX, p1.clientY - p2.clientY)
@@ -1285,40 +1319,28 @@ window.addEventListener("pointermove", e => {
 		input.pinchStartDist = d
 		zoomInOut(s)
 		return}
-
 	if(mode.draw || !input.dragging) return
-
 	let x = e.clientX
 	let y = e.clientY
 	let dx = x - input.lastX
 	let dy = y - input.lastY
 	input.lastX = x
 	input.lastY = y
-
 	let sensitivity = 500 / (view.r0 * view.f)
 	view.yaw = mod(view.yaw + dx * sensitivity, 360)
 	view.pitch = clip(view.pitch + dy * sensitivity, -90, 90)
-
 	update.view = true
-	update.canvas = true
-	render()})
+	update.sky = true
+	render()}
 
-window.addEventListener("pointerup", e => {
+window.onpointerup = e => {
 	if(view.orienting) return
 	if(mode.draw) input.drawing = false
 	input.activePointers.delete(e.pointerId)
 	if(input.activePointers.size < 2) input.pinchStartDist = null
 	input.dragging = false
-	UI.sky.releasePointerCapture(e.pointerId)})
-
-function zoomInOut(scale) {
-	view.r0 *= scale
-	let base = Math.min(view.w, view.h)
-	let rMin = 0.45 * base
-	let rMax = 20 * base
-	view.r0 = Math.max(rMin, Math.min(rMax, view.r0))
-	update.canvas = true
-	render()}
+	if(UI.sky.hasPointerCapture(e.pointerId)) UI.sky.releasePointerCapture(e.pointerId)}
+window.onpointercancel = window.onpointerup
 
 UI.sky.addEventListener("wheel", e => {
 	if(mode.draw || view.orienting) return
@@ -1326,17 +1348,317 @@ UI.sky.addEventListener("wheel", e => {
 	zoomInOut(1 - e.deltaY * 0.001)},
 	{passive: false})
 
-window.addEventListener("resize", () => {
+window.onresize = () => {
 	resize()
-	update.canvas = true
-	render()})
+	update.sky = true
+	render()}
+
+function drawPlanetOnMap(ctx, lon, lat, color, w, h, r = 4) {
+	let x = mod(lon + 180, 360) / 360 * w
+	let y = (90 - lat) / 180 * h
+	ctx.beginPath()
+	ctx.arc(x, y, r, 0, TWO_PI)
+	ctx.fillStyle = color
+	ctx.fill()
+	ctx.strokeStyle = "gray"
+	ctx.lineWidth = r / 3
+	ctx.stroke()}
+
+function drawWorldMap() {
+	let map = UI.worldMap
+	let ctx = map.getContext("2d")
+	let dpr = 2 //window.devicePixelRatio || 1
+	let w = 1.5 * 360
+	let h = 1.5 * 180
+	if(map.width !== w * dpr) map.width = w * dpr
+	if(map.height !== h * dpr) map.height = h * dpr
+	map.style.width = w + "px"
+	map.style.height = h + "px"
+	ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+	ctx.clearRect(0, 0, w, h)
+	ctx.imageSmoothingEnabled = false
+	ctx.save()
+	ctx.filter = mode.darkTheme ? "none" : "invert(1)"
+	ctx.drawImage(WORLDMAP, 0, 0, w, h)
+	ctx.restore()
+	ctx.strokeStyle = "#808080"
+	ctx.lineWidth = 0.5
+	for(let lon = -150; lon <= 150; lon += 30) {
+		let x = (lon + 180) / 360 * w
+		ctx.beginPath()
+		ctx.moveTo(x, 0)
+		ctx.lineTo(x, h)
+		ctx.stroke()}
+	for(let lat = -60; lat <= 60; lat += 30) {
+		let y = (90 - lat) / 180 * h
+		ctx.beginPath()
+		ctx.moveTo(0, y)
+		ctx.lineTo(w, y)
+		ctx.stroke()}
+	let lat = Number(UI.latitudeInput.value.replace("−", "-"))
+	let lon = Number(UI.longitudeInput.value.replace("−", "-"))
+	let jd = Number(UI.julianDayInput.value.replace("−", "-"))
+	let jc = (jd - 2451545) / 36525
+	let vn = solarSystemVectors(jc)
+	let fn = mul(rotateZ(lon - getSidereal(jc, lon)),
+		mul(rotateX(getObliquity(jc)), rotateZ(-getAyanamsa(jc))))
+	let ve = vn.map(v => toTP(normalize(dot(fn, v))))
+	let [ts, ps] = toTP(normalize(vn[1]))
+	let dnt = parallel(0).map(p =>
+		toTP(dot(fn, dot(mul(rotateZ(ts), rotateY(90 - ps)), p))))
+	let pMin = dnt[0]
+	let pMax = dnt[0]
+	for(let p of dnt) {
+		if(p[1] < pMin[1]) pMin = p
+		if(p[1] > pMax[1]) pMax = p}
+	let dMin = Math.abs(mod(pMin[0] - ve[1][0], 360, -180))
+	let dMax = Math.abs(mod(pMax[0] - ve[1][0], 360, -180))
+	let pole = dMin < dMax ? h : 0
+	ctx.fillStyle = "rgba(128, 128, 128, 0.75)"
+	ctx.beginPath()
+	for(let x = 0; x <= w; x++) {
+		let lat0 = 0
+		let lon0 = x / w * 360 - 180
+		let dlon = Infinity
+		for(let i = 0; i < dnt.length; i++) {
+			let d = Math.abs(mod(dnt[i][0] - lon0, 360, -180))
+			if(d < dlon) {dlon = d; lat0 = dnt[i][1]}}
+		let y = (90 - lat0) / 180 * h
+		x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)}
+	ctx.lineTo(w, pole)
+	ctx.lineTo(0, pole)
+	ctx.closePath()
+	ctx.fill()
+	ctx.strokeStyle = "blue"
+	ctx.lineWidth = 1.5
+	ctx.beginPath()
+	ctx.moveTo(0, h / 2)
+	ctx.lineTo(w, h / 2)
+	ctx.stroke()
+	ctx.strokeStyle = "red"
+	ctx.lineWidth = 1.5
+	let ecl = parallel(0).map(p => toTP(normalize(dot(fn, p))))
+	ctx.beginPath()
+	for(let x = 0; x <= w; x++) {
+		let lat0 = 0
+		let lon0 = x / w * 360 - 180
+		let dlon = Infinity
+		for(let i = 0; i < ecl.length; i++) {
+			let d = Math.abs(mod(ecl[i][0] - lon0, 360, -180))
+			if(d < dlon) {dlon = d; lat0 = ecl[i][1]}}
+		let y = (90 - lat0) / 180 * h
+		x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)}
+	ctx.stroke()
+	let x = (lon + 180) / 360 * w
+	let y = (90 - lat) / 180 * h
+	ctx.strokeStyle = horizontal_major_color
+	ctx.lineWidth = 2
+	ctx.setLineDash([5, 3])
+	ctx.beginPath()
+	ctx.moveTo(0, y)
+	ctx.lineTo(w, y)
+	ctx.moveTo(x, 0)
+	ctx.lineTo(x, h)
+	ctx.stroke()
+	ctx.setLineDash([])
+	let obj = [
+		{pos: ve[9], name: "Rahu", color: "gray", size: 3},
+		{pos: ve[8], name: "Neptune", color: "rgb(0,128,255)", size: 4},
+		{pos: ve[7], name: "Uranus", color: "rgb(0,255,128)", size: 4},
+		{pos: ve[6], name: "Saturn", color: "purple", size: 4},
+		{pos: ve[5], name: "Jupiter", color: "orange", size: 4},
+		{pos: ve[4], name: "Mars", color: "magenta", size: 4},
+		{pos: ve[3], name: "Venus", color: "cyan", size: 4},
+		{pos: ve[2], name: "Mercury", color: "green", size: 4},
+		{pos: ve[1], name: "Sun", color: "red", size: 6},
+		{pos: ve[0], name: "Moon", color: "yellow", size: 6}]
+	for(let o of obj) drawPlanetOnMap(ctx, o.pos[0], o.pos[1], o.color, w, h, o.size)}
+
+document.addEventListener("DOMContentLoaded", () => {
+	document.querySelectorAll(".setButton").forEach(e => {e.onclick = () => {
+		UI[astro.year < 1 ? "eraBC" : "eraAD"].checked = true
+		UI.yearInput.value = astro.year > 0 ? astro.year : Math.abs(astro.year - 1)
+		UI.monthInput.value = astro.month
+		UI.dayInput.value = astro.day
+		let [h, m, s] = toDMS(astro.localTime / 15, 24)
+		UI.hourInput.value = String(h).padStart(2, "0")
+		UI.minuteInput.value = String(m).padStart(2, "0")
+		UI.julianDayInput.value = astro.julianDay.toFixed(5)
+		UI.latitudeInput.value = formatSignedAngleDecimal(astro.latitude, 2).replace("°", "")
+		UI.longitudeInput.value = formatSignedAngleDecimal(astro.longitude, 2).replace("°", "")
+		drawWorldMap()
+		UI.modalBackground.style.display = "flex"}})
+	UI.modalOKButton.onclick = () => {
+		astro.latitude = Number(UI.latitudeInput.value.replace("−", "-"))
+		UI.latitudeSlider.value = astro.latitude
+		setLatitudeValue()
+		astro.longitude = Number(UI.longitudeInput.value.replace("−", "-"))
+		UI.longitudeSlider.value = astro.longitude
+		setLongitudeValue()
+		astro.timeZone = Math.round(astro.longitude / 15)
+		setTimeZoneValue()
+		let y = Number(UI.yearInput.value)
+		astro.year = UI.eraBC.checked ? 1 - y : y
+		UI.yearSlider.value = astro.year
+		setYearValue()
+		astro.totalDays = getTotalDays()
+		UI.dayOfYearSlider.max = astro.totalDays
+		astro.month = Number(UI.monthInput.value)
+		astro.day = Number(UI.dayInput.value)
+		astro.dayOfYear = getDayOfYear()
+		UI.dayOfYearSlider.value = astro.dayOfYear
+		setDayOfYearValue()
+		astro.localTime = 15 * (Number(UI.hourInput.value) + Number(UI.minuteInput.value) / 60)
+		UI.timeSlider.value = astro.localTime
+		setLocalTimeValue()
+		update.time = true
+		render()
+		UI.modalBackground.style.display = "none"}
+	UI.modalCancelButton.onclick = () => {
+		UI.modalBackground.style.display = "none"}})
+
+let previousValue
+function updateJulianDayInput() {
+	let y = Number(UI.yearInput.value)
+	let year = UI.eraBC.checked ? 1 - y : y
+	let localTime = 15 * (Number(UI.hourInput.value) + Number(UI.minuteInput.value) / 60)
+	let jd = getJulianDay(year, Number(UI.monthInput.value), Number(UI.dayInput.value),
+		localTime, Math.round(Number(UI.longitudeInput.value.replace("−", "-")) / 15))
+	UI.julianDayInput.value = jd < 0 ? "−" + Math.abs(jd).toFixed(5) : jd.toFixed(5)
+	drawWorldMap()}
+
+UI.latitudeInput.onfocus = () => {previousValue = UI.latitudeInput.value}
+UI.latitudeInput.onchange = () => {
+	let v = UI.latitudeInput.value.trim().replace("−", "-")
+	let l = Number(v)
+	if(v === "" || !Number.isFinite(l) || l < -90 || l > 90) {
+		alert("Please enter a valid latitude from −90° to +90°.")
+		UI.latitudeInput.value = previousValue
+		UI.latitudeInput.select()}
+	else {
+		UI.latitudeInput.value = formatSignedAngleDecimal(Math.round(l * 100) / 100, 2).replace("°", "")
+		drawWorldMap()}}
+
+UI.longitudeInput.onfocus = () => {previousValue = UI.longitudeInput.value}
+UI.longitudeInput.onchange = () => {
+	let v = UI.longitudeInput.value.trim().replace("−", "-")
+	let l = mod(Number(v), 360, -180)
+	if(v === "" || !Number.isFinite(l) || l < -180 || l > 180) {
+		alert("Please enter a valid longitude from −180° to +180°.")
+		UI.longitudeInput.value = previousValue
+		UI.longitudeInput.select()}
+	else {
+		UI.longitudeInput.value = formatSignedAngleDecimal(Math.round(l * 100) / 100, 2).replace("°", "")
+		updateJulianDayInput()}}
+
+function setLocationFromMap(event) {
+	let map = UI.worldMap.getBoundingClientRect()
+	let lat = 90 - clip(event.clientY - map.top, 0, map.height) / map.height * 180
+	let lon = clip(event.clientX - map.left, 0, map.width) / map.width * 360 - 180
+	UI.latitudeInput.value = formatSignedAngleDecimal(Math.round(lat * 100) / 100, 2).replace("°", "")
+	UI.longitudeInput.value = formatSignedAngleDecimal(Math.round(lon * 100) / 100, 2).replace("°", "")
+	updateJulianDayInput()}
+
+if(UI.worldMap) {
+	UI.worldMap.onpointerdown = e => {
+		e.preventDefault()
+		UI.worldMap.setPointerCapture(e.pointerId)
+		UI.worldMap.dataset.dragging = "true"
+		setLocationFromMap(e)}
+	UI.worldMap.onpointermove = e => {
+		if(UI.worldMap.dataset.dragging !== "true") return
+		e.preventDefault()
+		setLocationFromMap(e)}
+	UI.worldMap.onpointerup = e => {
+		UI.worldMap.dataset.dragging = "false"
+		if(UI.worldMap.hasPointerCapture(e.pointerId)) UI.worldMap.releasePointerCapture(e.pointerId)}
+	UI.worldMap.onpointercancel = UI.worldMap.onpointerup}
+
+["eraAD", "eraBC"].forEach(id => {UI[id].onchange = () => updateJulianDayInput()})
+
+UI.yearInput.onfocus = () => {previousValue = UI.yearInput.value}
+UI.yearInput.onchange = () => {
+	let v = UI.yearInput.value.trim()
+	if(!/^\d+$/.test(v) || Number(v) < 1 || Number(v) > 5000) {
+		alert("Please enter a valid year number from 1 to 5000.")
+		UI.yearInput.value = previousValue
+		UI.yearInput.select()}
+	else {
+		UI.yearInput.value = Math.round(Number(v))
+		updateJulianDayInput()}}
+
+UI.monthInput.onfocus = () => {previousValue = UI.monthInput.value}
+UI.monthInput.onchange = () => {
+	let v = UI.monthInput.value.trim()
+	if(!/^\d+$/.test(v) || Number(v) < 1 || Number(v) > 12) {
+		alert("Please enter a valid month number from 1 to 12.")
+		UI.monthInput.value = previousValue
+		UI.monthInput.select()}
+	else {
+		UI.monthInput.value = Math.round(Number(v))
+		updateJulianDayInput()}}
+
+UI.dayInput.onfocus = () => {previousValue = UI.dayInput.value}
+UI.dayInput.onchange = () => {
+	let v = UI.dayInput.value.trim()
+	let x = [31, astro.totalDays === 366 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][UI.monthInput.value - 1]
+	if(!/^\d+$/.test(v) || Number(v) < 1 || Number(v) > x) {
+		alert("Please enter a valid day number from 1 to " + x + ".")
+		UI.dayInput.value = previousValue
+		UI.dayInput.select()}
+	else {
+		UI.dayInput.value = Math.round(Number(v))
+		updateJulianDayInput()}}
+
+UI.hourInput.onfocus = () => {previousValue = UI.hourInput.value}
+UI.hourInput.onchange = () => {
+	let v = UI.hourInput.value.trim()
+	if(!/^\d+$/.test(v) || Number(v) < 0 || Number(v) > 23) {
+		alert("Please enter a valid hour number from 0 to 23.")
+		UI.hourInput.value = previousValue
+		UI.hourInput.select()}
+	else {
+		updateJulianDayInput()
+		UI.hourInput.value = String(Math.round(Number(v))).padStart(2, "0")}}
+
+UI.minuteInput.onfocus = () => {previousValue = UI.minuteInput.value}
+UI.minuteInput.onchange = () => {
+	let v = UI.minuteInput.value.trim()
+	if(!/^\d+$/.test(v) || Number(v) < 0 || Number(v) > 59) {
+		alert("Please enter a valid minute number from 0 to 59.")
+		UI.minuteInput.value = previousValue
+		UI.minuteInput.select()}
+	else {
+		updateJulianDayInput()
+		UI.minuteInput.value = String(Math.round(Number(v))).padStart(2, "0")}}
+
+UI.julianDayInput.onfocus = () => {previousValue = UI.julianDayInput.value}
+UI.julianDayInput.onchange = () => {
+	let v = UI.julianDayInput.value.trim().replace("−", "-")
+	let jd = Number(v)
+	if(v === "" || !Number.isFinite(jd) || jd < -104788 || jd > 3547638) {
+		alert("Please enter a valid Julian day between -104,788 and 3,547,638.")
+		UI.julianDayInput.value = previousValue
+		UI.julianDayInput.select()}
+	else {
+		UI.julianDayInput.value = jd < 0 ? "−" + Math.abs(jd).toFixed(5) : jd.toFixed(5)
+		let year, month, day, localTime
+		[year, month, day, localTime] = getGregorian(jd, UI.longitudeInput.value.replace("−", "-"))
+		UI[year < 1 ? "eraBC" : "eraAD"].checked = true
+		UI.yearInput.value = year > 0 ? year : Math.abs(year - 1)
+		UI.monthInput.value = month
+		UI.dayInput.value = day
+		let [h, m, s] = toDMS(localTime / 15, 24)
+		UI.hourInput.value = String(h).padStart(2, "0")
+		UI.minuteInput.value = String(m).padStart(2, "0")
+		drawWorldMap()}}
 
 function initializeStars() {
 	let s = [
 		/* Magnitide 0.XX or Brighter */
 		- 6142,+30775,- 9425,   - 2072,+19750,-26064,   -12250,-10244,-28613,   + 4099,-25211,+20525,   + 4276,+22357,+23570,
 		-25682,-17268,+10766,   + 6391,+31796,- 4674,   -13700,+29615,+ 2984,   +16145,+ 7333,-27554,   +  684,+32486,+ 4224,
-		-13891,- 8332,-28483,   +15047,-28666,+ 5051,   +11269,+29326,+ 9311,		0,	 0,	 0,
+		-13891,- 8332,-28483,   +15047,-28666,+ 5051,   +11269,+29326,+ 9311,        0,     0,     0,
 		
 		/* Magnitide 1.XX */
 		-29952,-11677,- 6343,   -11299,-27079,-14586,   -12829,+25924,+15396,   +27437,- 7654,-16196,   -14726,- 1717,-29221,
@@ -1346,7 +1668,7 @@ function initializeStars() {
 		+19756,-10479,-23949,   -11893,+18753,-24095,   +13270,+16434,+25050,   + 2847,-26891,-18505,   -15044,+ 3770,+28864,
 		- 8629,+28054,-14566,   -19053,- 9660,+24847,   - 2368,-23848,-22346,   +   48,+23191,+23149,   - 3592,-11164,-30596,
 		+10669,-14464,-27398,   -12463,+14249,-26745,   - 9685,+13514,-28236,   - 3082,+31018,-10102,   -25491,+19989,- 4933,
-			0,	 0,	 0,
+		     0,     0,     0,
 
 		/* Magnitide 2.XX */
 		+  332,+  259,+32764,   +25548,+15836,+13046,   - 5149,+31009,+ 9251,   +30604,+ 5892,-10118,   +28614,+ 1048,+15931,
@@ -1372,7 +1694,7 @@ function initializeStars() {
 		- 7701,- 9090,-30524,   -12035,+30108,+ 4724,   -24944,- 6222,+20317,   -14839,-25406,-14423,   +26007,-19677,- 3181,
 		- 3027,+30118,+12547,   + 9167,-29180,-11755,   +12752,+21616,+21067,   -12350,-26848,-14154,   +10222,-20734,+23223,
 		+13488,+14065,+26342,   - 4495,+20300,-25325,   +28781,-15662,-  183,   +26731,- 9334,+16493,   +16167,+27454,- 7654,
-		-24995,+16567,+13209,   -31149,- 4082,- 9315,   + 8957,-30526,+ 7851,		0,	 0,	 0,
+		-24995,+16567,+13209,   -31149,- 4082,- 9315,   + 8957,-30526,+ 7851,        0,     0,     0,
 		
 		/* Magnitide 3.XX */
 		+ 2976,+30416,+11819,   -22810,+ 5092,+22966,   -28355,-10170,-12893,   - 7558,-24672,-20195,   - 5652,+29122,+13916,
@@ -1444,7 +1766,7 @@ function initializeStars() {
 		-11281,+10222,-29016,   -31817,+ 5050,+ 5988,   -19981,- 1017,-25950,   -14563,-23072,-18146,   + 8902,-23225,-21331,
 		+21932,- 9166,-22553,   +28504,- 9464,+13100,   +30370,- 4950,-11261,   +  943,+25394,+20687,   - 4046,+11613,-30372,
 		-17197,+20476,-18939,   -17325,+17229,+21833,   +17854,+ 5491,-26922,   - 2110,+32502,- 3581,   -12547,+25780,-15863,
-		+   92,-32724,+ 1676,   - 8241,+ 3652,-31503,   +18431,-13640,+23408,		0,	 0,	 0,
+		+   92,-32724,+ 1676,   - 8241,+ 3652,-31503,   +18431,-13640,+23408,        0,     0,     0,
 		
 		/* Magnitide 4.XX or Fainter */
 		+26478,+15288,-11784,   - 9376,+ 9178,-30026,   -17259,- 4191,-27536,   -17515,- 6831,+26837,   -19692,-16813,-20080,
@@ -1518,93 +1840,98 @@ function initializeStars() {
 			return fromEquatorialJ2000([x, y, z])})}
 
 function initializeConstellations() {return [
-	/* And */[ 54,228,	58, 64,	58,228,	58,452,	58,658,   228,658,   228,659,   322,621,   345,646,   452,738,   458,592,   564,659,   564,677,   592,646,   621,738,   646,658],
-	/* Ant */[631,711,   631,753],
-	/* Aps */[416,456,   456,608,   456,790,   608,790],
-	/* Aql */[ 11,119,	11,372,   119,251,   167,251,   167,273,   167,534,   222,457,   222,669,   251,273,   251,457,   273,535,   273,669],
-	/* Aqr */[154,162,   154,396,   154,643,   162,445,   162,595,   162,795,   229,545,   229,683,   358,683,   386,545,   386,595,   386,612,   445,569,   506,683,   544,569,   569,795,   612,683],
-	/* Ara */[134,143,   134,238,   143,354,   143,551,   192,392,   192,551,   238,331,   331,392],
-	/* Ari */[ 51,108,	51,338,   108,460],
-	/* Aur */[  4, 42,	 4,181,	 4,203,	 4,376,	30,107,	30,112,	42,107,	42,376,   112,203,   181,389,   203,389],
-	/* Boo */[  5, 95,	 5,113,	 5,317,	 5,402,	95,281,   113,713,   184,283,   184,317,   184,597,   281,283,   550,597,   550,733,   597,733],
-	/* Cae */[696,810,   696,811,   745,810],
-	/* Cam */[537,650,   537,702,   623,686,   650,760,   650,792,   686,760,   739,792],
-	/* Cap */[144,357,   144,385,   189,321,   189,590,   321,563,   357,563,   385,575,   575,590],
-	/* Car */[  1, 29,	29,233,	35,276,	45, 76,	46, 76,	46,276,	76,248,   123,233,   123,249,   123,757,   248,249,   249,408,   408,481,   481,762,   757,762],
-	/* Cas */[ 65, 75,	65,111,	75, 77,   111,246],
-	/* Cen */[  2, 10,	10, 78,	59,257,	59,549,	66, 78,	66, 96,	66,478,	78, 96,	82,197,	82,423,	96,280,	96,450,	99,467,	99,478,   125,474,   125,768,   195,501,   257,280,   257,474,   423,450,   423,667,   478,501,   549,667],
-	/* Cep */[ 90,217,	90,266,	90,536,   216,217,   216,290,   217,290,   245,558,   245,598,   266,602,   290,558,   536,598],
-	/* Cet */[ 53,285,	53,306,	97,277,	97,782,   275,306,   275,332,   277,554,   277,633,   285,373,   332,373,   373,802,   554,802,   629,633,   629,782],
-	/* Cha */[552,567,   567,700,   567,800,   618,700,   618,800],
-	/* Cir */[208,557,   208,728],
-	/* CMa */[  0, 39,	 0, 47,	 0,672,	23, 39,	23,429,	39, 89,	47,494,   429,494,   555,571,   555,672,   571,672],
+	/* And */[ 54,228,  58, 64,  58,228,  58,452,  58,658, 228,658, 228,659, 322,621, 345,646, 452,738, 458,592, 564,659, 564,677, 592,646, 621,738, 646,658],
+	/* Ant */[631,711, 631,753],
+	/* Aps */[416,456, 456,608, 456,790, 608,790],
+	/* Aql */[ 11,119,  11,372, 119,251, 167,251, 167,273, 167,534, 222,457, 222,669, 251,273, 251,457, 273,535, 273,669],
+	/* Aqr */[154,162, 154,396, 154,643, 162,445, 162,595, 162,795, 229,545, 229,683, 358,683, 386,545, 386,595, 386,612, 445,569, 506,683, 544,569, 569,795, 612,683],
+	/* Ara */[134,143, 134,238, 143,354, 143,551, 192,392, 192,551, 238,331, 331,392],
+	/* Ari */[ 51,108,  51,338, 108,460],
+	/* Aur */[  4, 42,   4,181,   4,203,   4,376,  30,107,  30,112,  42,107,  42,376, 112,203, 181,389, 203,389],
+	/* Boo */[  5, 95,   5,113,   5,317,   5,402,  95,281, 113,713, 184,283, 184,317, 184,597, 281,283, 550,597, 550,733, 597,733],
+	/* Cae */[696,810, 696,811, 745,810],
+	/* Cam */[537,650, 537,702, 623,686, 650,760, 650,792, 686,760, 739,792],
+	/* Cap */[144,357, 144,385, 189,321, 189,590, 321,563, 357,563, 385,575, 575,590],
+	/* Car */[  1, 29,  29,233,  35,276,  45, 76,  46, 76,  46,276,  76,248, 123,233, 123,249, 123,757, 248,249, 249,408, 408,481, 481,762, 757,762],
+	/* Cas */[ 65, 75,  65,111,  75, 77, 111,246],
+	/* Cen */[  2, 10,  10, 78,  59,257,  59,549,  66, 78,  66, 96,  66,478,  78, 96,  82,197,  82,423,  96,280,  96,450,  99,467,  99,478, 125,474, 125,768, 195,501, 257,280, 257,474, 423,450, 423,667, 478,501, 549,667],
+	/* Cep */[ 90,217,  90,266,  90,536, 216,217, 216,290, 217,290, 245,558, 245,598, 266,602, 290,558, 536,598],
+	/* Cet */[ 53,285,  53,306,  97,277,  97,782, 275,306, 275,332, 277,554, 277,633, 285,373, 332,373, 373,802, 554,802, 629,633, 629,782],
+	/* Cha */[552,567, 567,700, 567,800, 618,700, 618,800],
+	/* Cir */[208,557, 208,728],
+	/* CMa */[  0, 39,   0, 47,   0,672,  23, 39,  23,429,  39, 89,  47,494, 429,494, 555,571, 555,672, 571,672],
 	/* CMi */[  7,151],
-	/* Cnc */[293,484,   484,625,   484,778,   532,778],
-	/* Col */[109,190,   109,454,   190,488,   190,664,   438,664],
-	/* Com */[620,652,   620,655],
-	/* CrA */[568,574,   568,807,   574,748,   748,763],
-	/* CrB */[ 70,350,	70,424,   350,593,   424,754,   585,754,   585,806],
-	/* Crt */[316,560,   316,561,   316,793,   560,705,   561,705,   561,784,   779,793],
-	/* Cru */[ 18, 27,	19,131],
-	/* Crv */[102,166,   102,175,   110,166,   110,175,   175,542],
+	/* Cnc */[293,484, 484,625, 484,778, 532,778],
+	/* Col */[109,190, 109,454, 190,488, 190,664, 438,664],
+	/* Com */[620,652, 620,655],
+	/* CrA */[568,574, 568,807, 574,748, 748,763],
+	/* CrB */[ 70,350,  70,424, 350,593, 424,754, 585,754, 585,806],
+	/* Crt */[316,560, 316,561, 316,793, 560,705, 561,705, 561,784, 779,793],
+	/* Cru */[ 18, 27,  19,131],
+	/* Crv */[102,166, 102,175, 110,166, 110,175, 175,542],
 	/* CVn */[152,619],
-	/* Cyg */[ 20, 74,	20,490,	20,523,	74, 93,	74,159,	74,477,	93,213,   159,395,   188,477,   213,490,   395,412,   395,523],
-	/* Del */[344,403,   344,543,   344,691,   403,627,   627,691],
-	/* Dor */[224,390,   224,624,   224,783,   390,654,   390,771,   390,783,   654,771],
-	/* Dra */[ 73,132,	73,380,   122,209,   122,528,   132,799,   187,380,   187,437,   187,609,   209,609,   235,348,   235,528,   318,609,   348,469,   380,799,   415,469],
-	/* Equ */[491,717,   717,786],
-	/* Eri */[  8,368,   130,531,   164,541,   164,689,   214,576,   214,622,   296,375,   296,689,   312,498,   312,594,   368,616,   375,470,   378,565,   378,630,   413,498,   413,726,   470,617,   483,531,   483,541,   565,707,   576,789,   594,750,   603,630,   603,765,   616,789,   617,707,   622,750,   726,764,   764,765],
-	/* For */[410,701,   701,781],
-	/* Gem */[ 16,556,	52,527,   149,673,   155,173,   155,232,   173,583,   173,673,   232,596,   244,319,   302,319,   302,527,   302,556,   315,556,   334,673,   406,556,   406,673],
-	/* Gru */[ 34, 62,	34,504,	62,288,	62,504,   177,706,   288,580,   504,794,   706,794],
-	/* Her */[129,142,   129,250,   129,379,   142,284,   142,480,   198,250,   198,480,   198,675,   201,284,   201,480,   201,730,   264,362,   264,675,   284,601,   362,435,   379,747,   417,434,   434,730,   475,601,   475,615,   615,758,   747,797],
-	/* Hor */[447,818,   805,814,   814,816,   816,817,   817,818],
-	/* Hya */[ 48,473,	48,572,   171,226,   171,640,   191,422,   191,560,   194,256,   194,466,   226,688,   256,584,   256,660,   304,640,   304,705,   335,422,   335,752,   466,473,   560,705,   572,752,   584,699,   639,660,   639,699],
-	/* Hyi */[133,145,   133,223,   145,223],
-	/* Ind */[193,718,   193,735,   349,682,   349,735,   682,718],
-	/* Lac */[404,662,   404,692,   579,720,   662,722,   662,744,   662,756,   692,756,   720,737,   722,737,   737,744],
-	/* Leo */[ 22,294,	63, 98,	63,242,	72, 98,	72,271,	72,294,	98,242,   165,294,   165,462,   165,648,   242,294,   242,500,   271,462,   462,709,   500,548,   648,709],
-	/* Lep */[101,139,   101,231,   101,308,   139,205,   139,327,   205,231,   231,635,   231,690,   308,369,   327,399,   369,776,   399,776],
-	/* Lib */[103,124,   103,482,   124,230,   124,482,   330,351,   330,482],
-	/* LMi */[407,600,   407,788,   600,712,   712,740,   712,788],
-	/* Lup */[ 79,260,   114,215,   128,215,   128,253,   128,269,   253,451,   260,269,   260,451,   269,313,   269,502,   313,502],
-	/* Lyn */[196,421,   421,742,   510,613,   510,742,   613,761,   665,697,   665,761],
-	/* Lyr */[  3,656,	 3,808,   221,295,   221,637,   295,656,   637,656,   656,808],
-	/* Mon */[489,666,   512,767,   589,666,   589,708,   589,767,   681,708,   681,727,   708,727,   727,777],
-	/* Mus */[116,186,   116,433,   116,553,   186,336,   336,433,   342,553],
-	/* Nor */[529,736,   529,769,   736,787,   769,787],
-	/* Oct */[382,586,   382,651,   586,651],
-	/* Oph */[ 60,126,	60,211,	88,100,	88,126,	88,227,   100,211,   100,642,   100,770,   121,218,   121,476,   126,384,   211,476,   218,770,   227,636,   239,384,   626,642,   626,714,   714,746],
-	/* Ori */[  6,254,	 9, 28,	 9, 32,	 9,255,	 9,581,	28, 71,	28,210,	28,255,	31, 32,	31, 71,	32, 55,	71,254,   210,356,   210,663,   356,365,   365,703,   559,773,   559,775,   581,687,   581,704,   663,773,   678,687,   678,766,   704,766],
-	/* Pav */[ 44,311,	44,611,   265,311,   265,611,   311,497,   311,530,   311,605,   311,680,   325,653,   605,668,   653,668,   653,680],
-	/* Peg */[ 54, 91,	54,135,	85,300,	91, 94,	91,163,	91,292,	94,135,	94,267,   163,644,   267,300,   292,505,   397,505,   397,591],
-	/* Per */[ 36,160,	36,179,	36,546,	61,157,	61,258,	61,405,   148,446,   148,547,   157,179,   157,547,   160,387,   160,487,   179,526,   387,487,   405,546,   487,546,   526,588,   540,570,   546,570,   588,751,   634,751],
-	/* Phe */[ 86,236,	86,459,   236,270,   236,459,   236,511,   270,486,   486,511],
-	/* Pic */[219,715,   448,715],
-	/* PsA */[ 17,599,	17,606,   599,719,   606,731,   645,719,   645,731,   657,719,   657,809,   719,809],
-	/* Psc */[340,628,   340,774,   363,638,   363,801,   419,628,   419,693,   539,587,   539,685,   587,638,   587,723,   632,685,   632,796,   693,796,   723,801,   732,774,   732,791,   774,791],
-	/* Pup */[  1,206,	35, 68,	68,136,   118,206,   118,772,   136,241,   241,698,   241,716,   513,716,   513,772,   698,772],
-	/* Pyx */[ 68,509,   359,509,   359,533],
-	/* Ret */[243,427,   243,694,   427,741,   694,803,   741,803],
-	/* Scl */[649,749,   671,684,   684,749],
-	/* Sco */[ 15,137,	15,158,	26,115,	26,212,	41,176,	41,237,	80,137,	80,172,	81,105,	81,153,	81,158,	84,115,	84,176,   105,582,   153,463,   172,337,   237,337],
-	/* Sct */[444,610,   444,780,   610,785,   780,785],
-	/* SerCap */[106,366,   106,578,   121,310,   310,366,   352,441,   352,578,   352,729,   441,566,   566,729],
-	/* SerCau */[ 88,305,   220,239,   220,759,   239,305],
-	/* Sex */[710,812,   710,813,   812,815],
-	/* Sge */[291,426,   426,670,   426,676],
-	/* Sgr */[ 37,104,	37,117,	37,199,	37,343,	57,204,	57,240,   104,204,   104,240,   117,138,   117,204,   117,343,   138,204,   138,436,   156,299,   156,394,   156,798,   299,394,   485,798],
-	/* Tau */[ 12,169,	12,259,	30,301,   259,346,   262,346,   262,374,   301,388,   333,374,   333,647,   346,388,   374,471],
-	/* Tel */[287,573,   287,734],
-	/* TrA */[ 43,141,	43,150,   141,150],
-	/* Tri */[178,261,   178,525,   261,525],
-	/* Tuc */[146,524,   146,721,   524,725,   607,724,   607,725,   721,724],
-	/* UMa */[ 33, 69,	33,234,	38, 83,	38,234,	38,347,	40, 69,	83, 87,	83,400,	87,234,	87,361,   170,185,   170,361,   185,272,   200,320,   207,320,   207,743,   247,347,   247,400,   286,361,   286,409,   347,400,   400,743],
-	/* UMi */[ 50,661,	56,182,	56,641,   182,804,   604,641,   604,661,   641,804],
-	/* Vel */[ 35, 45,	35, 67,	45, 92,	67,323,	92,303,   120,303,   120,431,   323,431],
-	/* Vir */[ 14,674,   140,263,   252,282,   252,562,   252,614,   263,282,   282,468,   282,674,   329,468,   329,538,   377,614,   455,562,   468,577,   538,577],
-	/* Vol */[391,508,   391,679,   393,519,   393,679,   508,679,   519,679],
+	/* Cyg */[ 20, 74,  20,490,  20,523,  74, 93,  74,159,  74,477,  93,213, 159,395, 188,477, 213,490, 395,412, 395,523],
+	/* Del */[344,403, 344,543, 344,691, 403,627, 627,691],
+	/* Dor */[224,390, 224,624, 224,783, 390,654, 390,771, 390,783, 654,771],
+	/* Dra */[ 73,132,  73,380, 122,209, 122,528, 132,799, 187,380, 187,437, 187,609, 209,609, 235,348, 235,528, 318,609, 348,469, 380,799, 415,469],
+	/* Equ */[491,717, 717,786],
+	/* Eri */[  8,368, 130,531, 164,541, 164,689, 214,576, 214,622, 296,375, 296,689, 312,498, 312,594, 368,616, 375,470, 378,565, 378,630, 413,498, 413,726, 470,617, 483,531, 483,541, 565,707, 576,789, 594,750, 603,630, 603,765, 616,789, 617,707, 622,750, 726,764, 764,765],
+	/* For */[410,701, 701,781],
+	/* Gem */[ 16,556,  52,527, 149,673, 155,173, 155,232, 173,583, 173,673, 232,596, 244,319, 302,319, 302,527, 302,556, 315,556, 334,673, 406,556, 406,673],
+	/* Gru */[ 34, 62,  34,504,  62,288,  62,504, 177,706, 288,580, 504,794, 706,794],
+	/* Her */[129,142, 129,250, 129,379, 142,284, 142,480, 198,250, 198,480, 198,675, 201,284, 201,480, 201,730, 264,362, 264,675, 284,601, 362,435, 379,747, 417,434, 434,730, 475,601, 475,615, 615,758, 747,797],
+	/* Hor */[447,818, 805,814, 814,816, 816,817, 817,818],
+	/* Hya */[ 48,473,  48,572, 171,226, 171,640, 191,422, 191,560, 194,256, 194,466, 226,688, 256,584, 256,660, 304,640, 304,705, 335,422, 335,752, 466,473, 560,705, 572,752, 584,699, 639,660, 639,699],
+	/* Hyi */[133,145, 133,223, 145,223],
+	/* Ind */[193,718, 193,735, 349,682, 349,735, 682,718],
+	/* Lac */[404,662, 404,692, 579,720, 662,722, 662,744, 662,756, 692,756, 720,737, 722,737, 737,744],
+	/* Leo */[ 22,294,  63, 98,  63,242,  72, 98,  72,271,  72,294,  98,242, 165,294, 165,462, 165,648, 242,294, 242,500, 271,462, 462,709, 500,548, 648,709],
+	/* Lep */[101,139, 101,231, 101,308, 139,205, 139,327, 205,231, 231,635, 231,690, 308,369, 327,399, 369,776, 399,776],
+	/* Lib */[103,124, 103,482, 124,230, 124,482, 330,351, 330,482],
+	/* LMi */[407,600, 407,788, 600,712, 712,740, 712,788],
+	/* Lup */[ 79,260, 114,215, 128,215, 128,253, 128,269, 253,451, 260,269, 260,451, 269,313, 269,502, 313,502],
+	/* Lyn */[196,421, 421,742, 510,613, 510,742, 613,761, 665,697, 665,761],
+	/* Lyr */[  3,656,   3,808, 221,295, 221,637, 295,656, 637,656, 656,808],
+	/* Mon */[489,666, 512,767, 589,666, 589,708, 589,767, 681,708, 681,727, 708,727, 727,777],
+	/* Mus */[116,186, 116,433, 116,553, 186,336, 336,433, 342,553],
+	/* Nor */[529,736, 529,769, 736,787, 769,787],
+	/* Oct */[382,586, 382,651, 586,651],
+	/* Oph */[ 60,126,  60,211,  88,100,  88,126,  88,227, 100,211, 100,642, 100,770, 121,218, 121,476, 126,384, 211,476, 218,770, 227,636, 239,384, 626,642, 626,714, 714,746],
+	/* Ori */[  6,254,   9, 28,   9, 32,   9,255,   9,581,  28, 71,  28,210,  28,255,  31, 32,  31, 71,  32, 55,  71,254, 210,356, 210,663, 356,365, 365,703, 559,773, 559,775, 581,687, 581,704, 663,773, 678,687, 678,766, 704,766],
+	/* Pav */[ 44,311,  44,611, 265,311, 265,611, 311,497, 311,530, 311,605, 311,680, 325,653, 605,668, 653,668, 653,680],
+	/* Peg */[ 54, 91,  54,135,  85,300,  91, 94,  91,163,  91,292,  94,135,  94,267, 163,644, 267,300, 292,505, 397,505, 397,591],
+	/* Per */[ 36,160,  36,179,  36,546,  61,157,  61,258,  61,405, 148,446, 148,547, 157,179, 157,547, 160,387, 160,487, 179,526, 387,487, 405,546, 487,546, 526,588, 540,570, 546,570, 588,751, 634,751],
+	/* Phe */[ 86,236,  86,459, 236,270, 236,459, 236,511, 270,486, 486,511],
+	/* Pic */[219,715, 448,715],
+	/* PsA */[ 17,599,  17,606, 599,719, 606,731, 645,719, 645,731, 657,719, 657,809, 719,809],
+	/* Psc */[340,628, 340,774, 363,638, 363,801, 419,628, 419,693, 539,587, 539,685, 587,638, 587,723, 632,685, 632,796, 693,796, 723,801, 732,774, 732,791, 774,791],
+	/* Pup */[  1,206,  35, 68,  68,136, 118,206, 118,772, 136,241, 241,698, 241,716, 513,716, 513,772, 698,772],
+	/* Pyx */[ 68,509, 359,509, 359,533],
+	/* Ret */[243,427, 243,694, 427,741, 694,803, 741,803],
+	/* Scl */[649,749, 671,684, 684,749],
+	/* Sco */[ 15,137,  15,158,  26,115,  26,212,  41,176,  41,237,  80,137,  80,172,  81,105,  81,153,  81,158,  84,115,  84,176, 105,582, 153,463, 172,337, 237,337],
+	/* Sct */[444,610, 444,780, 610,785, 780,785],
+	/* SerCap */[106,366, 106,578, 121,310, 310,366, 352,441, 352,578, 352,729, 441,566, 566,729],
+	/* SerCau */[ 88,305, 220,239, 220,759, 239,305],
+	/* Sex */[710,812, 710,813, 812,815],
+	/* Sge */[291,426, 426,670, 426,676],
+	/* Sgr */[ 37,104,  37,117,  37,199,  37,343,  57,204,  57,240, 104,204, 104,240, 117,138, 117,204, 117,343, 138,204, 138,436, 156,299, 156,394, 156,798, 299,394, 485,798],
+	/* Tau */[ 12,169,  12,259,  30,301, 259,346, 262,346, 262,374, 301,388, 333,374, 333,647, 346,388, 374,471],
+	/* Tel */[287,573, 287,734],
+	/* TrA */[ 43,141,  43,150, 141,150],
+	/* Tri */[178,261, 178,525, 261,525],
+	/* Tuc */[146,524, 146,721, 524,725, 607,724, 607,725, 721,724],
+	/* UMa */[ 33, 69,  33,234,  38, 83,  38,234,  38,347,  40, 69,  83, 87,  83,400,  87,234,  87,361, 170,185, 170,361, 185,272, 200,320, 207,320, 207,743, 247,347, 247,400, 286,361, 286,409, 347,400, 400,743],
+	/* UMi */[ 50,661,  56,182,  56,641, 182,804, 604,641, 604,661, 641,804],
+	/* Vel */[ 35, 45,  35, 67,  45, 92,  67,323,  92,303, 120,303, 120,431, 323,431],
+	/* Vir */[ 14,674, 140,263, 252,282, 252,562, 252,614, 263,282, 282,468, 282,674, 329,468, 329,538, 377,614, 455,562, 468,577, 538,577],
+	/* Vol */[391,508, 391,679, 393,519, 393,679, 508,679, 519,679],
 	/* Vul */[695,755]]}
+
+function initializeWorldMap() {
+	let map = new Image()
+	map.src = "data:image/png;base64,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"
+	return map}
 
 </script>
 
