@@ -2,7 +2,6 @@ const TWO_PI = 2 * Math.PI
 const DEGREE = Math.PI / 180
 
 function mod(m, n, d = 0) {return ((m - d) % n + n) % n + d}
-
 function clip(n, min, max) {return Math.max(min, Math.min(max, n))}
 
 function toDMS(degree, range = 360, offset = 0, decimal = 2) {
