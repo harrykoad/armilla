@@ -157,9 +157,9 @@ function lunarSearch(t0, latitude, longitude) {
 		"Svātī (15)", "Viśākha (16)", "Anurādhā (17)", "Jyeṣṭha (18)", "Mūla (19)",
 		"P.Aṣāḍhā (20)", "U.Aṣāḍhā (21)", "Śravaṇa (22)", "Dhaniṣṭha (23)",
 		"Śatabhiṣak (24)", "P.Bhādrapadā (25)", "U.Bhādrapadā (26)", "Revatī (27)"]
-	let months = ["Vaiśākha (1)", "Jyaiṣṭha (2)", "Āṣāḍha (3)", "Śrāvaṇa (4)",
-		"Bhādrapada (5)", "Āśvina (6)", "Kārttika (7)", "Mārgaśīrṣa (8)",
-		"Pauṣa (9)", "Māgha (10)", "Phālguna (11)", "Caitra (12)"]
+	let months = ["Vaiśākha (1/)", "Jyaiṣṭha (2/๗)", "Āṣāḍha (3/๘)", "Śrāvaṇa (4/๙)",
+		"Bhādrapada (5/๑๐)", "Āśvina (6/๑๑)", "Kārttika (7/๑๒)", "Mārgaśīrṣa (8/๑)",
+		"Pauṣa (9/๒)", "Māgha (10/๓)", "Phālguna (11/๔)", "Caitra (12/๕)"]
 	let now = stateAt(t0)
 	let phsIndex = mod(now[1] / 12, 30)
 	let phsNumber = clip(Math.round(mod(phsIndex, 15) + 1), 1, 15)
