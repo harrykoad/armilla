@@ -1,5 +1,6 @@
-const TWO_PI = 2 * Math.PI
-const DEGREE = Math.PI / 180
+const PI = Math.PI
+const TWO_PI = 2 * PI
+const DEGREE = PI / 180
 
 function mod(m, n, d = 0) {return ((m - d) % n + n) % n + d}
 function clip(n, min, max) {return Math.max(min, Math.min(max, n))}
@@ -50,18 +51,29 @@ function toTP(xyz) {
 	let t = mod(Math.atan2(xyz[1], xyz[0]) / DEGREE, 360)
 	return [t, p]}
 
-function normalize(vector) {
-	let r = Math.hypot(vector[0], vector[1], vector[2])
-	if(r === 0) return [0, 0, 0]
-	return [vector[0] / r, vector[1] / r, vector[2] / r]}
+function negate(vector) {return vector.map(n => -n)}
+function scale(vector, scalar) {return vector.map(n => scalar * n)}
+function translate(vector, offset) {return vector.map((n, i) => n + offset[i])}
 
-function dot(m, v) {return [
+function normalize(vector) {
+	let r = Math.hypot(...vector)
+	return r === 0 ? [0, 0, 0] : scale(vector, 1 / r)}
+
+function vdot(a, b) {return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]}
+
+function cross(a, b) {return [
+	a[1]*b[2] - a[2]*b[1],   a[2]*b[0] - a[0]*b[2],   a[0]*b[1] - a[1]*b[0]]}
+
+function mdot(m, v) {return [
 	m[0]*v[0] + m[1]*v[1] + m[2]*v[2],   m[3]*v[0] + m[4]*v[1] + m[5]*v[2],   m[6]*v[0] + m[7]*v[1] + m[8]*v[2]]}
 
 function mul(a, b) {return [
 	a[0]*b[0] + a[1]*b[3] + a[2]*b[6],   a[0]*b[1] + a[1]*b[4] + a[2]*b[7],   a[0]*b[2] + a[1]*b[5] + a[2]*b[8],
 	a[3]*b[0] + a[4]*b[3] + a[5]*b[6],   a[3]*b[1] + a[4]*b[4] + a[5]*b[7],   a[3]*b[2] + a[4]*b[5] + a[5]*b[8],
 	a[6]*b[0] + a[7]*b[3] + a[8]*b[6],   a[6]*b[1] + a[7]*b[4] + a[8]*b[7],   a[6]*b[2] + a[7]*b[5] + a[8]*b[8]]}
+
+function transpose(m) {return [
+	m[0], m[3], m[6],   m[1], m[4], m[7],   m[2], m[5], m[8]]}
 
 function rotateX(angle) {
 	angle *= DEGREE

@@ -139,15 +139,15 @@ UI.hereButton.onclick = () => navigator.geolocation.getCurrentPosition(p => {
 
 UI.yearSlider.oninput = () => {
 	param.year = parseInt(UI.yearSlider.value)
+	if(param.month === 2 && param.day === 29 && getYearDays() !== 366) {
+		param.month = 2
+		param.day = 28}
 	updateYear()
-	if(param.dayOfYear > 59) {
-		let d = param.totalDays - param.totalDays
-		if(d !== 0) param.dayOfYear += d > 0 ? 1 : -1}
 	render()}
 
 UI.dayOfYearSlider.oninput = () => {
 	param.dayOfYear = parseInt(UI.dayOfYearSlider.value)
-	let days = [31, param.totalDays === 366 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+	let days = getMonthDays()
 	param.day = param.dayOfYear
 	param.month = 1
 	while(param.day > days[param.month - 1]) {param.day -= days[param.month - 1]; param.month++}
@@ -161,6 +161,7 @@ UI.timeSlider.oninput = () => {
 
 UI.nowButton.onclick = () => {
 	setDateTime()
+	centerViewOnSun()
 	render()}
 
 UI.sky.onpointerdown = e => {
@@ -231,154 +232,269 @@ window.onresize = () => {
 	render()}
 
 document.querySelectorAll(".setButton").forEach(e => {e.onclick = () => {
+	let [h, m, s] = toDMS(param.time / 15, 24)
+	modal.temp.fallback = null
+	modal.temp.year = param.year
+	modal.temp.month = param.month
+	modal.temp.day = param.day
+	modal.temp.hour = h
+	modal.temp.minute = m
+	modal.temp.longitude = param.longitude
+	modal.temp.julianDay = param.julianDay
 	UI.latitudeInput.value = formatSignedAngleDecimal(param.latitude, 2).replace("°", "")
-	UI.longitudeInput.value = formatSignedAngleDecimal(param.longitude, 2).replace("°", "")
+	UI.longitudeInput.value = formatSignedAngleDecimal(modal.temp.longitude, 2).replace("°", "")
+	UI.timeZoneInput.textContent = UI.timeZoneValue.textContent
 	UI[param.year < 1 ? "eraBC" : "eraAD"].checked = true
 	UI.yearInput.value = param.year > 0 ? param.year : Math.abs(param.year - 1)
 	UI.monthInput.value = param.month
 	UI.dayInput.value = param.day
-	let [h, m, s] = toDMS(param.time / 15, 24)
 	UI.hourInput.value = String(h).padStart(2, "0")
 	UI.minuteInput.value = String(m).padStart(2, "0")
-	UI.julianDayInput.value = param.julianDay.toFixed(5)
-	drawWorldMap()
+	UI.julianDayInput.value = modal.temp.julianDay < 0 ? "−" + Math.abs(modal.temp.julianDay).toFixed(5) : modal.temp.julianDay.toFixed(5)
+	updateModal()
 	UI.modalBackground.style.display = "flex"}})
 UI.modalSetButton.onclick = () => {
 	param.latitude = Number(UI.latitudeInput.value.replace("−", "-"))
 	updateLatitude()
-	param.longitude = Number(UI.longitudeInput.value.replace("−", "-"))
+	param.longitude = modal.temp.longitude
 	updateLongitude()
-	let y = Number(UI.yearInput.value)
-	param.year = UI.eraBC.checked ? 1 - y : y
-	param.month = Number(UI.monthInput.value)
-	param.day = Number(UI.dayInput.value)
-	param.time = 15 * (Number(UI.hourInput.value) + Number(UI.minuteInput.value) / 60)
+	param.year = modal.temp.year
+	param.month = modal.temp.month
+	param.day = modal.temp.day
+	param.time = 15 * (modal.temp.hour + modal.temp.minute / 60)
 	updateYear()
 	render()
 	UI.modalBackground.style.display = "none"}
 UI.modalCancelButton.onclick = () => {
 	UI.modalBackground.style.display = "none"}
 
-let prevValue
+resize()
+render()
 
-UI.latitudeInput.onfocus = () => {prevValue = UI.latitudeInput.value}
+function setJulianDayModal() {
+	modal.temp.julianDay = getJulianDay(modal.temp.year, modal.temp.month, modal.temp.day,
+		15 * (modal.temp.hour + modal.temp.minute / 60), Math.round(modal.temp.longitude / 15))
+	UI.julianDayInput.value = modal.temp.julianDay < 0 ?
+		"−" + Math.abs(modal.temp.julianDay).toFixed(5) : modal.temp.julianDay.toFixed(5)
+	updateModal()}
+
+function setLocationFromMap(event) {
+	let map = UI.worldMap.getBoundingClientRect()
+	let lat = Math.round((90 - clip(event.clientY - map.top, 0, map.height) / map.height * 180) * 100) / 100
+	UI.latitudeInput.value = formatSignedAngleDecimal(lat, 2).replace("°", "")
+	let lon = Math.round((clip(event.clientX - map.left, 0, map.width) / map.width * 360 - 180) * 100) / 100
+	modal.temp.longitude = lon === -180 ? 180 : lon
+	let al = Math.abs(modal.temp.longitude)
+	UI.longitudeInput.value = al < 0.005 ? "0.00" : Math.abs(al - 180) < 0.005 ?
+		"180.00" : (modal.temp.longitude > 0 ? "+" : "−") + al.toFixed(2)
+	let tz = Math.round(modal.temp.longitude / 15)
+	UI.timeZoneInput.textContent = tz === 0 ? "UTC" : "UTC" + (tz >= 0 ? "+" : "−") + Math.abs(tz)
+	setJulianDayModal()}
+
+UI.worldMap.onpointerdown = e => {
+	if(e.button !== 0) return
+	e.preventDefault()
+	UI.worldMap.setPointerCapture(e.pointerId)
+	UI.worldMap.dataset.dragging = "true"
+	setLocationFromMap(e)}
+UI.worldMap.onpointermove = e => {
+	if(UI.worldMap.dataset.dragging !== "true") return
+	e.preventDefault()
+	setLocationFromMap(e)}
+UI.worldMap.onpointerup = e => {
+	UI.worldMap.dataset.dragging = "false"
+	if(UI.worldMap.hasPointerCapture(e.pointerId))
+		UI.worldMap.releasePointerCapture(e.pointerId)}
+UI.worldMap.onpointercancel = UI.worldMap.onpointerup
+
+function parseNumber(e, fallback = modal.temp.fallback) {
+	let n = Number(e.value.trim().replace("−", "-"))
+	if(!Number.isFinite(n)) n = Number(String(fallback).replace("−", "-"))
+	return Number.isFinite(n) ? n : null}
+
+function addNudgeListeners(elem, step) {
+	elem.onfocus = () => {modal.temp.fallback = elem.value}
+	elem.onkeydown = e => {
+		if(e.key !== "ArrowUp" && e.key !== "ArrowDown") return
+		e.preventDefault()
+		step(e.key === "ArrowUp" ? 1 : -1)
+		modal.temp.fallback = elem.value}
+	elem.addEventListener("wheel", e => {
+		e.preventDefault()
+		step(e.deltaY < 0 ? 1 : -1)
+		modal.temp.fallback = elem.value}, {passive: false})}
+
 UI.latitudeInput.onchange = () => {
-	let v = UI.latitudeInput.value.trim().replace("−", "-")
-	let l = Number(v)
-	if(v === "" || !Number.isFinite(l) || l < -90 || l > 90) {
+	let l = parseNumber(UI.latitudeInput, "")
+	if(l === null || l < -90 || l > 90) {
 		alert("Please enter a valid latitude from −90° to +90°.")
-		UI.latitudeInput.value = prevValue
+		UI.latitudeInput.value = modal.temp.fallback
 		UI.latitudeInput.select()}
 	else {
-		UI.latitudeInput.value = formatSignedAngleDecimal(Math.round(l * 100) / 100, 2).replace("°", "")
-		drawWorldMap()}}
+		UI.latitudeInput.value = formatSignedAngleDecimal(
+			Math.round(l * 100) / 100, 2).replace("°", "")
+		updateModal()}}
+addNudgeListeners(UI.latitudeInput, step => {
+	let l = parseNumber(UI.latitudeInput)
+	if(l === null) return
+	UI.latitudeInput.value = formatSignedAngleDecimal(
+			Math.round(clip(l + step, -90, 90) * 100) / 100, 2).replace("°", "")
+	updateModal()})
 
-UI.longitudeInput.onfocus = () => {prevValue = UI.longitudeInput.value}
+function updateLongitudeModal(longitude) {
+	let l = Math.round(longitude * 100) / 100
+	modal.temp.longitude = l === -180 ? 180 : l
+	let a = Math.abs(modal.temp.longitude)
+	UI.longitudeInput.value = a < 0.005 ? "0.00" : Math.abs(a - 180) < 0.005 ?
+		"180.00" : (modal.temp.longitude > 0 ? "+" : "−") + a.toFixed(2)
+	let tz = Math.round(modal.temp.longitude / 15)
+	UI.timeZoneInput.textContent = tz === 0 ? "UTC" : "UTC" + (tz >= 0 ? "+" : "−") + Math.abs(tz)
+	setJulianDayModal()}
+
 UI.longitudeInput.onchange = () => {
-	let v = UI.longitudeInput.value.trim().replace("−", "-")
-	let l = Number(v)
-	if(v === "" || !Number.isFinite(l) || l < -180 || l > 180) {
+	let l = parseNumber(UI.longitudeInput, "")
+	if(l === null || l < -180 || l > 180) {
 		alert("Please enter a valid longitude from −180° to +180°.")
-		UI.longitudeInput.value = prevValue
+		UI.longitudeInput.value = modal.temp.fallback
 		UI.longitudeInput.select()}
-	else {
-		l = Math.round(l * 100) / 100
-		l = l === -180 ? 180 : l
-		let al = Math.abs(l)
-		UI.longitudeInput.value = al < 0.005 ? "0.00" : Math.abs(al - 180) < 0.005 ?
-			"180.00" : (l > 0 ? "+" : "−") + al.toFixed(2)
-		updateJulianDayInput()}}
+	else updateLongitudeModal(l)}
+addNudgeListeners(UI.longitudeInput, step => {
+	let l = parseNumber(UI.longitudeInput)
+	if(l === null) return
+	updateLongitudeModal(mod(l + step, 360, -180))})
 
-if(UI.worldMap) {
-	UI.worldMap.onpointerdown = e => {
-		e.preventDefault()
-		UI.worldMap.setPointerCapture(e.pointerId)
-		UI.worldMap.dataset.dragging = "true"
-		setLocationFromMap(e)}
-	UI.worldMap.onpointermove = e => {
-		if(UI.worldMap.dataset.dragging !== "true") return
-		e.preventDefault()
-		setLocationFromMap(e)}
-	UI.worldMap.onpointerup = e => {
-		UI.worldMap.dataset.dragging = "false"
-		if(UI.worldMap.hasPointerCapture(e.pointerId)) UI.worldMap.releasePointerCapture(e.pointerId)}
-	UI.worldMap.onpointercancel = UI.worldMap.onpointerup}
+function setDayModal() {
+	modal.temp.day = clip(modal.temp.day, 1, getMonthDays(getYearDays(modal.temp.year))[modal.temp.month - 1])
+	UI.dayInput.value = modal.temp.day
+	setJulianDayModal()}
 
-["eraAD", "eraBC"].forEach(id => {UI[id].onchange = () => updateJulianDayInput()})
+["eraAD", "eraBC"].forEach(id => {UI[id].onchange = () => {
+	let y = Math.round(parseNumber(UI.yearInput))
+	if(!Number.isFinite(y) || y < 1 || y > 5000) {
+		UI.yearInput.value = modal.temp.fallback
+		UI.yearInput.select()
+		return}
+	modal.temp.year = UI.eraBC.checked ? 1 - y : y
+	setDayModal()}})
 
-UI.yearInput.onfocus = () => {prevValue = UI.yearInput.value}
+function updateYearModal(year, refresh = true) {
+	let y = Math.round(year)
+	modal.temp.year = y
+	UI[y < 1 ? "eraBC" : "eraAD"].checked = true
+	UI.yearInput.value = y > 0 ? y : Math.abs(y - 1)
+	if(refresh) setDayModal()}
+
 UI.yearInput.onchange = () => {
-	let v = UI.yearInput.value.trim()
-	if(!/^\d+$/.test(v) || Number(v) < 1 || Number(v) > 5000) {
+	let y = parseNumber(UI.yearInput, "")
+	if(y === null || y < 1 || y > 5000) {
 		alert("Please enter a valid year number from 1 to 5000.")
-		UI.yearInput.value = prevValue
+		UI.yearInput.value = modal.temp.fallback
 		UI.yearInput.select()}
-	else {
-		UI.yearInput.value = Math.round(Number(v))
-		updateJulianDayInput()}}
+	else updateYearModal(UI.eraBC.checked ? 1 - y : y)}
+addNudgeListeners(UI.yearInput, step => {
+	let y = parseNumber(UI.yearInput)
+	if(y === null) return
+	updateYearModal(clip(modal.temp.year + step,
+		Number(UI.yearSlider.min), Number(UI.yearSlider.max)))})
 
-UI.monthInput.onfocus = () => {prevValue = UI.monthInput.value}
+function updateMonthModal(month, refresh = true) {
+	let m = Math.round(month)
+	let y = modal.temp.year
+	while(m > 12) {m -= 12; y++}
+	while(m < 1) {m += 12; y--}
+	if(y < Number(UI.yearSlider.min)) {y = Number(UI.yearSlider.min); m = 1}
+	if(y > Number(UI.yearSlider.max)) {y = Number(UI.yearSlider.max); m = 12}
+	modal.temp.month = m
+	UI.monthInput.value = m
+	updateYearModal(y, refresh)}
+
 UI.monthInput.onchange = () => {
-	let v = UI.monthInput.value.trim()
-	if(!/^\d+$/.test(v) || Number(v) < 1 || Number(v) > 12) {
+	let m = parseNumber(UI.monthInput, "")
+	if(m === null || m < 1 || m > 12) {
 		alert("Please enter a valid month number from 1 to 12.")
-		UI.monthInput.value = prevValue
+		UI.monthInput.value = modal.temp.fallback
 		UI.monthInput.select()}
-	else {
-		UI.monthInput.value = Math.round(Number(v))
-		updateJulianDayInput()}}
+	else updateMonthModal(m)}
+addNudgeListeners(UI.monthInput, step => {
+	updateMonthModal(modal.temp.month + step)})
 
-UI.dayInput.onfocus = () => {prevValue = UI.dayInput.value}
+function updateDayModal(day) {
+	let d = Math.round(day)
+	let m = modal.temp.month
+	let days = getMonthDays(getYearDays(modal.temp.year))
+	while(d < 1 || d > days[m - 1]) {
+		let forward = d > days[m - 1]
+		if(forward) d -= days[m - 1]
+		let y0 = modal.temp.year, m0 = m
+		updateMonthModal(m + (forward ? 1 : -1), false)
+		m = modal.temp.month
+		if(modal.temp.year !== y0) days = getMonthDays(getYearDays(modal.temp.year))
+		if(modal.temp.year === y0 && m === m0) {d = forward ? days[m - 1] : 1; break}
+		if(!forward) d += days[m - 1]}
+	modal.temp.day = d
+	UI.dayInput.value = modal.temp.day
+	setJulianDayModal()}
+
 UI.dayInput.onchange = () => {
-	let v = UI.dayInput.value.trim()
-	let x = [31, param.totalDays === 366 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][UI.monthInput.value - 1]
-	if(!/^\d+$/.test(v) || Number(v) < 1 || Number(v) > x) {
-		alert("Please enter a valid day number from 1 to " + x + ".")
-		UI.dayInput.value = prevValue
+	let d = parseNumber(UI.dayInput, "")
+	if(d === null) {
+		alert("Please enter a valid day number.")
+		UI.dayInput.value = modal.temp.fallback
 		UI.dayInput.select()}
-	else {
-		UI.dayInput.value = Math.round(Number(v))
-		updateJulianDayInput()}}
+	else updateDayModal(d)}
+addNudgeListeners(UI.dayInput, step => {
+	updateDayModal(modal.temp.day + step)})
 
-UI.hourInput.onfocus = () => {prevValue = UI.hourInput.value}
+function updateJulianDayModal(jd) {
+	jd = clip(jd, -104788, 3547638)
+	modal.temp.julianDay = jd
+	UI.julianDayInput.value = jd < 0 ? "−" + Math.abs(jd).toFixed(5) : jd.toFixed(5)
+	let [Y, M, D, t] = getGregorian(jd, modal.temp.longitude)
+	let [h, m, s] = toDMS(t / 15, 24)
+	updateYearModal(Y, false)
+	modal.temp.month = M
+	UI.monthInput.value = M
+	modal.temp.day = D
+	UI.dayInput.value = D
+	modal.temp.hour = h
+	UI.hourInput.value = String(h).padStart(2, "0")
+	modal.temp.minute = m
+	UI.minuteInput.value = String(m).padStart(2, "0")
+	updateModal()}
+
 UI.hourInput.onchange = () => {
-	let v = UI.hourInput.value.trim()
-	if(!/^\d+$/.test(v) || Number(v) < 0 || Number(v) > 23) {
+	let h = parseNumber(UI.hourInput, "")
+	if(h === null || h < 0 || h > 23) {
 		alert("Please enter a valid hour number from 0 to 23.")
-		UI.hourInput.value = prevValue
+		UI.hourInput.value = modal.temp.fallback
 		UI.hourInput.select()}
 	else {
-		updateJulianDayInput()
-		UI.hourInput.value = String(Math.round(Number(v))).padStart(2, "0")}}
+		modal.temp.hour = Math.round(h)
+		UI.hourInput.value = String(modal.temp.hour).padStart(2, "0")
+		setJulianDayModal()}}
+addNudgeListeners(UI.hourInput, step => {
+	updateJulianDayModal(Math.round((modal.temp.julianDay + step / 24) * 1440) / 1440)})
 
-UI.minuteInput.onfocus = () => {prevValue = UI.minuteInput.value}
 UI.minuteInput.onchange = () => {
-	let v = UI.minuteInput.value.trim()
-	if(!/^\d+$/.test(v) || Number(v) < 0 || Number(v) > 59) {
+	let m = parseNumber(UI.minuteInput, "")
+	if(m === null || m < 0 || m > 59) {
 		alert("Please enter a valid minute number from 0 to 59.")
-		UI.minuteInput.value = prevValue
+		UI.minuteInput.value = modal.temp.fallback
 		UI.minuteInput.select()}
 	else {
-		updateJulianDayInput()
-		UI.minuteInput.value = String(Math.round(Number(v))).padStart(2, "0")}}
+		modal.temp.minute = Math.round(m)
+		UI.minuteInput.value = String(modal.temp.minute).padStart(2, "0")
+		setJulianDayModal()}}
+addNudgeListeners(UI.minuteInput, step => {
+	updateJulianDayModal(Math.round((modal.temp.julianDay + step / 1440) * 1440) / 1440)})
 
-UI.julianDayInput.onfocus = () => {prevValue = UI.julianDayInput.value}
 UI.julianDayInput.onchange = () => {
-	let v = UI.julianDayInput.value.trim().replace("−", "-")
-	let jd = Number(v)
-	if(v === "" || !Number.isFinite(jd) || jd < -104788 || jd > 3547638) {
+	let jd = parseNumber(UI.julianDayInput, "")
+	if(jd === null || jd < -104788 || jd > 3547638) {
 		alert("Please enter a valid Julian day between -104,788 and 3,547,638.")
-		UI.julianDayInput.value = prevValue
+		UI.julianDayInput.value = modal.temp.fallback
 		UI.julianDayInput.select()}
 	else {
-		UI.julianDayInput.value = jd < 0 ? "−" + Math.abs(jd).toFixed(5) : jd.toFixed(5)
-		let year, month, day, time
-		[year, month, day, time] = toGregorian(jd, UI.longitudeInput.value.replace("−", "-"))
-		UI[year < 1 ? "eraBC" : "eraAD"].checked = true
-		UI.yearInput.value = year > 0 ? year : Math.abs(year - 1)
-		UI.monthInput.value = month
-		UI.dayInput.value = day
-		let [h, m, s] = toDMS(time / 15, 24)
-		UI.hourInput.value = String(h).padStart(2, "0")
-		UI.minuteInput.value = String(m).padStart(2, "0")
-		drawWorldMap()}}
+		updateJulianDayModal(jd)}}
+addNudgeListeners(UI.julianDayInput, step => {
+	updateJulianDayModal(modal.temp.julianDay + step)})

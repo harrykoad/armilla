@@ -5,24 +5,29 @@ const EARTH_A = 6378.137
 const EARTH_E2 = 0.00669438
 const KM_PER_AU = 149597870.7
 const MASS_FACTOR = -82.34295832198312
+const MOON_R = 1737.4
+const SUN_R = 695700
 let geoObserver = [0, 0, 0]
 
-function getGeoObserver(sidereal) {
-	let p = param.latitude * DEGREE
+function getGeoObserver(
+	sidereal = param.sidereal, latitude = param.latitude,
+	ayanamsa = param.ayanamsa, obliquity = param.obliquity) {
+	let p = latitude * DEGREE
 	let t = sidereal * DEGREE
-	let sp = Math.sin(p), cp = Math.cos(p)
-	let r = EARTH_A / Math.sqrt(1 - EARTH_E2 * sp * sp)
-	return toNirayana([r * cp * Math.cos(t), r * cp * Math.sin(t),
-		r * (1 - EARTH_E2) * sp].map(n => n / KM_PER_AU))}
+	let cp = Math.cos(p), sp = Math.sin(p)
+	return mdot(transpose(mul(rotateX(obliquity), rotateZ(-ayanamsa))),
+		scale([cp * Math.cos(t), cp * Math.sin(t), sp * (1 - EARTH_E2)],
+		EARTH_A / Math.sqrt(1 - EARTH_E2 * sp * sp) / KM_PER_AU))}
 
-function getTopoLagna() {
-	let m = mul(matrix.toHorizontal, matrix.fromNirayana)
-	let l = mod(Math.atan2(-m[6], m[7]) / DEGREE, 360)
-	let n = toXYZ(l, 0)
-	return dot(m, n)[0] >= 0 ? n : [-n[0], -n[1], -n[2]]}
+function getTopoLagna(
+	sidereal = param.sidereal, latitude = param.latitude,
+	ayanamsa = param.ayanamsa, obliquity = param.obliquity) {
+	let m = mul(mul(rotateX(-(90 - latitude)), rotateZ(-(90 + sidereal))),
+		mul(rotateX(obliquity), rotateZ(-ayanamsa)))
+	let n = toXYZ(mod(Math.atan2(-m[6], m[7]) / DEGREE, 360), 0)
+	return mdot(m, n)[0] >= 0 ? n : negate(n)}
 
-function geoMoon(julianCentury) {
-	let jc = julianCentury
+function geoMoon(jc = param.julianCentury) {
 	let lp = mod(218.3166328333 + jc * (1732559343.3328 - jc *
 		( 6.8700 - jc * (0.006604 - 0.00003169 * jc))) / 3600, 360) * DEGREE
 	let d =  mod(297.8501917222 + jc * (1602961601.0312 - jc *
@@ -34,26 +39,26 @@ function geoMoon(julianCentury) {
 	let f =  mod( 93.2720976944 + jc * (1739527263.2179 - jc *
 		(13.2293 + jc * (0.001021 - 0.00000417 * jc))) / 3600, 360) * DEGREE
 	let n = [
-		[ 0,  0,  0,  1], [ 0,  0,  0,  2], [ 0,  0,  0,  3], [ 0,  0,  1, -3], [ 0,  0,  1, -2], [ 0,  0,  1, -1],
-		[ 0,  0,  1,  0], [ 0,  0,  1,  1], [ 0,  0,  1,  2], [ 0,  0,  1,  3], [ 0,  0,  2, -2], [ 0,  0,  2, -1],
-		[ 0,  0,  2,  0], [ 0,  0,  2,  1], [ 0,  0,  2,  2], [ 0,  0,  3, -1], [ 0,  0,  3,  0], [ 0,  0,  3,  1],
-		[ 0,  0,  4,  0], [ 0,  1, -2, -1], [ 0,  1, -2,  0], [ 0,  1, -1, -1], [ 0,  1, -1,  0], [ 0,  1, -1,  1],
-		[ 0,  1,  0, -1], [ 0,  1,  0,  0], [ 0,  1,  0,  1], [ 0,  1,  1, -1], [ 0,  1,  1,  0], [ 0,  1,  1,  1],
-		[ 0,  1,  2,  0], [ 0,  1,  2,  1], [ 0,  2, -1,  0], [ 0,  2,  0,  0], [ 0,  2,  1,  0], [ 1,  0, -2,  0],
-		[ 1,  0, -1, -1], [ 1,  0, -1,  0], [ 1,  0,  0, -1], [ 1,  0,  0,  0], [ 1,  0,  0,  1], [ 1,  0,  1, -1],
-		[ 1,  0,  1,  0], [ 1,  0,  1,  1], [ 1,  1, -1,  0], [ 1,  1,  0, -1], [ 1,  1,  0,  0], [ 1,  1,  0,  1],
-		[ 1,  1,  1,  0], [ 2, -2, -1,  0], [ 2, -2,  0, -1], [ 2, -2,  0,  0], [ 2, -2,  0,  1], [ 2, -1, -2, -1],
-		[ 2, -1, -2,  0], [ 2, -1, -1, -1], [ 2, -1, -1,  0], [ 2, -1, -1,  1], [ 2, -1,  0, -2], [ 2, -1,  0, -1],
-		[ 2, -1,  0,  0], [ 2, -1,  0,  1], [ 2, -1,  1, -1], [ 2, -1,  1,  0], [ 2, -1,  1,  1], [ 2, -1,  2,  0],
-		[ 2,  0, -3, -1], [ 2,  0, -3,  0], [ 2,  0, -2, -1], [ 2,  0, -2,  0], [ 2,  0, -2,  1], [ 2,  0, -1, -2],
-		[ 2,  0, -1, -1], [ 2,  0, -1,  0], [ 2,  0, -1,  1], [ 2,  0, -1,  2], [ 2,  0,  0, -3], [ 2,  0,  0, -2],
-		[ 2,  0,  0, -1], [ 2,  0,  0,  0], [ 2,  0,  0,  1], [ 2,  0,  0,  2], [ 2,  0,  1, -2], [ 2,  0,  1, -1],
-		[ 2,  0,  1,  0], [ 2,  0,  1,  1], [ 2,  0,  2, -1], [ 2,  0,  2,  0], [ 2,  0,  2,  1], [ 2,  0,  3,  0],
-		[ 2,  1, -2,  0], [ 2,  1, -1, -1], [ 2,  1, -1,  0], [ 2,  1, -1,  1], [ 2,  1,  0, -2], [ 2,  1,  0, -1],
-		[ 2,  1,  0,  0], [ 2,  1,  0,  1], [ 2,  1,  1, -1], [ 2,  1,  1,  0], [ 2,  2, -1,  0], [ 3,  0, -2,  0],
-		[ 3,  0, -1,  0], [ 4, -1, -2,  0], [ 4, -1, -1, -1], [ 4, -1, -1,  0], [ 4, -1,  0, -1], [ 4, -1,  0,  0],
-		[ 4,  0, -3,  0], [ 4,  0, -2, -1], [ 4,  0, -2,  0], [ 4,  0, -2,  1], [ 4,  0, -1, -1], [ 4,  0, -1,  0],
-		[ 4,  0, -1,  1], [ 4,  0,  0, -1], [ 4,  0,  0,  0], [ 4,  0,  0,  1], [ 4,  0,  1, -1], [ 4,  0,  1,  0]]
+		[0,  0,  0,  1], [0,  0,  0,  2], [0,  0,  0,  3], [0,  0,  1, -3], [0,  0,  1, -2], [0,  0,  1, -1],
+		[0,  0,  1,  0], [0,  0,  1,  1], [0,  0,  1,  2], [0,  0,  1,  3], [0,  0,  2, -2], [0,  0,  2, -1],
+		[0,  0,  2,  0], [0,  0,  2,  1], [0,  0,  2,  2], [0,  0,  3, -1], [0,  0,  3,  0], [0,  0,  3,  1],
+		[0,  0,  4,  0], [0,  1, -2, -1], [0,  1, -2,  0], [0,  1, -1, -1], [0,  1, -1,  0], [0,  1, -1,  1],
+		[0,  1,  0, -1], [0,  1,  0,  0], [0,  1,  0,  1], [0,  1,  1, -1], [0,  1,  1,  0], [0,  1,  1,  1],
+		[0,  1,  2,  0], [0,  1,  2,  1], [0,  2, -1,  0], [0,  2,  0,  0], [0,  2,  1,  0], [1,  0, -2,  0],
+		[1,  0, -1, -1], [1,  0, -1,  0], [1,  0,  0, -1], [1,  0,  0,  0], [1,  0,  0,  1], [1,  0,  1, -1],
+		[1,  0,  1,  0], [1,  0,  1,  1], [1,  1, -1,  0], [1,  1,  0, -1], [1,  1,  0,  0], [1,  1,  0,  1],
+		[1,  1,  1,  0], [2, -2, -1,  0], [2, -2,  0, -1], [2, -2,  0,  0], [2, -2,  0,  1], [2, -1, -2, -1],
+		[2, -1, -2,  0], [2, -1, -1, -1], [2, -1, -1,  0], [2, -1, -1,  1], [2, -1,  0, -2], [2, -1,  0, -1],
+		[2, -1,  0,  0], [2, -1,  0,  1], [2, -1,  1, -1], [2, -1,  1,  0], [2, -1,  1,  1], [2, -1,  2,  0],
+		[2,  0, -3, -1], [2,  0, -3,  0], [2,  0, -2, -1], [2,  0, -2,  0], [2,  0, -2,  1], [2,  0, -1, -2],
+		[2,  0, -1, -1], [2,  0, -1,  0], [2,  0, -1,  1], [2,  0, -1,  2], [2,  0,  0, -3], [2,  0,  0, -2],
+		[2,  0,  0, -1], [2,  0,  0,  0], [2,  0,  0,  1], [2,  0,  0,  2], [2,  0,  1, -2], [2,  0,  1, -1],
+		[2,  0,  1,  0], [2,  0,  1,  1], [2,  0,  2, -1], [2,  0,  2,  0], [2,  0,  2,  1], [2,  0,  3,  0],
+		[2,  1, -2,  0], [2,  1, -1, -1], [2,  1, -1,  0], [2,  1, -1,  1], [2,  1,  0, -2], [2,  1,  0, -1],
+		[2,  1,  0,  0], [2,  1,  0,  1], [2,  1,  1, -1], [2,  1,  1,  0], [2,  2, -1,  0], [3,  0, -2,  0],
+		[3,  0, -1,  0], [4, -1, -2,  0], [4, -1, -1, -1], [4, -1, -1,  0], [4, -1,  0, -1], [4, -1,  0,  0],
+		[4,  0, -3,  0], [4,  0, -2, -1], [4,  0, -2,  0], [4,  0, -2,  1], [4,  0, -1, -1], [4,  0, -1,  0],
+		[4,  0, -1,  1], [4,  0,  0, -1], [4,  0,  0,  0], [4,  0,  0,  1], [4,  0,  1, -1], [4,  0,  1,  0]]
 	let lc = [0, -114332, 0, 0, 10980, 0, 6288774, 0, -12528, 0, -381, 0, 213618, 0, -1110, 0, 10034, 0, 537,
 		0, -2689, 0, -40923, 0, 0, -185116, 0, 0, -30383, 0, -2120, 0, -713, -2069, -323, -487, 0, -5163, 0,
 		-34720, 0, 0, -2348, 0, 299, 0, 4987, 0, 351, 2048, 0, 2236, 0, 0, 2390, 0, 57066, 0, 596, 0, 45758, 0, 0,
@@ -72,9 +77,7 @@ function geoMoon(julianCentury) {
 		0, 0, 14403, 0, 246158, 0, 8752, 0, -3699111, 0, 0, 0, 10321, 0, -2955968, 0, 0, 4130, 0, -170733, 0, 0,
 		-10445, 0, 0, 0, 0, 24208, 0, 0, 0, 30824, 0, 0, 2616, 2354, 0, 3258, -1897, 0, -3958, 0, -1571, 0, 0,
 		-21636, 0, 0, -34782, 0, 0, -11650, 0, 0, -1423]
-	let l = 0
-	let b = 0
-	let rM = 385000.56
+	let l = 0, b = 0, rM = 385000.56
 	for(let k = 0; k < n.length; k++) {
 		let e = (1 - 0.002516 * jc - 0.0000074 * jc * jc) ** Math.abs(n[k][1])
 		let arg = n[k][0] * d + n[k][1] * m + n[k][2] * mp + n[k][3] * f
@@ -89,39 +92,35 @@ function geoMoon(julianCentury) {
 	b = (b - 2235 * Math.sin(lp) + 382 * Math.sin(ae) + 175 * Math.sin(av - f) + 175 * Math.sin(av + f) +
 		127 * Math.sin(lp - mp) - 115 * Math.sin(lp + mp)) / 1000000
 	rM /= KM_PER_AU
-	let vM = toXYZ(l, b)
-	vM = [vM[0] * rM, vM[1] * rM, vM[2] * rM]
-	let vR = toXYZ(mod(125.0445351389 - jc * (6967919.8851 - jc * (6.3593 + jc * (0.007625 - 0.00003586 * jc))) / 3600 -
-		1.4979 * Math.sin(2 * (d - f)) - 0.1500 * Math.sin(m) - 0.1226 * Math.sin(2 * d)
-		+ 0.1176 * Math.sin(2 * f) - 0.0801 * Math.sin(2 * (mp - f)), 360), 0)
-	vR = [vR[0] * rM, vR[1] * rM, vR[2] * rM]
-	return [vM, vR].map(p => dot(rotateZ(param.ayanamsaJ2000), p))}
+	let vM = scale(toXYZ(l, b), rM)
+	let vR = scale(toXYZ(mod(125.0445351389 -
+		jc * (6967919.8851 - jc * (6.3593 + jc * (0.007625 - 0.00003586 * jc))) / 3600 -
+		1.4979 * Math.sin(2 * (d - f)) - 0.1500 * Math.sin(m) - 0.1226 * Math.sin(2 * d) +
+		0.1176 * Math.sin(2 * f) - 0.0801 * Math.sin(2 * (mp - f)), 360), 0), rM)
+	return [vM, vR].map(p => mdot(rotateZ(param.ayanamsaJ2000), p))}
 
 function trueAnomaly(meanAnomaly, e) {
 	let M = meanAnomaly * DEGREE
 	let E = M
 	for(let k = 0; k < 5; k++)
 		E -= (E - e * Math.sin(E) - M) / (1 - e * Math.cos(E))
-	return 2 * Math.atan2(
-		Math.sqrt(1 + e) * Math.sin(E / 2),
+	return 2 * Math.atan2(Math.sqrt(1 + e) * Math.sin(E / 2),
 		Math.sqrt(1 - e) * Math.cos(E / 2)) / DEGREE}
 
 function helioDistance(trueAnomaly, a, e) {
 	return a * (1 - e * e) / (1 + e * Math.cos(trueAnomaly * DEGREE))}
 
-function helioEMB(julianCentury) {
-	let jc = julianCentury
+function helioEMB(jc = param.julianCentury) {
 	let a =  1.00000018 - 0.00000003 * jc
 	let e =  0.01673163 - 0.00003661 * jc
 	let i = -0.00054346 - 0.01337178 * jc
 	let omg = 108.04266274 + 0.55919116 * jc
 	let OMG = - 5.11260389 - 0.24123856 * jc
 	let nu = trueAnomaly(mod(-2.46314313 + 35999.05511069 * jc, 360), e)
-	let r = helioDistance(nu, a, e)
-	return dot(mul(rotateZ(OMG + param.ayanamsaJ2000), mul(rotateX(i), rotateZ(nu + omg))), [r, 0, 0])}
+	return mdot(mul(rotateZ(OMG + param.ayanamsaJ2000), mul(rotateX(i), rotateZ(nu + omg))),
+		[helioDistance(nu, a, e), 0, 0])}
 
-function helioPlanets(julianCentury) {
-	let jc = julianCentury
+function helioPlanets(jc = param.julianCentury) {
 	let a = [0.38709843,
 		0.72332102 - 0.00000026 * jc,  1.52371243 + 0.00000097 * jc,  5.20248019 - 0.00002864 * jc,
 		9.54149883 - 0.00003065 * jc, 19.18797948 - 0.00020455 * jc, 30.06952752 + 0.00006447 * jc]
@@ -147,53 +146,23 @@ function helioPlanets(julianCentury) {
 	let OMG = [48.33961819 - 0.12214182 * jc,
 		 76.67261496 - 0.27274174 * jc,  49.71320984 - 0.26852431 * jc, 100.29282654 + 0.13024619 * jc,
 		113.63998702 - 0.25015002 * jc,  73.96250215 + 0.05739699 * jc, 131.78635853 - 0.00606302 * jc]
-	let vec = []
+	let v = []
 	for(let k = 0; k < 7; k++) {
 		let nu = trueAnomaly(mu[k], e[k])
-		let r = helioDistance(nu, a[k], e[k])
-		vec.push(dot(mul(rotateZ(OMG[k] + param.ayanamsaJ2000), mul(rotateX(i[k]), rotateZ(nu + omg[k]))), [r, 0, 0]))}
-	return vec}
+		v.push(mdot(mul(rotateZ(OMG[k] + param.ayanamsaJ2000), mul(rotateX(i[k]), rotateZ(nu + omg[k]))),
+			[helioDistance(nu, a[k], e[k]), 0, 0]))}
+	return v}
 
-function solarSystem(julianCentury) {
-	let gm = geoMoon(julianCentury)
-	let he = helioEMB(julianCentury)
-	let hp = helioPlanets(julianCentury)
-	let gs = [gm[0][0] / MASS_FACTOR - he[0], gm[0][1] / MASS_FACTOR - he[1], gm[0][2] / MASS_FACTOR - he[2]]
-	let gp = hp.map(p => [p[0] + gs[0], p[1] + gs[1], p[2] + gs[2]])
+function solarSystem(jc = param.julianCentury) {
+	let gm = geoMoon(jc)
+	let gs = translate(scale(gm[0], 1 / MASS_FACTOR), negate(helioEMB(jc)))
+	let gp = helioPlanets(jc).map(p => translate(p, gs))
 	return [/* Moon */gm[0], /*	Sun */gs, /* Mercury */gp[0], /* Venus */gp[1], /* Mars */gp[2],
 		/* Jupiter */gp[3], /* Saturn */gp[4], /* Uranus */gp[5], /* Neptune */gp[6], /* Rahu */gm[1]]}
 
-function updateSolarSystemCache() {
-	let k = param.julianDay.toFixed(10)
-	if(cache.solarSystem && cache.solarSystem.key === k) return
-	cache.solarSystem = {key: k, vectors: solarSystem(param.julianCentury)}}
-
-function analemma() {
-	let pts = []
-	let jd0 = toJulianDay(param.year, 1, 1, param.time, param.timeZone)
-	for(let d = 0; d <= 366; d += 2) {
-		let jc = (jd0 + d - 2451545) / 36525
-		let he = helioEMB(jc)
-		let gm = geoMoon(jc)[0]
-		let go = getGeoObserver(getSidereal(jc, param.longitude))
-		let ts = [gm[0] / MASS_FACTOR - he[0] - go[0], gm[1] / MASS_FACTOR - he[1] - go[1], gm[2] / MASS_FACTOR - he[2] - go[2]]
-		pts.push(normalize(dot(mul(rotateX(-(90 - param.latitude)),
-			rotateZ(-(90 + getSidereal(jc, param.longitude)))), fromNirayana(ts))))}
-	return pts.map(fromHorizontal)}
-
-function updateAnalemmaCache() {
-	let k = [param.latitude.toFixed(10), param.longitude.toFixed(10),
-		param.year, param.time.toFixed(10)].join("|")
-	if(cache.analemma && cache.analemma.key === k) return
-	cache.analemma = {key: k, vectors: analemma()}}
-
-function centerViewOnSun() {
-	let jc = param.julianCentury
-	let gm = geoMoon(jc)[0]
-	let he = helioEMB(jc)
-	let go = geoObserver
-	let [t, p] = toTP(normalize(toHorizontal(fromNirayana([gm[0] / MASS_FACTOR - he[0] - go[0],
-		gm[1] / MASS_FACTOR - he[1] - go[1], gm[2] / MASS_FACTOR - he[2] - go[2]]))))
+function centerViewOnSun(jc = param.julianCentury) {
+	let [t, p] = toTP(normalize(toHorizontal(fromNirayana(
+		translate(scale(geoMoon()[0], 1 / MASS_FACTOR), negate(translate(helioEMB(), geoObserver)))))))
 	view.yaw = mod(-t, 360)
 	view.pitch = p
 	update.view = true
@@ -376,14 +345,9 @@ function initStars() {
 		+ 4849,-24751,+20917,   +23563,-15341,-16826,   + 8713,+24623,-19786,   + 8796,+21456,-23151,   -30287,+12500,-  364,
 		-27548,+17129,- 4620,   +11491,+11859,-28302,   -30210,+12594,- 1566,   +14523,+12258,-26693,   +15410,+12636,-26011,
 		+15715,+13488,-25393]
-	return Array.from(
-		{length: s.length / 3},
-		(_, i) => {
-			let x = s[i * 3] / 32767
-			let y = s[i * 3 + 1] / 32767
-			let z = s[i * 3 + 2] / 32767
-			if(x === 0 && y === 0 && z === 0) return [0, 0, 0]
-			return fromEquatorialJ2000([x, y, z])})}
+	return Array.from({length: s.length / 3}, (_, i) => {
+		let [x, y, z] = s.slice(3 * i, 3 * i + 3)
+		return x === 0 && y === 0 && z === 0 ? [0, 0, 0] : fromEquatorialJ2000(scale([x, y, z], 1 / 32767))})}
 
 function initConstellations() {return [
 	/* And */[ 54,228,  58, 64,  58,228,  58,452,  58,658, 228,658, 228,659, 322,621, 345,646, 452,738, 458,592, 564,659, 564,677, 592,646, 621,738, 646,658],
@@ -473,3 +437,5 @@ function initConstellations() {return [
 	/* Vir */[ 14,674, 140,263, 252,282, 252,562, 252,614, 263,282, 282,468, 282,674, 329,468, 329,538, 377,614, 455,562, 468,577, 538,577],
 	/* Vol */[391,508, 391,679, 393,519, 393,679, 508,679, 519,679],
 	/* Vul */[695,755]]}
+
+centerViewOnSun()

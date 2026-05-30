@@ -2,16 +2,16 @@
 <html>
 <head>
 <meta charset="utf-8">
-<meta property="og:title" content="Armilla 1.0 Beta">
-<meta property="og:description" content="Celestial Sphere Simulator WebApp">
-<meta property="og:image" content="https://raw.githubusercontent.com/harrykoad/armilla/refs/heads/main/preview.png">
-<meta property="og:url" content="https://harrykoad.github.io/armilla/">
-<meta property="og:type" content="website">
+<meta property="og: title" content="Armilla 1.0 Beta">
+<meta property="og: description" content="Celestial Sphere Simulator WebApp">
+<meta property="og: image" content="https: //raw.githubusercontent.com/harrykoad/armilla/refs/heads/main/preview.png">
+<meta property="og: url" content="https: //harrykoad.github.io/armilla/">
+<meta property="og: type" content="website">
 <meta name="copyright" content="© 2026 Peeravit Koad. Walailak University, Nakhon Si Thammarat, THAILAND.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Armilla 1.0 Beta</title>
 <style>
-body{color-scheme: dark light; font-family: sans-serif; margin: 0; overflow: hidden; touch-action: none}
+body{color-scheme: dark light; font-family: sans-serif; margin: 0px; overflow: hidden; touch-action: none}
 canvas{cursor: grab; display: block; touch-action: none}
 canvas:active{cursor: grabbing}
 #leftPanel, #rightPanel{color: white; cursor: grab; font-size: 12px; max-height: calc(100vh - 20px);
@@ -23,13 +23,13 @@ canvas:active{cursor: grabbing}
 #leftPanel{left: 10px}
 #rightPanel{right: 10px}
 .box{background: black; border-radius: 10px; border: 1px solid gray; margin-bottom: 10px; padding: 8px}
-.columns{column-gap: 0; display: grid; grid-template-columns: 45% 55%; margin-top: 2px; row-gap: 2px}
-.row{align-items:center; display:flex; justify-content:flex-start}
+.columns{column-gap: 0px; display: grid; grid-template-columns: 45% 55%; margin-top: 2px; row-gap: 2px}
+.row{align-items: center; display: flex; justify-content: flex-start}
 #orientationDropdown{background: black; border-radius: 5px; border: 1px solid gray;
 	color: white; font-size: 12px; padding: 2px 4px}
 .colorLegend{border-radius: 50%; border: 1.5px solid white; display: inline-block; height: 12.5px;
 	margin-bottom: 5px; margin-right: 5px; vertical-align: middle; width: 12.5px}
-.horizontalLine{border-top: 1px solid gray; display: inline-block; height: 0; vertical-align: middle;
+.horizontalLine{border-top: 1px solid gray; display: inline-block; height: 0px; vertical-align: middle;
 	width: 100%}
 input[type="checkbox"]{accent-color: currentColor}
 input[type="range"]{accent-color: currentColor; cursor: pointer; height: 15px; width: 100%}
@@ -37,11 +37,11 @@ input[type="radio"] {accent-color: white}
 .sliderContainer{display: flex; flex-direction: column}
 .sliderMarks{color: gray; display: flex; font-size: 10px; height: 10px; justify-content: space-between}
 .shortButton, .setButton{background: #3b3b3b; border-radius: 6px; border: 1px solid gray; color: white;
-	cursor: pointer; font-size: 11px; height: 20px; padding: 0; text-align: center; width: 40px}
+	cursor: pointer; font-size: 11px; height: 20px; padding: 0px; text-align: center; width: 40px}
 .longButton{background: #3b3b3b; border-radius: 6px; border: 1px solid gray; color: white;
-	cursor: pointer; font-size: 11px; height: 20px; padding: 0; text-align: center; width: 80px}
+	cursor: pointer; font-size: 11px; height: 20px; padding: 0px; text-align: center; width: 80px}
 .modalBackground{align-items: center; background: rgba(255, 255, 255, 0.5); color: white; display: none;
-	height: 100%; justify-content: center; left: 0; position: fixed; top: 0; width: 100%; z-index: 10000}
+	height: 100%; justify-content: center; left: 0px; position: fixed; top: 0px; width: 100%; z-index: 10000}
 .modal{background: black; border-radius: 10px; border: 1px solid gray; color: white;
 	font-size: 12px; padding: 10px; text-align: center; user-select: none;
 	-webkit-user-select: none; -moz-user-select: none; -ms-user-select: none}
@@ -106,7 +106,7 @@ input[type="radio"] {accent-color: white}
 		<div class="row"><input type="checkbox" id="horizontalGraticuleCheckbox" checked>&nbsp;Graticule</div>
 	</div>
 	<span class="horizontalLine"></span>
-	<div class="row"><input type="checkbox" id="observerMeridianCheckbox" checked>&nbsp;Observer's Meridian</div>
+	<div class="row"><input type="checkbox" id="observerMeridianCheckbox">&nbsp;Observer's Meridian</div>
 </div>
 
 <div class="box">
@@ -130,16 +130,16 @@ input[type="radio"] {accent-color: white}
 <div id="rightPanel">
 
 <div class="box">
-	<div class="row">Latitude:&nbsp;<span id="latitudeValue">8.64° N</span></div>
+	<div class="row">Latitude: &nbsp;<span id="latitudeValue">8.64° N</span></div>
 	<input type="range" id="latitudeSlider" min="-90" max="90" step="0.01" value="8.64">
 	<div class="sliderMarks" id="latitudeMarks"><span>90° S</span><span>0°</span><span>90° N</span></div>
 	<span class="horizontalLine"></span>
-	<div class="row">Longitude:&nbsp;<span id="longitudeValue">99.90° E</span></div>
+	<div class="row">Longitude: &nbsp;<span id="longitudeValue">99.90° E</span></div>
 	<input type="range" id="longitudeSlider" min="-180" max="180" step="0.01" value="99.90">
 	<div class="sliderMarks" id="longitudeMarks"><span>180° W</span><span>0°</span><span>180° E</span></div>
 	<span class="horizontalLine"></span>
 	<div class="row"><span id="timeZoneValue">UTC+7</span>
-		<div style="display:flex; gap:5px; margin-left:auto">
+		<div style="display: flex; gap: 5px; margin-left: auto">
 			<button id="hereButton" class="shortButton">Here</button>
 			<button id="setLatLonButton" class="setButton">Set</button>
 		</div>
@@ -147,20 +147,20 @@ input[type="radio"] {accent-color: white}
 </div>
 
 <div class="box">
-	<div class="row">Year (Gregorian):&nbsp;<span id="yearValue">N/A</span></div>
+	<div class="row">Year (Gregorian): &nbsp;<span id="yearValue">N/A</span></div>
 	<input type="range" id="yearSlider" min="-4999" max="5000" step="1" value="2000">
 	<div class="sliderMarks"><span>5000 BC</span><span>1 BC | AD 1</span><span>AD 5000</span></div>
 	<span class="horizontalLine"></span>
-	<div class="row">Month & Day:&nbsp;<span id="monthDayValue">N/A</span></div>
+	<div class="row">Month & Day: &nbsp;<span id="monthDayValue">N/A</span></div>
 	<input type="range" id="dayOfYearSlider" min="1" max="365" step="1" value="1">
 	<div class="sliderMarks"><span>Jan 1</span><span>Dec 31</span></div>
 	<span class="horizontalLine"></span>
-	<div class="row">Local Time:&nbsp;<span id="timeValue">N/A</span></div>
+	<div class="row">Local Time: &nbsp;<span id="timeValue">N/A</span></div>
 	<input type="range" id="timeSlider" min="0" max="359.75" step="0.25" value="180">
-	<div class="sliderMarks"><span>00:00</span><span>12:00</span><span>23:59</span></div>
+	<div class="sliderMarks"><span>00: 00</span><span>12: 00</span><span>23: 59</span></div>
 	<span class="horizontalLine"></span>
 	<div class="row"><span id="dayOfWeekValue">N/A</span>
-		<div style="display:flex; gap:5px; margin-left:auto">
+		<div style="display: flex; gap: 5px; margin-left: auto">
 			<button id="nowButton" class="shortButton">Now</button>
 			<button id="setDateTimeButton" class="setButton">Set</button>
 		</div>
@@ -169,30 +169,30 @@ input[type="radio"] {accent-color: white}
 
 <div class="box">
 	<div class="columns" style="grid-template-columns: 50% 50%">
-		<div class="row" style="margin-left:auto">Ayanāṃśa:&nbsp;</div><span id="ayanamsaValue">N/A</span>
-		<div class="row" style="margin-left:auto">Obliquity:&nbsp;</div><span id="obliquityValue">N/A</span>
+		<div class="row" style="margin-left: auto">Ayanāṃśa: &nbsp;</div><span id="ayanamsaValue">N/A</span>
+		<div class="row" style="margin-left: auto">Obliquity: &nbsp;</div><span id="obliquityValue">N/A</span>
 	</div>
 	<span class="horizontalLine"></span>
 	<div class="columns" style="grid-template-columns: 50% 50%">
-		<div class="row" style="margin-left:auto">Julian Day:&nbsp;</div><span id="julianDayValue">N/A</span>
-		<div class="row" style="margin-left:auto">Sidereal Time:&nbsp;</div><span id="siderealValue">N/A</span>
+		<div class="row" style="margin-left: auto">Julian Day: &nbsp;</div><span id="julianDayValue">N/A</span>
+		<div class="row" style="margin-left: auto">Sidereal Time: &nbsp;</div><span id="siderealValue">N/A</span>
 	</div>
 </div>
 
 <div class="box">
 	<div class="columns" style="grid-template-columns: 50% 50%">
-		<div class="row" style="margin-left:auto">Ecliptic Lon.:&nbsp;</div><span id="eclipticLongitudeValue">N/A</span>
-		<div class="row" style="margin-left:auto">Ecliptic Lat.:&nbsp;</div><span id="eclipticLatitudeValue">N/A</span>
+		<div class="row" style="margin-left: auto">Ecliptic Lon.: &nbsp;</div><span id="eclipticLongitudeValue">N/A</span>
+		<div class="row" style="margin-left: auto">Ecliptic Lat.: &nbsp;</div><span id="eclipticLatitudeValue">N/A</span>
 	</div>
 	<span class="horizontalLine"></span>
 	<div class="columns" style="grid-template-columns: 50% 50%">
-		<div class="row" style="margin-left:auto">Right Asc.:&nbsp;</div><span id="rightAscensionValue">N/A</span>
-		<div class="row" style="margin-left:auto">Declination:&nbsp;</div><span id="declinationValue">N/A</span>
+		<div class="row" style="margin-left: auto">Right Asc.: &nbsp;</div><span id="rightAscensionValue">N/A</span>
+		<div class="row" style="margin-left: auto">Declination: &nbsp;</div><span id="declinationValue">N/A</span>
 	</div>
 	<span class="horizontalLine"></span>
 	<div class="columns" style="grid-template-columns: 50% 50%">
-		<div class="row" style="margin-left:auto">Azimuth:&nbsp;</div><span id="azimuthValue">N/A</span>
-		<div class="row" style="margin-left:auto">Altitude:&nbsp;</div><span id="altitudeValue">N/A</span>
+		<div class="row" style="margin-left: auto">Azimuth: &nbsp;</div><span id="azimuthValue">N/A</span>
+		<div class="row" style="margin-left: auto">Altitude: &nbsp;</div><span id="altitudeValue">N/A</span>
 	</div>
 </div>
 
@@ -200,27 +200,34 @@ input[type="radio"] {accent-color: white}
 
 <div id="modalBackground" class="modalBackground">
 	<div class="modal">
-		<canvas id="worldMap" width="360" height="180" style="border:1px solid gray; margin-bottom:10px; cursor:crosshair"></canvas>
-		<div class="row" style="display:flex; justify-content:center; margin-bottom:5px">
-			Latitude:&nbsp;<input type="text" id="latitudeInput" class="textInput" value="N/A" style="width:45px">&nbsp;°&nbsp;&nbsp;&nbsp;
-			Longitude:&nbsp;<input type="text" id="longitudeInput" class="textInput" value="N/A" style="width:50px">&nbsp;°
-		</div>
-		<span class="horizontalLine"></span>
-		<div class="row" style="display:flex; justify-content:center; margin-bottom:5px; margin-top:5px">Year:
-			<input type="radio" id="eraAD" name="era" value="AD" checked>AD&nbsp;
-			<input type="text" id="yearInput" class="textInput" value="N/A" style="width:40px">
-			<input type="radio" id="eraBC" name="era" value="BC">BC&nbsp;&nbsp;&nbsp;
-			Month:&nbsp;<input type="text" id="monthInput" class="textInput" value="N/A" style="width:20px">&nbsp;&nbsp;&nbsp;
-			Day:&nbsp;<input type="text" id="dayInput" class="textInput" value="N/A" style="width:20px">
-		</div>
-		<div class="row" style="display:flex; justify-content:center; margin-bottom:15px">
-			Local Time:&nbsp;<input type="text" id="hourInput" class="textInput" value="N/A" style="width:20px">
-			&nbsp;:&nbsp;<input type="text" id="minuteInput" class="textInput" value="N/A" style="width:20px">&nbsp;&nbsp;&nbsp;
-			Julian Day:&nbsp;<input type="text" id="julianDayInput" class="textInput" value="N/A" style="width:90px">
-		</div>
-		<div style="display:flex; justify-content:center">
-			<button id="modalSetButton" class="longButton">Set</button>&nbsp;&nbsp;&nbsp;
-			<button id="modalCancelButton" class="longButton">Cancel</button>
+		<div class="columns" style="column-gap: 15px; grid-template-columns: auto auto">
+			<canvas id="horaryChart" width="320" height="320" style="cursor: crosshair"></canvas>
+			<div>
+				<canvas id="lunarChart" width="360" height="75" style="cursor: default; margin-bottom: 10px"></canvas>
+				<canvas id="worldMap" width="360" height="180" style="border: 1px solid gray; cursor: crosshair; margin-bottom: 10px"></canvas>
+				<div class="row" style="display: flex; justify-content: center; margin-bottom: 5px">
+					Latitude: &nbsp;<input type="text" id="latitudeInput" class="textInput" value="N/A" style="width: 45px">&nbsp;°&nbsp;&nbsp;&nbsp;
+					Longitude: &nbsp;<input type="text" id="longitudeInput" class="textInput" value="N/A" style="width: 50px">&nbsp;°&nbsp;&nbsp;&nbsp;
+					<span id="timeZoneInput" style="display: inline-block; text-align: left; width: 45px"></span>
+				</div>
+				<span class="horizontalLine"></span>
+				<div class="row" style="display: flex; justify-content: center; margin-bottom: 5px; margin-top: 5px">Year:
+					<input type="radio" id="eraAD" name="era" value="AD" checked>AD&nbsp;
+					<input type="text" id="yearInput" class="textInput" value="N/A" style="width: 40px">
+					<input type="radio" id="eraBC" name="era" value="BC">BC&nbsp;&nbsp;&nbsp;
+					Month: &nbsp;<input type="text" id="monthInput" class="textInput" value="N/A" style="width: 20px">&nbsp;&nbsp;&nbsp;
+					Day: &nbsp;<input type="text" id="dayInput" class="textInput" value="N/A" style="width: 20px">
+				</div>
+				<div class="row" style="display: flex; justify-content: center; margin-bottom: 15px">
+					Local Time: &nbsp;<input type="text" id="hourInput" class="textInput" value="N/A" style="width: 20px">
+					&nbsp;:&nbsp;<input type="text" id="minuteInput" class="textInput" value="N/A" style="width: 20px">&nbsp;&nbsp;
+					Julian Day: &nbsp;<input type="text" id="julianDayInput" class="textInput" value="N/A" style="width: 95px">
+				</div>
+				<div style="display: flex; justify-content: center">
+					<button id="modalSetButton" class="longButton">Set</button>&nbsp;&nbsp;&nbsp;
+					<button id="modalCancelButton" class="longButton">Cancel</button>
+				</div>
+			</div>
 		</div>
 	</div>
 </div>
@@ -235,12 +242,6 @@ input[type="radio"] {accent-color: white}
 <script src="sphere.js"></script>
 <script src="modal.js"></script>
 <script src="event.js"></script>
-<script>
-	setDateTime()
-	centerViewOnSun()
-	resize()
-	render()
-</script>
 
 </body>
 </html>
