@@ -98,8 +98,7 @@ function lunarState(julianDay, latitude, longitude) {
 	let jc = (julianDay - 2451545) / 36525
 	let gm = geoMoon(jc)[0]
 	let gs = translate(scale(gm, 1 / MASS_FACTOR), negate(helioEMB(jc)))
-	let go = getGeoObserver(getSidereal(jc, longitude), latitude,
-		getAyanamsa(jc), getObliquity(jc))
+	let go = getGeoObserver(getSidereal(jc, longitude), latitude, getAyanamsa(jc), getObliquity(jc))
 	let tm = normalize(translate(gm, negate(go)))
 	let ts = normalize(translate(gs, negate(go)))
 	let l = toTP(tm)[0]
@@ -122,10 +121,10 @@ function lunarSearch(t0, latitude, longitude) {
 		let tz = Math.round(longitude / 15)
 		let [Y, M, D, t] = getGregorian(jd, tz * 15)
 		let [h, min] = toDMS(t / 15, 24, 0, 0)
-		let era = Y > 0 ? "AD " + Y : Math.abs(Y - 1) + " BC"
+		// let era = Y > 0 ? "AD " + Y : Math.abs(Y - 1) + " BC"
 		let abbr = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
 			"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][M - 1]
-		return era + " " + abbr + " " + D + ", " +
+		return /*era + " " +*/ abbr + " " + D + ", " +
 			String(h).padStart(2, "0") + ":" + String(min).padStart(2, "0")}
 	let stateAt = jd => {
 		let i = Math.floor((jd - tmin) / dt)
@@ -153,10 +152,10 @@ function lunarSearch(t0, latitude, longitude) {
 	let formatEvent = (prefix, jd) => jd ? prefix + " " + eventTime(jd) : ""
 	let nakshatras = ["Aśvinī (1)", "Bharaṇī (2)", "Kṛttikā (3)", "Rohiṇī (4)",
 		"Mṛgaśīrṣa (5)", "Ārdrā (6)", "Punarvasu (7)", "Puṣya (8)", "Āśleṣā (9)",
-		"Maghā (10)", "P.Phalgunī (11)", "U.Phalgunī (12)", "Hasta (13)", "Citrā (14)",
+		"Maghā (10)", "P. Phalgunī (11)", "U. Phalgunī (12)", "Hasta (13)", "Citrā (14)",
 		"Svātī (15)", "Viśākha (16)", "Anurādhā (17)", "Jyeṣṭha (18)", "Mūla (19)",
-		"P.Aṣāḍhā (20)", "U.Aṣāḍhā (21)", "Śravaṇa (22)", "Dhaniṣṭha (23)",
-		"Śatabhiṣak (24)", "P.Bhādrapadā (25)", "U.Bhādrapadā (26)", "Revatī (27)"]
+		"P. Aṣāḍhā (20)", "U. Aṣāḍhā (21)", "Śravaṇa (22)", "Dhaniṣṭha (23)",
+		"Śatabhiṣak (24)", "P. Bhādrapadā (25)", "U. Bhādrapadā (26)", "Revatī (27)"]
 	let months = ["Vaiśākha (1/๖)", "Jyaiṣṭha (2/๗)", "Āṣāḍha (3/๘)", "Śrāvaṇa (4/๙)",
 		"Bhādrapada (5/๑๐)", "Āśvina (6/๑๑)", "Kārttika (7/๑๒)", "Mārgaśīrṣa (8/๑)",
 		"Pauṣa (9/๒)", "Māgha (10/๓)", "Phālguna (11/๔)", "Caitra (12/๕)"]
@@ -340,7 +339,7 @@ function updateModal() {
 
 	{// Lunar Chart
 		let lun = UI.lunarChart
-		let w = 360, h = 75
+		let w = 360, h = 80
 		if(lun.width !== w * dpr) lun.width = w * dpr
 		if(lun.height !== h * dpr) lun.height = h * dpr
 		lun.style.width = w + "px"
@@ -410,40 +409,40 @@ function updateModal() {
 			ctx.stroke()}
 		ctx.setLineDash([])
 		drawTexts(ctx, [
-			{text: "MOON", position: [cx, cy], size: 10,
+			{text: "MOON", position: [cx, cy], size: 12,
 				weight: "bold", baseline: "middle", color: "black"},
 			{text: ((1 + vdot(lunarView, lunarLight)) * 50).toFixed(2) + "%",
-				position: [cx, 64], size: 10, align: "center", baseline: "top", color: col},
+				position: [cx, 64], size: 12, align: "center", baseline: "top", color: col},
 			{text: "Phase Number:",
-				position: [140, 0], size: 10, align: "right", baseline: "top", color: col},
+				position: [150, 0], size: 11.5, align: "right", baseline: "top", color: col},
 			{text: lunar.phase.value,
-				position: [145, 0], size: 10, align: "left", baseline: "top", color: col},
+				position: [155, 0], size: 11.5, align: "left", baseline: "top", color: col},
 			{text: lunar.phase.until,
-				position: [w, 0], size: 10, align: "right", baseline: "top", color: col},
+				position: [w, 0], size: 11.5, align: "right", baseline: "top", color: col},
 			{text: "Synodic Month:",
-				position: [140, 16], size: 10, align: "right", baseline: "top", color: col},
+				position: [150, 16], size: 11.5, align: "right", baseline: "top", color: col},
 			{text: lunar.month.value,
-				position: [145, 16], size: 10, align: "left", baseline: "top", color: col},
+				position: [155, 16], size: 11.5, align: "left", baseline: "top", color: col},
 			{text: lunar.month.until,
-				position: [w, 16], size: 10, align: "right", baseline: "top", color: col},
+				position: [w, 16], size: 11.5, align: "right", baseline: "top", color: col},
 			{text: "Nakṣatra:",
-				position: [140, 32], size: 10, align: "right", baseline: "top", color: col},
+				position: [150, 32], size: 11.5, align: "right", baseline: "top", color: col},
 			{text: lunar.nakshatra.value,
-				position: [145, 32], size: 10, align: "left", baseline: "top", color: col},
+				position: [155, 32], size: 11.5, align: "left", baseline: "top", color: col},
 			{text: lunar.nakshatra.until,
-				position: [w, 32], size: 10, align: "right", baseline: "top", color: col},
+				position: [w, 32], size: 11.5, align: "right", baseline: "top", color: col},
 			{text: lunar.moonEvents[0] ? lunar.moonEvents[0].label : "",
-				position: [140, 48], size: 10, align: "right", baseline: "top", color: col},
+				position: [150, 48], size: 11.5, align: "right", baseline: "top", color: col},
 			{text: lunar.moonEvents[0] ? lunar.moonEvents[0].value : "",
-				position: [145, 48], size: 10, align: "left", baseline: "top", color: col},
+				position: [155, 48], size: 11.5, align: "left", baseline: "top", color: col},
 			{text: lunar.moonEvents[0] ? lunar.moonEvents[0].time : "",
-				position: [w, 48], size: 10, align: "right", baseline: "top", color: col},
+				position: [w, 48], size: 11.5, align: "right", baseline: "top", color: col},
 			{text: lunar.moonEvents[1] ? lunar.moonEvents[1].label : "",
-				position: [140, 64], size: 10, align: "right", baseline: "top", color: col},
+				position: [150, 64], size: 11.5, align: "right", baseline: "top", color: col},
 			{text: lunar.moonEvents[1] ? lunar.moonEvents[1].value : "",
-				position: [145, 64], size: 10, align: "left", baseline: "top", color: col},
+				position: [155, 64], size: 11.5, align: "left", baseline: "top", color: col},
 			{text: lunar.moonEvents[1] ? lunar.moonEvents[1].time : "",
-				position: [w, 64], size: 10, align: "right", baseline: "top", color: col}])}
+				position: [w, 64], size: 11.5, align: "right", baseline: "top", color: col}])}
 
 	{// World Map
 		let map = UI.worldMap
