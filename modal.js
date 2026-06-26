@@ -92,110 +92,13 @@ function initModal() {
 	for(let lat = -60; lat <= 60; lat += 30) {
 		let y = 90 - lat
 		modal.world.graticule.push([[0, y], [w, y]])}
-		modal.world.equator = [[[0, h / 2], [w, h / 2]]]}
-
-function lunarState(julianDay, latitude, longitude) {
-	let jc = (julianDay - 2451545) / 36525
-	let gm = geoMoon(jc)[0]
-	let gs = translate(scale(gm, 1 / MASS_FACTOR), negate(helioEMB(jc)))
-	let go = getGeoObserver(getSidereal(jc, longitude), latitude, getAyanamsa(jc), getObliquity(jc))
-	let tm = normalize(translate(gm, negate(go)))
-	let ts = normalize(translate(gs, negate(go)))
-	let l = toTP(tm)[0]
-	let p = Math.acos(clip(vdot(tm, ts), -1, 1)) / DEGREE
-	if(mod(l - toTP(ts)[0], 360) > 180) p = 360 - p
-	return [gm, gs, go, l * 27 / 360, p]}
-
-function lunarSearch(t0, latitude, longitude) {
-	let tmin = t0 - 16, tmax = t0 + 31, dt = 1 / 24
-	let data = []
-	for(let jd = tmin; jd <= tmax + dt / 2; jd += dt) {
-		let [gm, gs, go, nks, phs] = lunarState(jd, latitude, longitude)
-		if(data.length) {
-			let p = data[data.length - 1]
-			nks = p[1] + mod(nks - p[1], 27, -13.5)
-			phs = p[2] + mod(phs - p[2], 360, -180)}
-		data.push([jd, nks, phs])}
-	let eventTime = jd => {
-		jd = Math.floor(jd * 1440) / 1440
-		let tz = Math.round(longitude / 15)
-		let [Y, M, D, t] = getGregorian(jd, tz * 15)
-		let [h, min] = toDMS(t / 15, 24, 0, 0)
-		// let era = Y > 0 ? "AD " + Y : Math.abs(Y - 1) + " BC"
-		let abbr = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-			"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][M - 1]
-		return /*era + " " +*/ abbr + " " + D + ", " +
-			String(h).padStart(2, "0") + ":" + String(min).padStart(2, "0")}
-	let stateAt = jd => {
-		let i = Math.floor((jd - tmin) / dt)
-		let a = data[i], b = data[i + 1]
-		let k = (jd - a[0]) / (b[0] - a[0])
-		return [a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k]}
-	let refine = (lo, hi, key, target) => {
-		for(let i = 0; i < 12; i++) {
-			let mid = (lo + hi) / 2
-			if(stateAt(mid)[key] < target) lo = mid
-			else hi = mid}
-		return (lo + hi) / 2}
-	let crossing = (key, target, after = t0) => {
-		for(let i = 0; i < data.length - 1; i++)
-			if(data[i][key + 1] <= target && data[i + 1][key + 1] >= target)
-				if(data[i + 1][0] > after)
-					return refine(data[i][0], data[i + 1][0], key, target)}
-	let nextCrossing = (key, step, after) => {
-		let target = Math.floor(stateAt(after)[key] / step) * step + step
-		while(target <= data[data.length - 1][key + 1]) {
-			let jd = crossing(key, target, after)
-			if(jd) return jd
-			target += step}
-		return null}
-	let formatEvent = (prefix, jd) => jd ? prefix + " " + eventTime(jd) : ""
-	let nakshatras = ["Aśvinī (1)", "Bharaṇī (2)", "Kṛttikā (3)", "Rohiṇī (4)",
-		"Mṛgaśīrṣa (5)", "Ārdrā (6)", "Punarvasu (7)", "Puṣya (8)", "Āśleṣā (9)",
-		"Maghā (10)", "P. Phalgunī (11)", "U. Phalgunī (12)", "Hasta (13)", "Citrā (14)",
-		"Svātī (15)", "Viśākha (16)", "Anurādhā (17)", "Jyeṣṭha (18)", "Mūla (19)",
-		"P. Aṣāḍhā (20)", "U. Aṣāḍhā (21)", "Śravaṇa (22)", "Dhaniṣṭha (23)",
-		"Śatabhiṣak (24)", "P. Bhādrapadā (25)", "U. Bhādrapadā (26)", "Revatī (27)"]
-	let months = ["Vaiśākha (1/๖)", "Jyaiṣṭha (2/๗)", "Āṣāḍha (3/๘)", "Śrāvaṇa (4/๙)",
-		"Bhādrapada (5/๑๐)", "Āśvina (6/๑๑)", "Kārttika (7/๑๒)", "Mārgaśīrṣa (8/๑)",
-		"Pauṣa (9/๒)", "Māgha (10/๓)", "Phālguna (11/๔)", "Caitra (12/๕)"]
-	let now = stateAt(t0)
-	let phsIndex = mod(now[1] / 12, 30)
-	let phsNumber = clip(Math.round(mod(phsIndex, 15) + 1), 1, 15)
-	phsNumber = phsNumber + (phsNumber % 10 === 1 && phsNumber !== 11 ? "ˢᵗ" :
-		phsNumber % 10 === 2 && phsNumber !== 12 ? "ⁿᵈ" :
-		phsNumber % 10 === 3 && phsNumber !== 13 ? "ʳᵈ" : "ᵗʰ")
-	let phsUntil = crossing(1, Math.floor(now[1] / 12) * 12 + 12)
-	let [gm, gs, go] = lunarState(crossing(1, phsIndex < 15 ?
-		Math.floor(now[1] / 360) * 360 + 180 : Math.floor((now[1] - 180) / 360) * 360 + 180,
-		phsIndex < 15 ? t0 : tmin), latitude, longitude)
-	let synMonth = Math.floor(mod(toTP(normalize(translate(gs, negate(go))))[0], 360) / 30)
-	let nksIndex = mod(Math.floor(now[0]), 27)
-	let nksUntil = nextCrossing(0, 1, phsUntil)
-	let nextNewMoon = nextCrossing(1, 360, phsUntil)
-	let moonEvents = []
-	for(let target = Math.floor(stateAt(phsUntil)[1] / 180) * 180 + 180;
-			target <= data[data.length - 1][2]; target += 180) {
-		let jd = crossing(1, target, phsUntil)
-		if(!jd) continue
-		moonEvents.push({jd,
-			label: mod(target, 360) === 0 ? "Next New Moon:" : "Next Full Moon:",
-			value: nakshatras[mod(Math.floor(stateAt(jd)[0]), 27)],
-			time: formatEvent("at", jd)})}
-	moonEvents.sort((a, b) => a.jd - b.jd)
-	return {
-		phase: {value: (phsIndex < 15 ? "Bright" : "Dark") + " " + phsNumber,
-			until: formatEvent("until", phsUntil)},
-		month: {value: months[synMonth],
-			until: formatEvent("until", nextNewMoon)},
-		nakshatra: {value: nakshatras[nksIndex],
-			until: formatEvent("until", nksUntil)},
-		moonEvents: moonEvents.slice(0, 2)}}
+		modal.world.equator = [[[0, h / 2], [w, h / 2]]]
+	modal.world.map.onload = () => {
+		if(UI.modalBackground.style.display === "flex") updateModal()}}
 
 function updateModal() {
 	let dpr = 2 //window.devicePixelRatio || 1
 	let col = mode.darkTheme ? "white" : "black"
-
 	let latitude = Number(UI.latitudeInput.value.replace("−", "-"))
 	let longitude = modal.temp.longitude
 	let jd = modal.temp.julianDay
@@ -456,7 +359,11 @@ function updateModal() {
 		ctx.clearRect(0, 0, w, h)
 		ctx.save()
 		ctx.filter = mode.darkTheme ? "none" : "invert(1)"
-		ctx.drawImage(modal.world.map, 0, 0, w, h)
+		if(modal.world.map.complete && modal.world.map.naturalWidth > 0)
+			ctx.drawImage(modal.world.map, 0, 0, w, h)
+		else {
+			ctx.fillStyle = mode.darkTheme ? "black" : "white"
+			ctx.fillRect(0, 0, w, h)}
 		ctx.restore()
 		drawLines(ctx, [{points: modal.world.graticule, color: "gray", width: 0.5},
 			{points: modal.world.equator, color: color.equatorial, width: 1.5}])

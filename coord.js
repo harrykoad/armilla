@@ -127,6 +127,15 @@ function getQueryValue(query, names) {
 		if(value !== null && value.trim() !== "") return value.trim()}
 	return null}
 
+function getURLQuery() {
+	let parts = []
+	if(window.location.search) parts.push(window.location.search.replace(/^\?/, ""))
+	if(window.location.hash.match(/^#[?&]/)) parts.push(window.location.hash.slice(2))
+	if(!window.location.search) {
+		let pathQuery = window.location.pathname.match(/&([^/?#]*)$/)
+		if(pathQuery) parts.push(pathQuery[1])}
+	return new URLSearchParams(parts.join("&"))}
+
 function parseURLDate(value) {
 	let match = value.match(/^([+-]?\d{1,4})-(\d{1,2})-(\d{1,2})$/)
 	if(!match) return null
@@ -149,7 +158,7 @@ function parseURLTime(value) {
 	return null}
 
 function applyURLParams() {
-	let query = new URLSearchParams(window.location.search)
+	let query = getURLQuery()
 	let latitudeValue = getQueryValue(query, ["lat"])
 	if(latitudeValue !== null) {
 		let latitude = Number(latitudeValue)

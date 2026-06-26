@@ -268,6 +268,11 @@ UI.modalSetButton.onclick = () => {
 UI.modalCancelButton.onclick = () => {
 	UI.modalBackground.style.display = "none"}
 
+function normalizeModalInputs() {
+	UI.latitudeInput.value = param.latitude.toFixed(2)
+	UI.longitudeInput.value = modal.temp.longitude.toFixed(2)
+	UI.julianDayInput.value = modal.temp.julianDay.toFixed(5)}
+
 function setModalVisible(visible) {
 	if(!visible) {
 		UI.modalBackground.style.display = "none"
@@ -292,8 +297,9 @@ function setModalVisible(visible) {
 	UI.minuteInput.value = String(m).padStart(2, "0")
 	UI.julianDayInput.value = modal.temp.julianDay < 0 ?
 		"โ’" + Math.abs(modal.temp.julianDay).toFixed(5) : modal.temp.julianDay.toFixed(5)
-	updateModal()
-	UI.modalBackground.style.display = "flex"}
+	normalizeModalInputs()
+	UI.modalBackground.style.display = "flex"
+	updateModal()}
 
 setDateTime()
 updateLatitude()
