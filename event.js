@@ -268,6 +268,33 @@ UI.modalSetButton.onclick = () => {
 UI.modalCancelButton.onclick = () => {
 	UI.modalBackground.style.display = "none"}
 
+function setModalVisible(visible) {
+	if(!visible) {
+		UI.modalBackground.style.display = "none"
+		return}
+	let [h, m, s] = toDMS(param.time / 15, 24)
+	modal.temp.fallback = null
+	modal.temp.year = param.year
+	modal.temp.month = param.month
+	modal.temp.day = param.day
+	modal.temp.hour = h
+	modal.temp.minute = m
+	modal.temp.longitude = param.longitude
+	modal.temp.julianDay = param.julianDay
+	UI.latitudeInput.value = formatSignedAngleDecimal(param.latitude, 2).replace("ยฐ", "")
+	UI.longitudeInput.value = formatSignedAngleDecimal(modal.temp.longitude, 2).replace("ยฐ", "")
+	UI.timeZoneInput.textContent = UI.timeZoneValue.textContent
+	UI[param.year < 1 ? "eraBC" : "eraAD"].checked = true
+	UI.yearInput.value = param.year > 0 ? param.year : Math.abs(param.year - 1)
+	UI.monthInput.value = param.month
+	UI.dayInput.value = param.day
+	UI.hourInput.value = String(h).padStart(2, "0")
+	UI.minuteInput.value = String(m).padStart(2, "0")
+	UI.julianDayInput.value = modal.temp.julianDay < 0 ?
+		"โ’" + Math.abs(modal.temp.julianDay).toFixed(5) : modal.temp.julianDay.toFixed(5)
+	updateModal()
+	UI.modalBackground.style.display = "flex"}
+
 setDateTime()
 updateLatitude()
 UI.latitudeSlider.value = param.latitude

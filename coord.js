@@ -179,7 +179,12 @@ function applyURLParams() {
 		let parsed = parseURLTime(time)
 		if(parsed !== null) {
 			param.time = parsed
-			updateTime()}}}
+			updateTime()}}
+	let modalValue = getQueryValue(query, ["modal"])
+	if(modalValue !== null) {
+		modalValue = modalValue.toLowerCase()
+		if(modalValue === "true") setModalVisible(true)
+		else if(modalValue === "false") setModalVisible(false)}}
 
 function updateLatitude(latitude = param.latitude) {
 	let l = Math.abs(latitude)
