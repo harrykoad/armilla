@@ -268,6 +268,13 @@ UI.modalSetButton.onclick = () => {
 UI.modalCancelButton.onclick = () => {
 	UI.modalBackground.style.display = "none"}
 
+setDateTime()
+updateLatitude()
+UI.latitudeSlider.value = param.latitude
+updateLongitude()
+UI.longitudeSlider.value = param.longitude
+applyURLParams()
+centerViewOnSun()
 resize()
 render()
 

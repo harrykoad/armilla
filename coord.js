@@ -121,6 +121,66 @@ function setDateTime() {
 	param.time = Math.floor(15 * (dt.getHours() + dt.getMinutes() / 60) * 4) / 4
 	updateYear()}
 
+function getQueryValue(query, names) {
+	for(let name of names) {
+		let value = query.get(name)
+		if(value !== null && value.trim() !== "") return value.trim()}
+	return null}
+
+function parseURLDate(value) {
+	let match = value.match(/^([+-]?\d{1,4})-(\d{1,2})-(\d{1,2})$/)
+	if(!match) return null
+	let year = Number(match[1])
+	let month = Number(match[2])
+	let day = Number(match[3])
+	if(!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) return null
+	if(year < Number(UI.yearSlider.min) || year > Number(UI.yearSlider.max)) return null
+	if(month < 1 || month > 12) return null
+	let yearDays = getYearDays(year)
+	if(day < 1 || day > getMonthDays(yearDays)[month - 1]) return null
+	return {year, month, day}}
+
+function parseURLTime(value) {
+	let match = value.match(/^(\d{1,2}):(\d{1,2})$/)
+	if(match) {
+		let hour = Number(match[1])
+		let minute = Number(match[2])
+		if(hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) return 15 * (hour + minute / 60)}
+	return null}
+
+function applyURLParams() {
+	let query = new URLSearchParams(window.location.search)
+	let latitudeValue = getQueryValue(query, ["lat"])
+	if(latitudeValue !== null) {
+		let latitude = Number(latitudeValue)
+		if(Number.isFinite(latitude)) {
+			param.latitude = clip(latitude, -90, 90)
+			UI.latitudeSlider.value = param.latitude
+			updateLatitude()
+			updateHorizontal()}}
+	let longitudeValue = getQueryValue(query, ["lon"])
+	if(longitudeValue !== null) {
+		let longitude = Number(longitudeValue)
+		if(Number.isFinite(longitude)) {
+			param.longitude = clip(longitude, -180, 180)
+			UI.longitudeSlider.value = param.longitude
+			updateLongitude()
+			UI.longitudeSlider.value = param.longitude}}
+	let date = getQueryValue(query, ["date"])
+	if(date !== null) {
+		let parsed = parseURLDate(date)
+		if(parsed !== null) {
+			param.year = parsed.year
+			param.month = parsed.month
+			param.day = parsed.day
+			updateYear()}}
+	let time = getQueryValue(query, ["time"])
+	if(time !== null) {
+		let parsed = parseURLTime(time)
+		if(parsed !== null) {
+			param.time = parsed
+			updateTime()}}}
+
 function updateLatitude(latitude = param.latitude) {
 	let l = Math.abs(latitude)
 	UI.latitudeValue.textContent = l < 0.005 ? "0.00°" : l.toFixed(2) + "° " + (latitude > 0 ? "N" : "S")}
@@ -149,4 +209,3 @@ function toScreen(point, fromMode, toMode) {
 function fromScreen(point, fromMode, toMode) {
 	return changeSystem(mdot(matrix.fromScreen, point), fromMode, toMode)}
 
-setDateTime()
