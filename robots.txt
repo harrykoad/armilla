@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://harrykoad.github.io/armilla/sitemap.xml

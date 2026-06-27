@@ -1,17 +1,50 @@
+<!-- Example URL: https://harrykoad.github.io/armilla/?lat=8.64&lon=99.90&date=1996-03-29&time=15:30&modal=true -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
-<meta property="og: title" content="Armilla 1.0 Beta">
-<meta property="og: description" content="Celestial Sphere Simulator WebApp">
-<meta property="og: image" content="https://raw.githubusercontent.com/harrykoad/armilla/refs/heads/main/preview.png">
-<meta property="og: url" content="https://harrykoad.github.io/armilla/">
-<!-- Example URL: https://harrykoad.github.io/armilla/?lat=8.64&lon=99.90&date=1996-03-29&time=15:30&modal=true -->
-<meta property="og: type" content="website">
-<meta name="copyright" content="© 2026 Peeravit Koad. Walailak University, Nakhon Si Thammarat, THAILAND.">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Armilla</title>
+<meta name="description" content="An interactive educational tool for visualizing the celestial sphere and understanding astronomical coordinate systems.">
+<meta name="author" content="Peeravit Koad">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<link rel="canonical" href="https://harrykoad.github.io/armilla/">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<title>Armilla 1.0 Beta</title>
+<meta property="og:locale" content="en_US">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Armilla">
+<meta property="og:title" content="Armilla">
+<meta property="og:description" content="An interactive educational tool for visualizing the celestial sphere and understanding astronomical coordinate systems.">
+<meta property="og:image" content="https://raw.githubusercontent.com/harrykoad/armilla/refs/heads/main/preview.png">
+<meta property="og:image:alt" content="Armilla">
+<meta property="og:url" content="https://harrykoad.github.io/armilla/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Armilla">
+<meta name="twitter:description" content="An interactive educational tool for visualizing the celestial sphere and understanding astronomical coordinate systems.">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/harrykoad/armilla/refs/heads/main/preview.png">
+<meta name="copyright" content="© 2026 Peeravit Koad. Walailak University, Nakhon Si Thammarat, THAILAND.">
+<script type="application/ld+json">
+{
+	"@context": "https://schema.org",
+	"@type": "WebApplication",
+	"name": "Armilla",
+	"url": "https://harrykoad.github.io/armilla/",
+	"description": "An interactive educational tool for visualizing the celestial sphere and understanding astronomical coordinate systems.",
+	"applicationCategory": "EducationalApplication",
+	"operatingSystem": "Any",
+	"browserRequirements": "Requires JavaScript and an HTML5-compatible web browser.",
+	"isAccessibleForFree": true,
+	"image": "https://raw.githubusercontent.com/harrykoad/armilla/refs/heads/main/preview.png",
+	"author": {
+		"@type": "Person",
+		"name": "Peeravit Koad",
+		"affiliation": {
+			"@type": "CollegeOrUniversity",
+			"name": "Walailak University"
+		}
+	}
+}
+</script>
 <style>
 body{color-scheme: dark light; font-family: sans-serif; margin: 0px; overflow: hidden; touch-action: none}
 canvas{cursor: grab; display: block; touch-action: none}
@@ -253,8 +286,7 @@ input[type="radio"] {accent-color: white}
 <script src="modal.js"></script>
 <script src="event.js"></script>
 <script>
-UI.copyrightFooter.innerHTML = "\u00a9 " + new Date().getUTCFullYear() +
-	" Peeravit Koad<br>Walailak University, Thailand"
+UI.copyrightFooter.innerHTML = "\u00a9 " + new Date().getUTCFullYear() + " Peeravit Koad<br>Walailak University, Thailand"
 </script>
 
 </body>
