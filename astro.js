@@ -182,10 +182,28 @@ function lunarState(julianDay, latitude, longitude) {
 	return [gm, gs, go, l * 27 / 360, p]}
 
 function lunarSearch(t0, latitude, longitude) {
+	let k = [latitude.toFixed(10), longitude.toFixed(10)].join("|")
+	if(!cache.lunar || cache.lunar.key !== k)
+		cache.lunar = {key: k, states: new Map()}
+	let lunarCache = cache.lunar
+	let cachedLunarState = jd => {
+		let key = Math.round(jd * 86400000)
+		if(lunarCache.states.has(key)) {
+			let state = lunarCache.states.get(key)
+			lunarCache.states.delete(key)
+			lunarCache.states.set(key, state)
+			return state}
+		let state = lunarState(jd, latitude, longitude)
+		lunarCache.states.set(key, state)
+		if(lunarCache.states.size > 5000)
+			lunarCache.states.delete(lunarCache.states.keys().next().value)
+		return state}
 	let tmin = t0 - 16, tmax = t0 + 31, dt = 1 / 24
 	let data = []
-	for(let jd = tmin; jd <= tmax + dt / 2; jd += dt) {
-		let [gm, gs, go, nks, phs] = lunarState(jd, latitude, longitude)
+	let firstHour = Math.floor(tmin * 24), lastHour = Math.ceil(tmax * 24)
+	for(let hour = firstHour; hour <= lastHour; hour++) {
+		let jd = hour / 24
+		let [gm, gs, go, nks, phs] = cachedLunarState(jd)
 		if(data.length) {
 			let p = data[data.length - 1]
 			nks = p[1] + mod(nks - p[1], 27, -13.5)
@@ -196,22 +214,32 @@ function lunarSearch(t0, latitude, longitude) {
 		let tz = Math.round(longitude / 15)
 		let [Y, M, D, t] = getGregorian(jd, tz * 15)
 		let [h, min] = toDMS(t / 15, 24, 0, 0)
-		// let era = Y > 0 ? "AD " + Y : Math.abs(Y - 1) + " BC"
 		let abbr = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
 			"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][M - 1]
-		return /*era + " " +*/ abbr + " " + D + ", " +
-			String(h).padStart(2, "0") + ":" + String(min).padStart(2, "0")}
+		return abbr + " " + D + ", " + String(h).padStart(2, "0") + ":" +
+			String(min).padStart(2, "0")}
 	let stateAt = jd => {
-		let i = Math.floor((jd - tmin) / dt)
-		let a = data[i], b = data[i + 1]
-		let k = (jd - a[0]) / (b[0] - a[0])
-		return [a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k]}
+		let i = clip(Math.round((jd - data[0][0]) / dt), 0, data.length - 1)
+		let reference = data[i]
+		let state = cachedLunarState(jd)
+		return [
+			reference[1] + mod(state[3] - reference[1], 27, -13.5),
+			reference[2] + mod(state[4] - reference[2], 360, -180)]}
 	let refine = (lo, hi, key, target) => {
-		for(let i = 0; i < 12; i++) {
-			let mid = (lo + hi) / 2
-			if(stateAt(mid)[key] < target) lo = mid
-			else hi = mid}
-		return (lo + hi) / 2}
+		let period = key === 0 ? 27 : 360
+		let minute = Math.floor(lo * 1440)
+		let valueAt = jd => {
+			let state = cachedLunarState(jd)
+			return target + mod(state[key + 3] - target, period, -period / 2)}
+		let previousJd = minute / 1440
+		let previousValue = valueAt(previousJd)
+		while(previousJd <= hi) {
+			let jd = ++minute / 1440
+			let value = valueAt(jd)
+			if(previousValue <= target && value >= target) return (minute - 0.5) / 1440
+			previousJd = jd
+			previousValue = value}
+		return null}
 	let crossing = (key, target, after = t0) => {
 		for(let i = 0; i < data.length - 1; i++)
 			if(data[i][key + 1] <= target && data[i + 1][key + 1] >= target)
@@ -236,22 +264,22 @@ function lunarSearch(t0, latitude, longitude) {
 		"Pauṣa (9/๒)", "Māgha (10/๓)", "Phālguna (11/๔)", "Caitra (12/๕)"]
 	let now = stateAt(t0)
 	let phsIndex = mod(now[1] / 12, 30)
-	let phsNumber = clip(Math.round(mod(phsIndex, 15) + 1), 1, 15)
+	let phsNumber = Math.floor(mod(phsIndex, 15)) + 1
 	phsNumber = phsNumber + (phsNumber % 10 === 1 && phsNumber !== 11 ? "ˢᵗ" :
 		phsNumber % 10 === 2 && phsNumber !== 12 ? "ⁿᵈ" :
 		phsNumber % 10 === 3 && phsNumber !== 13 ? "ʳᵈ" : "ᵗʰ")
-	let phsUntil = crossing(1, Math.floor(now[1] / 12) * 12 + 12)
-	let [gm, gs, go] = lunarState(crossing(1, phsIndex < 15 ?
+	let phsUntil = nextCrossing(1, 12, t0)
+	let [gm, gs, go] = cachedLunarState(crossing(1, phsIndex < 15 ?
 		Math.floor(now[1] / 360) * 360 + 180 : Math.floor((now[1] - 180) / 360) * 360 + 180,
-		phsIndex < 15 ? t0 : tmin), latitude, longitude)
+		phsIndex < 15 ? t0 : tmin))
 	let synMonth = Math.floor(mod(toTP(normalize(translate(gs, negate(go))))[0], 360) / 30)
 	let nksIndex = mod(Math.floor(now[0]), 27)
-	let nksUntil = nextCrossing(0, 1, phsUntil)
-	let nextNewMoon = nextCrossing(1, 360, phsUntil)
+	let nksUntil = nextCrossing(0, 1, t0)
+	let nextNewMoon = nextCrossing(1, 360, t0)
 	let moonEvents = []
-	for(let target = Math.floor(stateAt(phsUntil)[1] / 180) * 180 + 180;
+	for(let target = Math.floor(now[1] / 180) * 180 + 180;
 			target <= data[data.length - 1][2]; target += 180) {
-		let jd = crossing(1, target, phsUntil)
+		let jd = crossing(1, target, t0)
 		if(!jd) continue
 		moonEvents.push({jd,
 			label: mod(target, 360) === 0 ? "Next New Moon:" : "Next Full Moon:",
@@ -259,7 +287,7 @@ function lunarSearch(t0, latitude, longitude) {
 			time: formatEvent("at", jd)})}
 	moonEvents.sort((a, b) => a.jd - b.jd)
 	return {
-		phase: {value: (phsIndex < 15 ? "Bright" : "Dark") + " " + phsNumber,
+		phase: {value: phsNumber + " " + (phsIndex < 15 ? "Bright" : "Dark"),
 			until: formatEvent("until", phsUntil)},
 		month: {value: months[synMonth],
 			until: formatEvent("until", nextNewMoon)},

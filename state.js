@@ -2,7 +2,7 @@ const UI = new Proxy({}, {get(obj, id) {if(!obj[id]) obj[id] = document.getEleme
 
 const buffer = {backLines: [], backStars: [], backPoints: [], backTexts: [],
 	frontLines: [], frontStars: [], frontPoints: [], frontTexts: []}
-const cache = {stars: null, graticule: {}, solarSystem: null, analemma: null}
+const cache = {stars: null, graticule: {}, solarSystem: null, analemma: null, lunar: null}
 const color = {ecliptic: "red", equatorial: "blue", horizontal: "#00c000", galactic: "#c000c0",
 	constellations: "gray", zodiac: "orange", moon: "#c0c000", sun: "red", mercury: "green", venus: "cyan",
 	mars: "magenta", jupiter: "orange", saturn: "purple", uranus: "#00ff80", neptune: "#0080ff", rahu: "gray"}
@@ -17,7 +17,6 @@ const param = {latitude: 8.64, longitude: 99.90, timeZone: 7, year: 2000, month:
 const modal = {temp: {fallback: null, year: null, month: null, day: null,
 		hour: null, minute: null, longitude: null, julianDay: null},
 	horary: {frame: [], slots: [], stars: [], constellations: [], zodiac: []},
-	lunar: {},
 	world: {map: new Image(), graticule: [], equator: []}}
 const show = {sphere: true, stars: true, milkyWay: true, constellations: true, zodiac: true,
 	ecliptic: true, eclipticAxes: true, eclipticMeridian: false, eclipticGraticule: false, precessionCircles: false,
