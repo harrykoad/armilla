@@ -58,11 +58,12 @@ function drawLines(ctx, lines) {
 		ctx.stroke()}
 	ctx.setLineDash([])}
 
-function pushStars() {
+function pushStars(showPoints = true) {
 	let k = param.julianDay.toFixed(10)
 	if(!cache.stars || cache.stars.key !== k)
 		cache.stars = {key: k, vectors: STARS.map(p => {
 			return p[0] === 0 && p[1] === 0 && p[2] === 0 ? [0, 0, 0] : fromNirayana(p)})}
+	if(!showPoints) return
 	let m = 0
 	for(let s of cache.stars.vectors) {
 		if(s[0] === 0 && s[1] === 0 && s[2] === 0) {m++; continue}
@@ -116,6 +117,30 @@ function pushPoints(points) {
 			buffer.backPoints.push(marker)
 			if(label.text !== "") buffer.backTexts.push(label)}}}
 
+function pushLabels(labels) {
+	for(let label of labels) {
+		let [c3D, s2D] = project(label.position)
+		let text = {...label, position: s2D}
+		delete text.name
+		if(text.text === undefined) text.text = label.name
+		if(text.float) {
+			let [x, y] = s2D
+			let dx = x - view.x0
+			let dy = y - view.y0
+			let len = Math.hypot(dx, dy)
+			if(len < 1e-6) {dx = 0; dy = -1; len = 1}
+			dx /= len
+			dy /= len
+			CTX.font = (text.weight ? text.weight + " " : "") + (text.size || 12) + "px sans-serif"
+			let m = CTX.measureText(text.text)
+			let height = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent || text.size || 12
+			text.position = [
+				x + dx * (10 + m.width / 2),
+				y + dy * (10 + height / 2)]}
+		delete text.float
+		if(c3D[0] >= view.z0) buffer.frontTexts.push(text)
+		else if(!show.sphere) buffer.backTexts.push(text)}}
+
 function drawPoints(ctx, points) {
 	for(let p of points) {
 		ctx.beginPath()
@@ -136,11 +161,15 @@ function drawTexts(ctx, texts) {
 		ctx.save()
 		ctx.translate(t.position[0], t.position[1])
 		ctx.rotate(t.rotation || 0)
-		if(t.edge) {
-			ctx.lineWidth = t.border || 1
-			ctx.strokeStyle = t.edge
-			ctx.strokeText(t.text, 0, 0)}
-		ctx.fillText(t.text, 0, 0)
+		let lines = String(t.text).split("\n")
+		let lineHeight = t.lineHeight || (t.size || 12) * 1.1
+		for(let i = 0; i < lines.length; i++) {
+			let y = (i - (lines.length - 1) / 2) * lineHeight
+			if(t.edge) {
+				ctx.lineWidth = t.border || 1
+				ctx.strokeStyle = t.edge
+				ctx.strokeText(lines[i], 0, y)}
+			ctx.fillText(lines[i], 0, y)}
 		ctx.restore()}}
 
 function drawSphere() {
@@ -227,6 +256,21 @@ function render() {
 	if(show.observerMeridian) pushLines({points: meridian(param.sidereal), color: color.horizontal, width: 3})
 	if(show.analemma) pushAnalemma()
 
+	if(show.constellationNames)
+		pushLabels(CONSTELLATION_LABELS.map(label => ({
+			name: label.name,
+			position: fromNirayana(label.position),
+			color: show.zodiac && ZODIAC_NAMES.has(label.name) ? color.zodiac : color.constellations,
+			edge: mode.darkTheme ? "black" : "white",
+			border: 2, size: 11})))
+	if(show.starNames)
+		pushLabels(STAR_LABELS.map(label => ({
+			name: label.name,
+			position: fromNirayana(label.position),
+			color: c,
+			edge: mode.darkTheme ? "black" : "white",
+			border: 2, size: 11, float: show.stars})))
+
 	if(show.eclipticAxes) {
 		pushPoints(AXES.map((axis, i) => ({
 			position: mdot(rotateX(param.obliquity), axis),
@@ -252,7 +296,7 @@ function render() {
 			text: {text: "Lagna", color: c}}])}
 
 	if(show.constellations || show.zodiac || show.stars) {
-		if(show.stars) pushStars()
+		pushStars(show.stars)
 		let s = cache.stars.vectors
 		if(show.constellations) {
 			for(let c of CONSTELLATIONS) {

@@ -1,4 +1,18 @@
-for(let panel of [UI.leftPanel, UI.rightPanel]) {
+const panelScrollControls = [
+	[UI.leftPanel, UI.leftPanelScrollUp, UI.leftPanelScrollDown],
+	[UI.rightPanel, UI.rightPanelScrollUp, UI.rightPanelScrollDown]]
+
+function updatePanelScrollButtons() {
+	for(let [panel, up, down] of panelScrollControls) {
+		let overflowing = panel.scrollHeight > panel.clientHeight + 1
+		up.style.display = overflowing && panel.scrollTop > 1 ? "block" : "none"
+		down.style.display = overflowing &&
+			panel.scrollTop + panel.clientHeight < panel.scrollHeight - 1 ? "block" : "none"}}
+
+for(let [panel, up, down] of panelScrollControls) {
+	up.onclick = () => panel.scrollBy({top: -0.8 * panel.clientHeight, behavior: "smooth"})
+	down.onclick = () => panel.scrollBy({top: 0.8 * panel.clientHeight, behavior: "smooth"})
+	panel.addEventListener("scroll", updatePanelScrollButtons)
 	let isDown = false
 	let startY
 	let scrollTop
@@ -65,11 +79,12 @@ UI.darkThemeCheckbox.onchange = () => {
 	mode.darkTheme = UI.darkThemeCheckbox.checked
 	let i = mode.darkTheme ? 0 : 1
 	document.body.style.colorScheme = ["dark", "light"][i]
-	document.querySelectorAll("#leftPanel, #rightPanel, .modal").forEach(e => e.style.color = ["white", "black"][i])
+	document.querySelectorAll("#leftPanel, #rightPanel, .modal, .panelScrollButton").forEach(
+		e => e.style.color = ["white", "black"][i])
 	document.querySelectorAll(".box, .modal").forEach(e => e.style.background = ["black", "white"][i])
 	document.querySelectorAll(".colorLegend").forEach(e => e.style.borderColor = ["white","black"][i])
 	document.querySelectorAll('input[type="radio"]').forEach(e => {e.style.accentColor = ["white","black"][i]})
-	document.querySelectorAll("#orientationDropdown, .shortButton, .setButton, .longButton").forEach(e => {
+	document.querySelectorAll("#orientationDropdown, .shortButton, .setButton, .longButton, .panelScrollButton").forEach(e => {
 		e.style.background = ["#3b3b3b", "#efefef"][i]
 		e.style.color = ["white", "black"][i]})
 	UI.modalBackground.style.background = ["rgba(255, 255, 255, 0.5)", "rgba(0, 0, 0, 0.5)"][i]
@@ -228,6 +243,7 @@ UI.sky.addEventListener("wheel", e => {
 
 window.onresize = () => {
 	resize()
+	updatePanelScrollButtons()
 	update.sky = true
 	render()}
 
@@ -309,6 +325,8 @@ UI.longitudeSlider.value = param.longitude
 applyURLParams()
 centerViewOnSun()
 resize()
+updatePanelScrollButtons()
+window.addEventListener("load", updatePanelScrollButtons)
 render()
 
 function setJulianDayModal() {

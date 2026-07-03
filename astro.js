@@ -1,6 +1,10 @@
 const STARS = initStars()
+const STAR_LABELS = initStarNames()
 const CONSTELLATIONS = initConstellations()
+const CONSTELLATION_LABELS = initConstellationNames()
 const ZODIAC = [6, 76, 37, 21, 45, 84, 47, 69, 75, 11, 4, 64]
+const ZODIAC_NAMES = new Set(["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
+	"Libra", "Scorpius", "Sagittarius", "Capricornus", "Aquarius", "Pisces"])
 const EARTH_A = 6378.137
 const EARTH_E2 = 0.00669438
 const KM_PER_AU = 149597870.7
@@ -168,132 +172,6 @@ function centerViewOnSun(jc = param.julianCentury) {
 	view.pitch = p
 	update.view = true
 	update.sky = true}
-
-function lunarState(julianDay, latitude, longitude) {
-	let jc = (julianDay - 2451545) / 36525
-	let gm = geoMoon(jc)[0]
-	let gs = translate(scale(gm, 1 / MASS_FACTOR), negate(helioEMB(jc)))
-	let go = getGeoObserver(getSidereal(jc, longitude), latitude, getAyanamsa(jc), getObliquity(jc))
-	let tm = normalize(translate(gm, negate(go)))
-	let ts = normalize(translate(gs, negate(go)))
-	let l = toTP(tm)[0]
-	let p = Math.acos(clip(vdot(tm, ts), -1, 1)) / DEGREE
-	if(mod(l - toTP(ts)[0], 360) > 180) p = 360 - p
-	return [gm, gs, go, l * 27 / 360, p]}
-
-function lunarSearch(t0, latitude, longitude) {
-	let k = [latitude.toFixed(10), longitude.toFixed(10)].join("|")
-	if(!cache.lunar || cache.lunar.key !== k)
-		cache.lunar = {key: k, states: new Map()}
-	let lunarCache = cache.lunar
-	let cachedLunarState = jd => {
-		let key = Math.round(jd * 86400000)
-		if(lunarCache.states.has(key)) {
-			let state = lunarCache.states.get(key)
-			lunarCache.states.delete(key)
-			lunarCache.states.set(key, state)
-			return state}
-		let state = lunarState(jd, latitude, longitude)
-		lunarCache.states.set(key, state)
-		if(lunarCache.states.size > 5000)
-			lunarCache.states.delete(lunarCache.states.keys().next().value)
-		return state}
-	let tmin = t0 - 16, tmax = t0 + 31, dt = 1 / 24
-	let data = []
-	let firstHour = Math.floor(tmin * 24), lastHour = Math.ceil(tmax * 24)
-	for(let hour = firstHour; hour <= lastHour; hour++) {
-		let jd = hour / 24
-		let [gm, gs, go, nks, phs] = cachedLunarState(jd)
-		if(data.length) {
-			let p = data[data.length - 1]
-			nks = p[1] + mod(nks - p[1], 27, -13.5)
-			phs = p[2] + mod(phs - p[2], 360, -180)}
-		data.push([jd, nks, phs])}
-	let eventTime = jd => {
-		jd = Math.floor(jd * 1440) / 1440
-		let tz = Math.round(longitude / 15)
-		let [Y, M, D, t] = getGregorian(jd, tz * 15)
-		let [h, min] = toDMS(t / 15, 24, 0, 0)
-		let abbr = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-			"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][M - 1]
-		return abbr + " " + D + ", " + String(h).padStart(2, "0") + ":" +
-			String(min).padStart(2, "0")}
-	let stateAt = jd => {
-		let i = clip(Math.round((jd - data[0][0]) / dt), 0, data.length - 1)
-		let reference = data[i]
-		let state = cachedLunarState(jd)
-		return [
-			reference[1] + mod(state[3] - reference[1], 27, -13.5),
-			reference[2] + mod(state[4] - reference[2], 360, -180)]}
-	let refine = (lo, hi, key, target) => {
-		let period = key === 0 ? 27 : 360
-		let minute = Math.floor(lo * 1440)
-		let valueAt = jd => {
-			let state = cachedLunarState(jd)
-			return target + mod(state[key + 3] - target, period, -period / 2)}
-		let previousJd = minute / 1440
-		let previousValue = valueAt(previousJd)
-		while(previousJd <= hi) {
-			let jd = ++minute / 1440
-			let value = valueAt(jd)
-			if(previousValue <= target && value >= target) return (minute - 0.5) / 1440
-			previousJd = jd
-			previousValue = value}
-		return null}
-	let crossing = (key, target, after = t0) => {
-		for(let i = 0; i < data.length - 1; i++)
-			if(data[i][key + 1] <= target && data[i + 1][key + 1] >= target)
-				if(data[i + 1][0] > after)
-					return refine(data[i][0], data[i + 1][0], key, target)}
-	let nextCrossing = (key, step, after) => {
-		let target = Math.floor(stateAt(after)[key] / step) * step + step
-		while(target <= data[data.length - 1][key + 1]) {
-			let jd = crossing(key, target, after)
-			if(jd) return jd
-			target += step}
-		return null}
-	let formatEvent = (prefix, jd) => jd ? prefix + " " + eventTime(jd) : ""
-	let nakshatras = ["Aśvinī (1)", "Bharaṇī (2)", "Kṛttikā (3)", "Rohiṇī (4)",
-		"Mṛgaśīrṣa (5)", "Ārdrā (6)", "Punarvasu (7)", "Puṣya (8)", "Āśleṣā (9)",
-		"Maghā (10)", "P. Phalgunī (11)", "U. Phalgunī (12)", "Hasta (13)", "Citrā (14)",
-		"Svātī (15)", "Viśākha (16)", "Anurādhā (17)", "Jyeṣṭha (18)", "Mūla (19)",
-		"P. Aṣāḍhā (20)", "U. Aṣāḍhā (21)", "Śravaṇa (22)", "Dhaniṣṭha (23)",
-		"Śatabhiṣak (24)", "P. Bhādrapadā (25)", "U. Bhādrapadā (26)", "Revatī (27)"]
-	let months = ["Vaiśākha (1/๖)", "Jyaiṣṭha (2/๗)", "Āṣāḍha (3/๘)", "Śrāvaṇa (4/๙)",
-		"Bhādrapada (5/๑๐)", "Āśvina (6/๑๑)", "Kārttika (7/๑๒)", "Mārgaśīrṣa (8/๑)",
-		"Pauṣa (9/๒)", "Māgha (10/๓)", "Phālguna (11/๔)", "Caitra (12/๕)"]
-	let now = stateAt(t0)
-	let phsIndex = mod(now[1] / 12, 30)
-	let phsNumber = Math.floor(mod(phsIndex, 15)) + 1
-	phsNumber = phsNumber + (phsNumber % 10 === 1 && phsNumber !== 11 ? "ˢᵗ" :
-		phsNumber % 10 === 2 && phsNumber !== 12 ? "ⁿᵈ" :
-		phsNumber % 10 === 3 && phsNumber !== 13 ? "ʳᵈ" : "ᵗʰ")
-	let phsUntil = nextCrossing(1, 12, t0)
-	let [gm, gs, go] = cachedLunarState(crossing(1, phsIndex < 15 ?
-		Math.floor(now[1] / 360) * 360 + 180 : Math.floor((now[1] - 180) / 360) * 360 + 180,
-		phsIndex < 15 ? t0 : tmin))
-	let synMonth = Math.floor(mod(toTP(normalize(translate(gs, negate(go))))[0], 360) / 30)
-	let nksIndex = mod(Math.floor(now[0]), 27)
-	let nksUntil = nextCrossing(0, 1, t0)
-	let nextNewMoon = nextCrossing(1, 360, t0)
-	let moonEvents = []
-	for(let target = Math.floor(now[1] / 180) * 180 + 180;
-			target <= data[data.length - 1][2]; target += 180) {
-		let jd = crossing(1, target, t0)
-		if(!jd) continue
-		moonEvents.push({jd,
-			label: mod(target, 360) === 0 ? "Next New Moon:" : "Next Full Moon:",
-			value: nakshatras[mod(Math.floor(stateAt(jd)[0]), 27)],
-			time: formatEvent("at", jd)})}
-	moonEvents.sort((a, b) => a.jd - b.jd)
-	return {
-		phase: {value: phsNumber + " " + (phsIndex < 15 ? "Bright" : "Dark"),
-			until: formatEvent("until", phsUntil)},
-		month: {value: months[synMonth],
-			until: formatEvent("until", nextNewMoon)},
-		nakshatra: {value: nakshatras[nksIndex],
-			until: formatEvent("until", nksUntil)},
-		moonEvents: moonEvents.slice(0, 2)}}
 
 function initStars() {
 	let s = [
@@ -476,6 +354,24 @@ function initStars() {
 		let [x, y, z] = s.slice(3 * i, 3 * i + 3)
 		return x === 0 && y === 0 && z === 0 ? [0, 0, 0] : fromEquatorialJ2000(scale([x, y, z], 1 / 32767))})}
 
+function initStarNames() {
+	let data = [
+		[101.287, -16.7161, "Sirius"], [95.988, -52.6957, "Canopus"],
+		[219.902, -60.834, "Alpha Centauri"], [213.915, 19.1824, "Arcturus"],
+		[279.235, 38.7837, "Vega"], [79.1723, 45.998, "Capella"],
+		[78.6345, -8.20164, "Rigel"], [114.825, 5.22499, "Procyon"],
+		[24.4285, -57.2368, "Achernar"], [88.7929, 7.40706, "Betelgeuse"],
+		[210.956, -60.373, "Hadar"], [297.696, 8.86832, "Altair"],
+		[186.65, -63.0991, "Acrux"], [68.9802, 16.5093, "Aldebaran"],
+		[247.352, -26.432, "Antares"], [201.298, -11.1613, "Spica"],
+		[116.329, 28.0262, "Pollux"], [344.413, -29.6222, "Fomalhaut"],
+		[310.358, 45.2803, "Deneb"], [191.93, -59.6888, "Mimosa"],
+		[152.093, 11.9672, "Regulus"], [104.656, -28.9721, "Adhara"],
+		[113.649, 31.8883, "Castor"], [263.402, -37.1038, "Shaula"],
+		[187.791, -57.1132, "Gacrux"], [37.9545, 89.2641, "Polaris"]]
+	return data.map(([theta, phi, name]) => ({
+		name, position: fromEquatorialJ2000(toXYZ(theta, phi))}))}
+
 function initConstellations() {return [
 	/* And */[ 54,228,  58, 64,  58,228,  58,452,  58,658, 228,658, 228,659, 322,621, 345,646, 452,738, 458,592, 564,659, 564,677, 592,646, 621,738, 646,658],
 	/* Ant */[631,711, 631,753],
@@ -565,3 +461,37 @@ function initConstellations() {return [
 	/* Vol */[391,508, 391,679, 393,519, 393,679, 508,679, 519,679],
 	/* Vul */[695,755]]}
 
+function initConstellationNames() {
+	let data = [
+		[3, 39, "Andromeda"], [156, -36, "Antlia"], [234, -77, "Apus"],
+		[335, -8, "Aquarius"], [292, 3, "Aquila"], [267, -56, "Ara"],
+		[34, 20, "Aries"], [82, 38, "Auriga"], [223, 35, "Boötes"],
+		[75, -40, "Caelum"], [74, 66, "Camelopardalis"], [131, 21, "Cancer"],
+		[192, 40, "Canes\nVenatici"], [108, -20, "Canis\nMajor"], [116, 9, "Canis\nMinor"],
+		[314, -21, "Capricornus"], [117, -60, "Carina"], [11, 66, "Cassiopeia"],
+		[199, -45, "Centaurus"], [330, 64, "Cepheus"], [23, -12, "Cetus"],
+		[153, -79, "Chamaeleon"], [226, -62, "Circinus"], [90, -38, "Columba"],
+		[192, 23, "Coma\nBerenices"], [282, -39, "Corona\nAustralis"], [236, 29, "Corona\nBorealis"],
+		[186, -20, "Corvus"], [174, -14, "Crater"], [193, -57, "Crux"],
+		[299, 40, "Cygnus"], [310, 14, "Delphinus"], [76, -59, "Dorado"],
+		[241, 59, "Draco"], [318, 8, "Equuleus"], [60, -30, "Eridanus"],
+		[42, -28, "Fornax"], [107, 25, "Gemini"], [342, -44, "Grus"],
+		[253, 24, "Hercules"], [51, -52, "Horologium"], [139, -3, "Hydra\n(Caput)"],
+		[201, -28, "Hydra\n(Cauda)"], [32, -73, "Hydrus"], [319, -53, "Indus"],
+		[330, 43, "Lacerta"], [161, 13, "Leo"], [157, 34, "Leo\nMinor"],
+		[73, -19, "Lepus"], [229, -20, "Libra"], [236, -37, "Lupus"],
+		[120, 46, "Lynx"], [285, 40, "Lyra"], [83, -75, "Mensa"],
+		[315, -37, "Microscopium"], [108, -1, "Monoceros"], [178, -71, "Musca"],
+		[244, -48, "Norma"], [300, -85, "Octans"], [258, 0, "Ophiuchus"],
+		[85, 4, "Orion"], [297, -62, "Pavo"], [338, 18, "Pegasus"],
+		[50, 45, "Perseus"], [11, -49, "Phoenix"], [92, -58, "Pictor"],
+		[16, 15, "Pisces"], [333, -28, "Piscis\nAustrinus"], [117, -34, "Puppis"],
+		[127, -31, "Pyxis"], [61, -62, "Reticulum"], [298, 19, "Sagitta"],
+		[281, -23, "Sagittarius"], [251, -31, "Scorpius"], [357, -33, "Sculptor"],
+		[280, -10, "Scutum"], [240, 10, "Serpens\nCaput"], [280, 1, "Serpens\nCauda"],
+		[153, -5, "Sextans"], [63, 14, "Taurus"], [276, -47, "Telescopium"],
+		[31, 32, "Triangulum"], [240, -67, "Triangulum\nAustrale"], [348, -63, "Tucana"],
+		[168, 51, "Ursa\nMajor"], [218, 82, "Ursa\nMinor"], [143, -49, "Vela"],
+		[200, 4, "Virgo"], [121, -68, "Volans"], [296, 24, "Vulpecula"]]
+	return data.map(([theta, phi, name]) => ({
+		name, position: fromEquatorialJ2000(toXYZ(theta, phi))}))}

@@ -57,6 +57,13 @@ canvas:active{cursor: grabbing}
 #leftPanel input[type="checkbox"], #rightPanel input[type="checkbox"] {cursor: pointer}
 #leftPanel{left: 10px}
 #rightPanel{right: 10px}
+.panelScrollButton{background: #3b3b3b; border: 2px solid gray; border-radius: 50%; color: white;
+	cursor: pointer; display: none; font-size: 14px; font-weight: bold; height: 32px; padding: 0px; position: fixed;
+	width: 32px; z-index: 1000}
+#leftPanelScrollUp, #leftPanelScrollDown{left: 110px; transform: translateX(-50%)}
+#rightPanelScrollUp, #rightPanelScrollDown{right: 110px; transform: translateX(50%)}
+#leftPanelScrollUp, #rightPanelScrollUp{top: 10px}
+#leftPanelScrollDown, #rightPanelScrollDown{bottom: 10px}
 .box{background: black; border-radius: 10px; border: 1px solid gray; margin-bottom: 10px; padding: 8px}
 .columns{column-gap: 0px; display: grid; grid-template-columns: 45% 55%; margin-top: 2px; row-gap: 2px}
 .row{align-items: center; display: flex; justify-content: flex-start}
@@ -103,10 +110,12 @@ input[type="radio"] {accent-color: white}
 	<span class="horizontalLine"></span>
 	<div class="row"><input type="checkbox" id="sphereCheckbox" checked>&nbsp;Celestial Sphere</div>
 	<div class="columns">
-		<div class="row"><input type="checkbox" id="starsCheckbox" checked>&nbsp;Stars</div>
-		<div class="row"><input type="checkbox" id="constellationsCheckbox" checked>&nbsp;Constellations</div>
 		<div class="row"><input type="checkbox" id="milkyWayCheckbox" checked>&nbsp;Milky Way</div>
 		<div class="row"><input type="checkbox" id="zodiacCheckbox" checked>&nbsp;Zodiac</div>
+		<div class="row"><input type="checkbox" id="starsCheckbox" checked>&nbsp;Stars</div>
+		<div class="row"><input type="checkbox" id="constellationsCheckbox" checked>&nbsp;Constellations</div>
+		<div class="row"><input type="checkbox" id="starNamesCheckbox">&nbsp;S. Names</div>
+		<div class="row"><input type="checkbox" id="constellationNamesCheckbox">&nbsp;C. Names</div>
 	</div>
 </div>
 
@@ -240,6 +249,11 @@ input[type="radio"] {accent-color: white}
 <div class="panelFooter" id="copyrightFooter"></div>
 
 </div>
+
+<button id="leftPanelScrollUp" class="panelScrollButton" type="button" aria-label="Scroll left panel up">▲</button>
+<button id="leftPanelScrollDown" class="panelScrollButton" type="button" aria-label="Scroll left panel down">▼</button>
+<button id="rightPanelScrollUp" class="panelScrollButton" type="button" aria-label="Scroll right panel up">▲</button>
+<button id="rightPanelScrollDown" class="panelScrollButton" type="button" aria-label="Scroll right panel down">▼</button>
 
 <div id="modalBackground" class="modalBackground">
 	<div class="modal">

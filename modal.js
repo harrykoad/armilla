@@ -96,6 +96,132 @@ function initModal() {
 	modal.world.map.onload = () => {
 		if(UI.modalBackground.style.display === "flex") updateModal()}}
 
+function lunarState(julianDay, latitude, longitude) {
+	let jc = (julianDay - 2451545) / 36525
+	let gm = geoMoon(jc)[0]
+	let gs = translate(scale(gm, 1 / MASS_FACTOR), negate(helioEMB(jc)))
+	let go = getGeoObserver(getSidereal(jc, longitude), latitude, getAyanamsa(jc), getObliquity(jc))
+	let tm = normalize(translate(gm, negate(go)))
+	let ts = normalize(translate(gs, negate(go)))
+	let l = toTP(tm)[0]
+	let p = Math.acos(clip(vdot(tm, ts), -1, 1)) / DEGREE
+	if(mod(l - toTP(ts)[0], 360) > 180) p = 360 - p
+	return [gm, gs, go, l * 27 / 360, p]}
+
+function lunarSearch(t0, latitude, longitude) {
+	let k = [latitude.toFixed(10), longitude.toFixed(10)].join("|")
+	if(!cache.lunar || cache.lunar.key !== k)
+		cache.lunar = {key: k, states: new Map()}
+	let lunarCache = cache.lunar
+	let cachedLunarState = jd => {
+		let key = Math.round(jd * 86400000)
+		if(lunarCache.states.has(key)) {
+			let state = lunarCache.states.get(key)
+			lunarCache.states.delete(key)
+			lunarCache.states.set(key, state)
+			return state}
+		let state = lunarState(jd, latitude, longitude)
+		lunarCache.states.set(key, state)
+		if(lunarCache.states.size > 5000)
+			lunarCache.states.delete(lunarCache.states.keys().next().value)
+		return state}
+	let tmin = t0 - 16, tmax = t0 + 31, dt = 1 / 24
+	let data = []
+	let firstHour = Math.floor(tmin * 24), lastHour = Math.ceil(tmax * 24)
+	for(let hour = firstHour; hour <= lastHour; hour++) {
+		let jd = hour / 24
+		let [gm, gs, go, nks, phs] = cachedLunarState(jd)
+		if(data.length) {
+			let p = data[data.length - 1]
+			nks = p[1] + mod(nks - p[1], 27, -13.5)
+			phs = p[2] + mod(phs - p[2], 360, -180)}
+		data.push([jd, nks, phs])}
+	let eventTime = jd => {
+		jd = Math.floor(jd * 1440) / 1440
+		let tz = Math.round(longitude / 15)
+		let [Y, M, D, t] = getGregorian(jd, tz * 15)
+		let [h, min] = toDMS(t / 15, 24, 0, 0)
+		let abbr = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+			"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][M - 1]
+		return abbr + " " + D + ", " + String(h).padStart(2, "0") + ":" +
+			String(min).padStart(2, "0")}
+	let stateAt = jd => {
+		let i = clip(Math.round((jd - data[0][0]) / dt), 0, data.length - 1)
+		let reference = data[i]
+		let state = cachedLunarState(jd)
+		return [
+			reference[1] + mod(state[3] - reference[1], 27, -13.5),
+			reference[2] + mod(state[4] - reference[2], 360, -180)]}
+	let refine = (lo, hi, key, target) => {
+		let period = key === 0 ? 27 : 360
+		let minute = Math.floor(lo * 1440)
+		let valueAt = jd => {
+			let state = cachedLunarState(jd)
+			return target + mod(state[key + 3] - target, period, -period / 2)}
+		let previousJd = minute / 1440
+		let previousValue = valueAt(previousJd)
+		while(previousJd <= hi) {
+			let jd = ++minute / 1440
+			let value = valueAt(jd)
+			if(previousValue <= target && value >= target) return (minute - 0.5) / 1440
+			previousJd = jd
+			previousValue = value}
+		return null}
+	let crossing = (key, target, after = t0) => {
+		for(let i = 0; i < data.length - 1; i++)
+			if(data[i][key + 1] <= target && data[i + 1][key + 1] >= target)
+				if(data[i + 1][0] > after)
+					return refine(data[i][0], data[i + 1][0], key, target)}
+	let nextCrossing = (key, step, after) => {
+		let target = Math.floor(stateAt(after)[key] / step) * step + step
+		while(target <= data[data.length - 1][key + 1]) {
+			let jd = crossing(key, target, after)
+			if(jd) return jd
+			target += step}
+		return null}
+	let formatEvent = (prefix, jd) => jd ? prefix + " " + eventTime(jd) : ""
+	let nakshatras = ["Aśvinī (1)", "Bharaṇī (2)", "Kṛttikā (3)", "Rohiṇī (4)",
+		"Mṛgaśīrṣa (5)", "Ārdrā (6)", "Punarvasu (7)", "Puṣya (8)", "Āśleṣā (9)",
+		"Maghā (10)", "P. Phalgunī (11)", "U. Phalgunī (12)", "Hasta (13)", "Citrā (14)",
+		"Svātī (15)", "Viśākha (16)", "Anurādhā (17)", "Jyeṣṭha (18)", "Mūla (19)",
+		"P. Aṣāḍhā (20)", "U. Aṣāḍhā (21)", "Śravaṇa (22)", "Dhaniṣṭha (23)",
+		"Śatabhiṣak (24)", "P. Bhādrapadā (25)", "U. Bhādrapadā (26)", "Revatī (27)"]
+	let months = ["Vaiśākha (1/๖)", "Jyaiṣṭha (2/๗)", "Āṣāḍha (3/๘)", "Śrāvaṇa (4/๙)",
+		"Bhādrapada (5/๑๐)", "Āśvina (6/๑๑)", "Kārttika (7/๑๒)", "Mārgaśīrṣa (8/๑)",
+		"Pauṣa (9/๒)", "Māgha (10/๓)", "Phālguna (11/๔)", "Caitra (12/๕)"]
+	let now = stateAt(t0)
+	let phsIndex = mod(now[1] / 12, 30)
+	let phsNumber = Math.floor(mod(phsIndex, 15)) + 1
+	phsNumber = phsNumber + (phsNumber % 10 === 1 && phsNumber !== 11 ? "ˢᵗ" :
+		phsNumber % 10 === 2 && phsNumber !== 12 ? "ⁿᵈ" :
+		phsNumber % 10 === 3 && phsNumber !== 13 ? "ʳᵈ" : "ᵗʰ")
+	let phsUntil = nextCrossing(1, 12, t0)
+	let [gm, gs, go] = cachedLunarState(crossing(1, phsIndex < 15 ?
+		Math.floor(now[1] / 360) * 360 + 180 : Math.floor((now[1] - 180) / 360) * 360 + 180,
+		phsIndex < 15 ? t0 : tmin))
+	let synMonth = Math.floor(mod(toTP(normalize(translate(gs, negate(go))))[0], 360) / 30)
+	let nksIndex = mod(Math.floor(now[0]), 27)
+	let nksUntil = nextCrossing(0, 1, t0)
+	let nextNewMoon = nextCrossing(1, 360, t0)
+	let moonEvents = []
+	for(let target = Math.floor(now[1] / 180) * 180 + 180;
+			target <= data[data.length - 1][2]; target += 180) {
+		let jd = crossing(1, target, t0)
+		if(!jd) continue
+		moonEvents.push({jd,
+			label: mod(target, 360) === 0 ? "Next New Moon:" : "Next Full Moon:",
+			value: nakshatras[mod(Math.floor(stateAt(jd)[0]), 27)],
+			time: formatEvent("at", jd)})}
+	moonEvents.sort((a, b) => a.jd - b.jd)
+	return {
+		phase: {value: phsNumber + " " + (phsIndex < 15 ? "Bright" : "Dark"),
+			until: formatEvent("until", phsUntil)},
+		month: {value: months[synMonth],
+			until: formatEvent("until", nextNewMoon)},
+		nakshatra: {value: nakshatras[nksIndex],
+			until: formatEvent("until", nksUntil)},
+		moonEvents: moonEvents.slice(0, 2)}}
+
 function updateModal() {
 	let dpr = 2 //window.devicePixelRatio || 1
 	let col = mode.darkTheme ? "white" : "black"
@@ -111,7 +237,7 @@ function updateModal() {
 	let obj = [
 		{position: ss[8], label: "N", name: "Neptune", color: color.neptune},
 		{position: ss[7], label: "U", name: "Uranus", color: color.uranus},
-		{position: ss[9], label: "8", name: "Rahu", color: color.rahu},
+		{position: ss[9], label: "8", name: "Rāhu", color: color.rahu},
 		{position: ss[6], label: "7", name: "Saturn", color: color.saturn},
 		{position: ss[3], label: "6", name: "Venus", color: color.venus},
 		{position: ss[5], label: "5", name: "Jupiter", color: color.jupiter},
