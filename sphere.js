@@ -7,10 +7,26 @@ function meridian(theta, phi0 = 90) {
 	let pts = []
 	for(let p = -phi0; p <= phi0; p += 2) pts.push(toXYZ(theta, p))
 	return pts}
+
 function parallel(phi) {
 	let pts = []
 	for(let t = 0; t <= 360; t += 2) pts.push(toXYZ(t, phi))
 	return pts}
+
+function greatCircleArc(theta0, phi0, theta1, phi1, dir = 1) {
+	let p0 = toXYZ(theta0, phi0), p1 = toXYZ(theta1, phi1)
+	let a1 = Math.acos(clip(vdot(p0, p1), -1, 1))
+	if(a1 === 0) return [dir === 1 ? p0 : p1]
+	let axis = normalize(cross(p0, p1))
+	if(Math.hypot(...axis) === 0) return dir === 1 ? [p0, p1] : [p1, p0]
+	let pts = []
+	for(let a = 0; a <= a1; a += 2 * DEGREE) {
+		let t = dir === 1 ? a : a1 - a
+		pts.push(translate(scale(p0, Math.cos(t)), scale(cross(axis, p0), Math.sin(t))))}
+	let end = dir === 1 ? p1 : p0
+	if(vdot(pts[pts.length - 1], end) < 1 - 1e-12) pts.push(end)
+	return pts}
+
 const GRATICULE = []
 for(let t = 0; t < 360; t += 30) GRATICULE.push(meridian(t, mod(t, 30) === 0 ? 90 : 75))
 for(let p = -60; p <= 60; p += 30) GRATICULE.push(parallel(p))
@@ -20,7 +36,23 @@ function pushGraticule(name, rotation, color) {
 		name === "horizontal" ? param.sidereal.toFixed(10) + "|" + param.latitude.toFixed(10) : "equatorial"
 	if(!cache.graticule[name] || cache.graticule[name].key !== k)
 		cache.graticule[name] = {key: k, lines: GRATICULE.map(pts => pts.map(rotation))}
-	for(let pts of cache.graticule[name].lines) pushLines({points: pts, color, width: 0.75})}
+	let softColor = name === "ecliptic" ? "rgba(255, 0, 0, 0.65)" :
+		name === "equatorial" ? "rgba(64, 96, 255, 0.65)" :
+		name === "horizontal" ? "rgba(0, 192, 0, 0.65)" : color
+	for(let pts of cache.graticule[name].lines) pushLines({points: pts, color: softColor, width: 1})}
+
+function pushSeasonalTriangles() {
+	for(let triangle of SEASONAL_TRIANGLES) {
+		let stars = triangle.stars.map(name => STAR_LABEL_BY_NAME.get(name))
+		if(stars.some(star => !star)) continue
+		let vertices = stars.map(star => toTP(star.position))
+		for(let i = 0; i < vertices.length; i++) {
+			let a = vertices[i], b = vertices[(i + 1) % vertices.length]
+			pushLines({points: greatCircleArc(a[0], a[1], b[0], b[1]).map(fromNirayana),
+				color: triangle.color, width: 1.5})}
+		let center = normalize(stars.reduce((sum, star) => translate(sum, star.position), [0, 0, 0]))
+		pushLabels([{position: fromNirayana(center), text: triangle.name, color: triangle.color,
+			edge: mode.darkTheme ? "black" : "white", border: 2, size: 12}])}}
 
 function pushAnalemma() {
 	let k = [param.latitude.toFixed(10), param.longitude.toFixed(10),

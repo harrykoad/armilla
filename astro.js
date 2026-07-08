@@ -1,7 +1,11 @@
 const STARS = initStars()
 const STAR_LABELS = initStarNames()
+const STAR_LABEL_BY_NAME = new Map(STAR_LABELS.map(star => [star.name, star]))
+const SEASONAL_TRIANGLES = [
+	{name: "Summer\nTriangle", color: "magenta", stars: ["Vega", "Altair", "Deneb"]},
+	{name: "Winter\nTriangle", color: "cyan", stars: ["Sirius", "Procyon", "Betelgeuse"]}]
 const CONSTELLATIONS = initConstellations()
-const CONSTELLATION_LABELS = initConstellationNames()
+const CONSTELLATION_NAMES = initConstellationNames()
 const ZODIAC = [6, 76, 37, 21, 45, 84, 47, 69, 75, 11, 4, 64]
 const ZODIAC_NAMES = new Set(["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
 	"Libra", "Scorpius", "Sagittarius", "Capricornus", "Aquarius", "Pisces"])
@@ -357,7 +361,7 @@ function initStars() {
 function initStarNames() {
 	let data = [
 		[101.287, -16.7161, "Sirius"], [95.988, -52.6957, "Canopus"],
-		[219.902, -60.834, "Alpha Centauri"], [213.915, 19.1824, "Arcturus"],
+		[219.902, -60.834, "Rigil Kent."], [213.915, 19.1824, "Arcturus"],
 		[279.235, 38.7837, "Vega"], [79.1723, 45.998, "Capella"],
 		[78.6345, -8.20164, "Rigel"], [114.825, 5.22499, "Procyon"],
 		[24.4285, -57.2368, "Achernar"], [88.7929, 7.40706, "Betelgeuse"],

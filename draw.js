@@ -233,6 +233,7 @@ function render() {
 	if(show.eclipticGraticule) pushGraticule("ecliptic", fromNirayana, color.ecliptic)
 	if(show.equatorialGraticule) pushGraticule("equatorial", p => p, color.equatorial)
 	if(show.horizontalGraticule) pushGraticule("horizontal", fromHorizontal, color.horizontal)
+	if(show.seasonalTriangles) pushSeasonalTriangles()
 
 	let c = mode.darkTheme ? "white" : "black"
 	if(show.milkyWay) {
@@ -257,7 +258,7 @@ function render() {
 	if(show.analemma) pushAnalemma()
 
 	if(show.constellationNames)
-		pushLabels(CONSTELLATION_LABELS.map(label => ({
+		pushLabels(CONSTELLATION_NAMES.map(label => ({
 			name: label.name,
 			position: fromNirayana(label.position),
 			color: show.zodiac && ZODIAC_NAMES.has(label.name) ? color.zodiac : color.constellations,
