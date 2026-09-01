@@ -13,14 +13,20 @@ function resize() {
 	UI.sky.style.height = view.h + "px"
 	CTX.setTransform(dpr, 0, 0, dpr, 0, 0)}
 
-function project(point) {
-	let camera3D = toScreen(point, "equatorial", mode.orientation)
+function project(point, fromMode = "equatorial") {
+	let oriented = fromMode === mode.orientation ? point : changeSystem(point, fromMode, mode.orientation)
+	let camera3D = mdot(matrix.toScreen, oriented)
 	let s = view.r0 * view.f / (view.f - camera3D[0])
 	let screen2D = [view.x0 + camera3D[1] * s, view.y0 - camera3D[2] * s]
 	return [camera3D, screen2D]}
 
+function celestialRenderPosition(point) {
+	return refractionEnabled() ?
+		{position: refractHorizontal(toHorizontal(point)), fromMode: "horizontal"} :
+		{position: point, fromMode: "equatorial"}}
+
 function pushLines(lines) {
-	let {points, color, width, dash = []} = lines
+	let {points, color, width, dash = [], fromMode = "equatorial"} = lines
 	let pts = []
 	let side = null
 
@@ -32,7 +38,7 @@ function pushLines(lines) {
 		pts = []}
 
 	for(let p of points) {
-		let [c3D, s2D] = project(p)
+		let [c3D, s2D] = project(p, fromMode)
 		let currentSide = c3D[0] >= view.z0
 		if(side === null) side = currentSide
 		if(currentSide !== side) {
@@ -58,19 +64,29 @@ function drawLines(ctx, lines) {
 		ctx.stroke()}
 	ctx.setLineDash([])}
 
-function pushStars(showPoints = true) {
+function getStarRenderVectors() {
 	let k = param.julianDay.toFixed(10)
 	if(!cache.stars || cache.stars.key !== k)
 		cache.stars = {key: k, vectors: STARS.map(p => {
 			return p[0] === 0 && p[1] === 0 && p[2] === 0 ? [0, 0, 0] : fromNirayana(p)})}
-	if(!showPoints) return
+	if(!refractionEnabled()) return {vectors: cache.stars.vectors, fromMode: "equatorial"}
+	let rk = [k, param.sidereal.toFixed(10), param.latitude.toFixed(10)].join("|")
+	if(!cache.refractedStars || cache.refractedStars.key !== rk)
+		cache.refractedStars = {key: rk, vectors: cache.stars.vectors.map(p =>
+			p[0] === 0 && p[1] === 0 && p[2] === 0 ? [0, 0, 0] : refractHorizontal(toHorizontal(p)))}
+	return {vectors: cache.refractedStars.vectors, fromMode: "horizontal"}}
+
+function pushStars(showPoints = true) {
+	let stars = getStarRenderVectors()
+	if(!showPoints) return stars
 	let m = 0
-	for(let s of cache.stars.vectors) {
+	for(let s of stars.vectors) {
 		if(s[0] === 0 && s[1] === 0 && s[2] === 0) {m++; continue}
-		let [c3D, s2D] = project(s)
+		let [c3D, s2D] = project(s, stars.fromMode)
 		let point = {position: s2D, magnitude: m}
 		if(c3D[0] >= view.z0) buffer.frontStars.push(point)
-		else if(!show.sphere) buffer.backStars.push(point)}}
+		else if(!show.sphere) buffer.backStars.push(point)}
+	return stars}
 
 function drawStars(stars) {
 	let r = view.r0 * view.f / Math.sqrt(view.f * view.f - 1)
@@ -90,8 +106,8 @@ function drawStars(stars) {
 
 function pushPoints(points) {
 	for(let p of points) {
-		let {position, point = {}, text = {}} = p
-		let [c3D, s2D] = project(position)
+		let {position, point = {}, text = {}, fromMode = "equatorial"} = p
+		let [c3D, s2D] = project(position, fromMode)
 		let marker = {...point, position: s2D}
 		let label = {text: "", color: point.color || "white", size: 16, ...text, position: s2D}
 		if(label.text !== "") {
@@ -119,9 +135,10 @@ function pushPoints(points) {
 
 function pushLabels(labels) {
 	for(let label of labels) {
-		let [c3D, s2D] = project(label.position)
+		let [c3D, s2D] = project(label.position, label.fromMode || "equatorial")
 		let text = {...label, position: s2D}
 		delete text.name
+		delete text.fromMode
 		if(text.text === undefined) text.text = label.name
 		if(text.float) {
 			let [x, y] = s2D
@@ -233,7 +250,6 @@ function render() {
 	if(show.eclipticGraticule) pushGraticule("ecliptic", fromNirayana, color.ecliptic)
 	if(show.equatorialGraticule) pushGraticule("equatorial", p => p, color.equatorial)
 	if(show.horizontalGraticule) pushGraticule("horizontal", fromHorizontal, color.horizontal)
-	if(show.seasonalTriangles) pushSeasonalTriangles()
 
 	let c = mode.darkTheme ? "white" : "black"
 	if(show.milkyWay) {
@@ -255,19 +271,20 @@ function render() {
 	if(show.horizon) pushLines({points: parallel(0).map(fromHorizontal), color: color.horizontal, width: 3})
 	if(show.horizontalMeridian) pushLines({points: meridian(90).map(fromHorizontal), color: color.horizontal, width: 3})
 	if(show.observerMeridian) pushLines({points: meridian(param.sidereal), color: color.horizontal, width: 3})
+	if(show.seasonalTriangles) pushSeasonalTriangles()
 	if(show.analemma) pushAnalemma()
 
 	if(show.constellationNames)
 		pushLabels(CONSTELLATION_NAMES.map(label => ({
 			name: label.name,
-			position: fromNirayana(label.position),
+			...celestialRenderPosition(fromNirayana(label.position)),
 			color: show.zodiac && ZODIAC_NAMES.has(label.name) ? color.zodiac : color.constellations,
 			edge: mode.darkTheme ? "black" : "white",
 			border: 2, size: 11})))
 	if(show.starNames)
 		pushLabels(STAR_LABELS.map(label => ({
 			name: label.name,
-			position: fromNirayana(label.position),
+			...celestialRenderPosition(fromNirayana(label.position)),
 			color: c,
 			edge: mode.darkTheme ? "black" : "white",
 			border: 2, size: 11, float: show.stars})))
@@ -297,17 +314,19 @@ function render() {
 			text: {text: "Lagna", color: c}}])}
 
 	if(show.constellations || show.zodiac || show.stars) {
-		pushStars(show.stars)
-		let s = cache.stars.vectors
+		let stars = pushStars(show.stars)
+		let s = stars.vectors
 		if(show.constellations) {
 			for(let c of CONSTELLATIONS) {
 				for(let i = 0; i < c.length; i += 2)
-					pushLines({points: [s[c[i]], s[c[i + 1]]], color: color.constellations, width: 0.75})}}
+					pushLines({points: [s[c[i]], s[c[i + 1]]], color: color.constellations,
+						width: 0.75, fromMode: stars.fromMode})}}
 		if(show.zodiac) {
 			for(let z of ZODIAC) {
 				let c = CONSTELLATIONS[z]
 				for(let i = 0; i < c.length; i += 2)
-					pushLines({points: [s[c[i]], s[c[i + 1]]], color: color.zodiac, width: 1.5})}}}
+					pushLines({points: [s[c[i]], s[c[i + 1]]], color: color.zodiac,
+						width: 1.5, fromMode: stars.fromMode})}}}
 
 	if(show.sun || show.moon || show.planets || show.moonsOrbit ||
 		show.eclipses || show.halo || show.rainbow) pushSolarSystem()

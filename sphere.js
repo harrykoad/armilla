@@ -105,7 +105,7 @@ function pushSolarSystem() {
 		{position: v[2], name: "Mercury", color: color.mercury, show: show.planets},
 		{position: v[1], name: "Sun", color: color.sun, show: show.sun},
 		{position: v[0], name: "Moon", color: color.moon, show: show.moon}].filter(p => p.show).map(p => ({
-			position: p.position,
+			...celestialRenderPosition(p.position),
 			point: {size: 6, color: p.color, border: 2, edge: c},
 			text: {text: p.name, color: c}})))
 

@@ -7,6 +7,48 @@ const toHorizontal = p => mdot(matrix.toHorizontal, p)
 const fromEquatorialJ2000 = p => mdot(matrix.fromEquatorialJ2000, p)
 const fromGalactic = p => mdot(matrix.fromGalactic, p)
 
+function apparentAltitude(h) {
+	return h + (1013.25 / 1010) * (283 / (26.5 + 273)) *
+		((((((((((
+		+ 3.58488944710088e-9 * h
+		+ 3.54390052445494e-5) * h
+		+ 1.27998250881386e-3) * h
+		- 2.06613004585861e+0) * h
+		- 5.17900258176740e+1) * h
+		+ 1.40000848608753e+4) * h
+		+ 3.31589479667060e+5) * h
+		+ 3.18807561066599e+6) * h
+		+ 1.60254988667429e+7) * h
+		+ 4.26511737209119e+7) * h
+		+ 4.83049428529694e+7) /
+		((((((((((
+		+ 6.60514676743955e-6 * h
+		+ 2.39478091081164e-4) * h
+		- 6.25130435189532e-1) * h
+		- 1.85989226390845e+1) * h
+		+ 1.47322041634870e+4) * h
+		+ 3.42577546206784e+5) * h
+		+ 3.43484620426114e+6) * h
+		+ 1.92241649445868e+7) * h
+		+ 6.35667762830273e+7) * h
+		+ 1.18359542336086e+8) * h
+		+ 1.00000000000000e+8)}
+
+function refractHorizontal(point) {
+	let [x, y, z] = point
+	let horizontal = Math.hypot(x, y)
+	let radius = Math.hypot(horizontal, z)
+	if(radius === 0 || horizontal < 1e-12) return point
+	let altitude = Math.atan2(z, horizontal) / DEGREE
+	let apparent = apparentAltitude(altitude) * DEGREE
+	let scaleHorizontal = radius * Math.cos(apparent) / horizontal
+	let refraction = [x * scaleHorizontal - x, y * scaleHorizontal - y,
+		radius * Math.sin(apparent) - z]
+	return translate(point, refraction)}
+
+function refractionEnabled() {
+	return mode.orientation === "horizontal" && UI.atmosphericRefractionCheckbox.checked}
+
 function getJulianDay(year = param.year, month = param.month, day = param.day,
 	time = param.time, timeZone = param.timeZone) {
 	let [h, m, s] = toDMS(time / 15, 24)

@@ -42,14 +42,20 @@ UI.orientationDropdown.onchange = () => {
 	let newMode = UI.orientationDropdown.value
 	if(oldMode === newMode) return
 	let a = UI.analemmaCheckbox.parentElement
+	let r = UI.atmosphericRefractionCheckbox.parentElement
 	if(newMode === "horizontal") {
 		UI.analemmaCheckbox.disabled = false
-		a.style.color = mode.darkTheme ? "white" : "black"}
+		a.style.color = mode.darkTheme ? "white" : "black"
+		UI.atmosphericRefractionCheckbox.disabled = false
+		r.style.color = ""}
 	else {
 		UI.analemmaCheckbox.disabled = true
 		UI.analemmaCheckbox.checked = false
 		show.analemma = false
-		a.style.color = "gray"}
+		a.style.color = "gray"
+		UI.atmosphericRefractionCheckbox.disabled = true
+		UI.atmosphericRefractionCheckbox.checked = false
+		r.style.color = "gray"}
 	let a0 = 0; a1 = 0
 	let p = toScreen([0, 0, 1], newMode, oldMode)
 	if(p[1] !== 0 || p[2] !== 0) a1 = Math.atan2(p[1], p[2]) / DEGREE
@@ -107,6 +113,10 @@ for (let s in show) {
 		show[s] = e.checked
 		update.sky = true
 		render()}}
+
+UI.atmosphericRefractionCheckbox.onchange = () => {
+	update.sky = true
+	render()}
 
 UI.eclipticLegend.style.background = color.ecliptic
 UI.equatorialLegend.style.background = color.equatorial
