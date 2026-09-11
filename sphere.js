@@ -67,8 +67,9 @@ function pushAnalemma() {
 				negate(translate(helioEMB(jc), getGeoObserver(sidereal, param.latitude))))
 			v.push(normalize(mdot(mul(rotateX(-(90 - param.latitude)),
 				rotateZ(-(90 + sidereal))), fromNirayana(ts))))}
-		cache.analemma = {key: k, vectors: v.map(fromHorizontal)}}
-	pushLines({points: cache.analemma.vectors, color: color.sun, width: 2, dash: [5, 5]})}
+		cache.analemma = {key: k, vectors: v}}
+	let points = refractionEnabled() ? cache.analemma.vectors.map(refractHorizontal) : cache.analemma.vectors
+	pushLines({points, color: color.sun, width: 2, dash: [5, 5], fromMode: "horizontal"})}
 
 function pushSolarSystem() {
 	let k = param.julianDay.toFixed(10)

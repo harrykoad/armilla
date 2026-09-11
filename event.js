@@ -55,6 +55,7 @@ UI.orientationDropdown.onchange = () => {
 		a.style.color = "gray"
 		UI.atmosphericRefractionCheckbox.disabled = true
 		UI.atmosphericRefractionCheckbox.checked = false
+		show.atmosphericRefraction = false
 		r.style.color = "gray"}
 	let a0 = 0; a1 = 0
 	let p = toScreen([0, 0, 1], newMode, oldMode)
@@ -113,10 +114,6 @@ for (let s in show) {
 		show[s] = e.checked
 		update.sky = true
 		render()}}
-
-UI.atmosphericRefractionCheckbox.onchange = () => {
-	update.sky = true
-	render()}
 
 UI.eclipticLegend.style.background = color.ecliptic
 UI.equatorialLegend.style.background = color.equatorial

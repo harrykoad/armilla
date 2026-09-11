@@ -7,31 +7,31 @@ const toHorizontal = p => mdot(matrix.toHorizontal, p)
 const fromEquatorialJ2000 = p => mdot(matrix.fromEquatorialJ2000, p)
 const fromGalactic = p => mdot(matrix.fromGalactic, p)
 
-function apparentAltitude(h) {
-	return h + (1013.25 / 1010) * (283 / (26.5 + 273)) *
+function apparentAltitude(alt, temp = 26.5, pres = 1013.25) {
+	return alt + (pres / 1010) * (283 / (temp + 273)) *
 		((((((((((
-		+ 3.58488944710088e-9 * h
-		+ 3.54390052445494e-5) * h
-		+ 1.27998250881386e-3) * h
-		- 2.06613004585861e+0) * h
-		- 5.17900258176740e+1) * h
-		+ 1.40000848608753e+4) * h
-		+ 3.31589479667060e+5) * h
-		+ 3.18807561066599e+6) * h
-		+ 1.60254988667429e+7) * h
-		+ 4.26511737209119e+7) * h
+		+ 3.58488944710088e-9 * alt
+		+ 3.54390052445494e-5) * alt
+		+ 1.27998250881386e-3) * alt
+		- 2.06613004585861e+0) * alt
+		- 5.17900258176740e+1) * alt
+		+ 1.40000848608753e+4) * alt
+		+ 3.31589479667060e+5) * alt
+		+ 3.18807561066599e+6) * alt
+		+ 1.60254988667429e+7) * alt
+		+ 4.26511737209119e+7) * alt
 		+ 4.83049428529694e+7) /
 		((((((((((
-		+ 6.60514676743955e-6 * h
-		+ 2.39478091081164e-4) * h
-		- 6.25130435189532e-1) * h
-		- 1.85989226390845e+1) * h
-		+ 1.47322041634870e+4) * h
-		+ 3.42577546206784e+5) * h
-		+ 3.43484620426114e+6) * h
-		+ 1.92241649445868e+7) * h
-		+ 6.35667762830273e+7) * h
-		+ 1.18359542336086e+8) * h
+		+ 6.60514676743955e-6 * alt
+		+ 2.39478091081164e-4) * alt
+		- 6.25130435189532e-1) * alt
+		- 1.85989226390845e+1) * alt
+		+ 1.47322041634870e+4) * alt
+		+ 3.42577546206784e+5) * alt
+		+ 3.43484620426114e+6) * alt
+		+ 1.92241649445868e+7) * alt
+		+ 6.35667762830273e+7) * alt
+		+ 1.18359542336086e+8) * alt
 		+ 1.00000000000000e+8)}
 
 function refractHorizontal(point) {
@@ -47,7 +47,7 @@ function refractHorizontal(point) {
 	return translate(point, refraction)}
 
 function refractionEnabled() {
-	return mode.orientation === "horizontal" && UI.atmosphericRefractionCheckbox.checked}
+	return mode.orientation === "horizontal" && show.atmosphericRefraction}
 
 function getJulianDay(year = param.year, month = param.month, day = param.day,
 	time = param.time, timeZone = param.timeZone) {

@@ -23,7 +23,8 @@ const show = {sphere: true, stars: true, starNames: false, milkyWay: true, const
 	ecliptic: true, eclipticAxes: true, eclipticMeridian: false, eclipticGraticule: false, precessionCircles: false,
 	equator: true, equatorialAxes: true, equatorialMeridian: false, equatorialGraticule: false, circumpolarCircles: false,
 	horizon: true, horizontalAxes: true, horizontalMeridian: false, horizontalGraticule: true, observerMeridian: false,
-	sun: true, moon: true, planets: false, analemma: false, moonsOrbit: false, eclipses: false, halo: false, rainbow: false}
+	sun: true, moon: true, planets: false, analemma: false, moonsOrbit: false, eclipses: false,
+	atmosphericRefraction: true, halo: false, rainbow: false}
 const update = {view: true, sky: true}
 const view = {w: 200, h: 100, f: 10, /* w / 2 */x0: 100, /* h / 2 */y0: 50, /* 1 / f */z0: 0.1,
 	/* 0.45 * min(w, h) */r0: 45, yaw: 0, pitch: 0, roll: 0, orienting: false}
