@@ -8,14 +8,16 @@
 <style>
 * {box-sizing: border-box}
 body {background: black; color: white; color-scheme: dark; font-family: sans-serif;
-	font-size: 10pt; margin: 12px}
-.controls {align-items: flex-start; display: flex; flex-wrap: wrap; gap: 12px}
+	font-size: 10pt; margin: 12px; overflow-x: hidden}
+.controls {align-items: stretch; display: grid; gap: 12px;
+	grid-template-columns: repeat(3, max-content) minmax(0, 1fr); width: 100%; min-width: 0}
 .controlGroup, .graphPanel {background: black; border: 1px solid gray; border-radius: 10px; padding: 8px}
 .controlGroup {display: grid; grid-auto-rows: 1fr; gap: 8px}
-.intersectionGroup {display: block; flex: 1 1 260px; height: 104px; min-width: 260px;
+.intersectionGroup {display: block; contain: size; min-height: 0; min-width: 0;
 	overflow: hidden; user-select: none}
 .intersectionHeader {height: 24px; overflow: hidden}
-.intersectionScroller {height: calc(100% - 24px); overflow-y: auto; scrollbar-gutter: stable}
+.intersectionScroller {height: calc(100% - 24px); overflow-x: hidden; overflow-y: auto;
+	scrollbar-gutter: stable}
 .intersectionHeaderTable, .intersectionTable {border-collapse: separate; border-spacing: 0;
 	font-size: 10pt; width: auto}
 .intersectionHeaderTable {table-layout: fixed}
@@ -29,17 +31,24 @@ body {background: black; color: white; color-scheme: dark; font-family: sans-ser
 .intersectionOption {cursor: pointer; height: 24px}
 .intersectionOption td {height: 24px; line-height: 24px; padding: 0 10px; white-space: nowrap}
 .intersectionOption:hover td {background: #1d1d1d}
+.intersectionOption.selected td {background: #303030}
+.intersectionOption.selected td:first-child {border-radius: 4px 0 0 4px}
+.intersectionOption.selected td:last-child {border-radius: 0 4px 4px 0}
 .intersectionOption:hover td:first-child {border-radius: 4px 0 0 4px}
 .intersectionOption:hover td:last-child {border-radius: 0 4px 4px 0}
 .intersectionStar {align-items: center; display: flex; gap: 4px; min-width: 0}
-.intersectionDate {text-align: center}
+.intersectionDate {min-width: 86px; text-align: center; width: 86px}
+.intersectionDateLink {border: 1px solid currentColor; border-radius: 4px; color: inherit;
+	display: block; line-height: 18px; margin: 0 auto; padding: 0 4px; text-decoration: none; width: 60px}
+.intersectionDateLink:hover {background: #2a2a2a}
+.intersectionDateLink:focus-visible {outline: 2px solid #80bfff; outline-offset: 1px}
 .intersectionCentral {padding-right: 2px !important; text-align: right; width: 7ch}
 .intersectionRange {padding-left: 2px !important; text-align: left}
 .intersectionOption input {accent-color: var(--star-color); flex: 0 0 auto; margin: 0}
 .intersectionOption span {min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap}
 .intersectionEmpty {color: #aaa; height: 24px; line-height: 24px; text-align: center}
-.graphPanel {flex: 0 0 100%; min-width: 0; width: 100%; overflow-x: auto}
-#azimuthGraph {display: block; width: 100%; min-width: 760px; height: max(520px, calc(100vh - 180px))}
+.graphPanel {grid-column: 1 / -1; min-width: 0; width: 100%; overflow: hidden}
+#azimuthGraph {aspect-ratio: 21 / 9; display: block; height: auto; min-width: 0; width: 100%}
 .field {align-items: center; display: grid; gap: 8px;
 	grid-template-columns: 1fr 76px 2em; white-space: nowrap}
 .locationGroup .field, .azimuthGroup .field {grid-template-columns: 1fr 76px max-content}
@@ -111,15 +120,16 @@ input:focus-visible {outline: 2px solid #80bfff; outline-offset: 2px}
 		<div class="intersectionHeader" id="intersectionTitle">
 			<table class="intersectionHeaderTable">
 				<colgroup><col><col><col><col><col></colgroup>
-				<thead><tr><th class="intersectionStarHeading" colspan="2">Star/Asterism</th>
-					<th colspan="2">Year Range</th><th>Solar Opposition*</th></tr></thead>
+				<thead><tr><th class="intersectionStarHeading">Star/Asterism</th>
+					<th colspan="2">Year Range</th>
+					<th title="Star rises as the Sun's center sets at the entered horizon altitude.">Acron. Ris.*</th>
+					<th title="Star sets as the Sun's center rises at the entered horizon altitude.">Acron. Set.*</th></tr></thead>
 			</table>
 		</div>
 		<div class="intersectionScroller">
 			<table class="intersectionTable">
 				<thead class="intersectionSizingHeader" aria-hidden="true">
-					<tr><th colspan="2">Star/Asterism</th><th colspan="2">Year Range</th>
-						<th>Solar Opposition*</th></tr>
+					<tr><th>Star/Asterism</th><th colspan="2">Year Range</th><th>Acron. Ris.*</th><th>Acron. Set.*</th></tr>
 				</thead>
 				<tbody class="intersectionList" id="intersectionList" role="radiogroup"
 					aria-label="Stars intersecting the azimuth uncertainty band" aria-live="polite"></tbody>
@@ -138,6 +148,14 @@ input:focus-visible {outline: 2px solid #80bfff; outline-offset: 2px}
 <script src="coord.js"></script>
 <script src="astro.js"></script>
 <script>
+
+const initialPixelRatio = window.devicePixelRatio || 1
+let pageScale = 1
+
+function syncViewportScale() {
+	pageScale = initialPixelRatio / (window.devicePixelRatio || 1)
+	document.body.style.zoom = String(pageScale)
+	requestGraphRender()}
 
 function setupCoordinateInput(id, limit, wrap) {
 	const input = UI[id]
@@ -175,7 +193,7 @@ function setupCoordinateInput(id, limit, wrap) {
 		event.preventDefault()
 		nudge(event.key === "ArrowUp" ? 1 : -1)}
 	input.addEventListener("wheel", event => {
-		if(event.deltaY === 0) return
+		if(event.ctrlKey || event.metaKey || event.deltaY === 0) return
 		event.preventDefault()
 		nudge(event.deltaY < 0 ? 1 : -1)}, {passive: false})}
 
@@ -236,7 +254,7 @@ function setupAzimuthPanel() {
 			event.preventDefault()
 			nudge(input, event.key === "ArrowUp" ? 1 : -1)}
 		input.addEventListener("wheel", event => {
-			if(event.deltaY === 0) return
+			if(event.ctrlKey || event.metaKey || event.deltaY === 0) return
 			event.preventDefault()
 			nudge(input, event.deltaY < 0 ? 1 : -1)}, {passive: false})}}
 
@@ -265,7 +283,7 @@ function setupPressureInput() {
 		event.preventDefault()
 		nudge(event.key === "ArrowUp" ? 1 : -1)}
 	input.addEventListener("wheel", event => {
-		if(event.deltaY === 0) return
+		if(event.ctrlKey || event.metaKey || event.deltaY === 0) return
 		event.preventDefault()
 		nudge(event.deltaY < 0 ? 1 : -1)}, {passive: false})}
 
@@ -296,7 +314,7 @@ function setupTemperatureInput() {
 		event.preventDefault()
 		nudge(event.key === "ArrowUp" ? 1 : -1)}
 	input.addEventListener("wheel", event => {
-		if(event.deltaY === 0) return
+		if(event.ctrlKey || event.metaKey || event.deltaY === 0) return
 		event.preventDefault()
 		nudge(event.deltaY < 0 ? 1 : -1)}, {passive: false})}
 
@@ -317,19 +335,9 @@ const GRAPH_STAR_COLORS = {
 	Rigel: "#ffc137", Spica: "#e889b2", Sirius: "#6dda91", Antares: "#f2bd57",
 	Fomalhaut: "#ff8a65", Adhara: "#95b7ed", Shaula: "#b0d444", Canopus: "#ffb34f",
 	Achernar: "#83d0ee", Gacrux: "#bfa9e0"}
-const GRAPH_STAR_BAYER = {
-	Capella: "α Aur", Deneb: "α Cyg", Vega: "α Lyr", Castor: "α Gem", Pollux: "β Gem",
-	Arcturus: "α Boo", Aldebaran: "α Tau", Regulus: "α Leo", Altair: "α Aql",
-	Betelgeuse: "α Ori", Bellatrix: "γ Ori", Procyon: "α CMi", Rigel: "β Ori",
-	Spica: "α Vir", Sirius: "α CMa", Antares: "α Sco", Fomalhaut: "α PsA",
-	Adhara: "ε CMa", Shaula: "λ Sco", Canopus: "α Car", Achernar: "α Eri", Gacrux: "γ Cru"}
-// Existing Armilla J2000 positions, plus Bellatrix from SIMBAD:
-// https://simbad.u-strasbg.fr/simbad/sim-basic?Ident=bellatrix
-const GRAPH_STARS = [...STAR_LABELS, {
-	name: "Bellatrix", position: fromEquatorialJ2000(toXYZ(
-		15 * (5 + 25 / 60 + 7.86325 / 3600), 6 + 20 / 60 + 58.9318 / 3600))
-}].filter(star => GRAPH_STAR_COLORS[star.name]).map(star => ({
-	...star, color: GRAPH_STAR_COLORS[star.name], bayer: GRAPH_STAR_BAYER[star.name]}))
+const GRAPH_STARS = [...STAR_LABELS, {name: "Bellatrix", index: 28}]
+	.filter(star => GRAPH_STAR_COLORS[star.name]).map(star => ({
+	...star, color: GRAPH_STAR_COLORS[star.name]}))
 
 function graphNumber(input) {
 	const text = input.value.trim().replace(/−/g, "-").replace(/^±/, "")
@@ -375,7 +383,7 @@ function starAzimuthAtYear(star, year, conditions, altitude) {
 	const jd = getJulianDay(wholeYear, 1, 1, 0, 0) + (year - wholeYear) * getYearDays(wholeYear)
 	const jc = (jd - 2451545) / 36525
 	const rotation = mul(rotateX(getObliquity(jc)), rotateZ(-getAyanamsa(jc)))
-	const declination = toTP(mdot(rotation, star.position))[1]
+	const declination = toTP(mdot(rotation, getStarPosition(star.index, jd)))[1]
 	return risingAzimuth(declination, conditions.latitude, altitude)}
 
 function horizonTransitionPoint(star, visiblePoint, hiddenYear, conditions, altitude) {
@@ -406,7 +414,7 @@ function getGraphTracks(conditions) {
 		const jc = (jd - 2451545) / 36525
 		const rotation = mul(rotateX(getObliquity(jc)), rotateZ(-getAyanamsa(jc)))
 		for(const track of tracks) {
-			const declination = toTP(mdot(rotation, track.position))[1]
+			const declination = toTP(mdot(rotation, getStarPosition(track.index, jd)))[1]
 			const azimuth = risingAzimuth(declination, conditions.latitude, altitude)
 			track.points.push(azimuth === null ? null : {year, azimuth})}}
 	for(const track of tracks) {
@@ -477,7 +485,10 @@ function uncertaintyIntersections(tracks, conditions) {
 			intersections.push({id: track.name + ":" + index, track,
 				start: interval.start, end: interval.end,
 				centralYear: centralAzimuthCrossingYear(track, conditions.rising, interval)})})
-	return intersections.sort((a, b) => a.start - b.start || a.track.name.localeCompare(b.track.name))}
+	return intersections.sort((a, b) => {
+		const aYear = Number.isFinite(a.centralYear) ? a.centralYear : (a.start + a.end) / 2
+		const bYear = Number.isFinite(b.centralYear) ? b.centralYear : (b.start + b.end) / 2
+		return bYear - aYear || a.track.name.localeCompare(b.track.name)})}
 
 function formatIntersectionYear(year) {
 	const rounded = Math.round(year)
@@ -493,50 +504,158 @@ function formatIntersectionRange(item) {
 	if(omitsEnd) return firstYear + "–"
 	return firstYear === lastYear ? firstYear : firstYear + "–" + lastYear}
 
-function starOppositionMonthDay(star, centralYear, longitude) {
-	if(!Number.isFinite(centralYear)) return "N/A"
-	const year = Math.round(centralYear)
-	const timeZone = Math.round(longitude / 15)
-	const key = star.name + "|" + year + "|" + timeZone
-	if(graph.oppositionDates.has(key)) return graph.oppositionDates.get(key)
-	const targetLongitude = mod(toTP(star.position)[0] + 180, 360)
-	function longitudeError(julianDay) {
-		const jc = (julianDay - 2451545) / 36525
-		const moon = geoMoon(jc)[0]
-		const sun = translate(scale(moon, 1 / MASS_FACTOR), negate(helioEMB(jc)))
-		const sunLongitude = toTP(normalize(sun))[0]
-		return mod(sunLongitude - targetLongitude + 180, 360) - 180}
-	const firstDay = getJulianDay(year, 1, 1, 0, 0)
-	const days = getYearDays(year)
-	let previousDay = firstDay, previousError = longitudeError(firstDay), oppositionDay = null
-	for(let offset = 2; offset <= days + 1; offset += 2) {
-		const currentDay = firstDay + Math.min(offset, days)
-		const currentError = longitudeError(currentDay)
-		if(Math.abs(previousError) < 1e-10) oppositionDay = previousDay
-		else if(previousError * currentError <= 0 && Math.abs(currentError - previousError) < 180) {
+function horizonHourAngle(declination, latitude, altitude) {
+	const phi = latitude * DEGREE, dec = declination * DEGREE
+	const denominator = Math.cos(phi) * Math.cos(dec)
+	if(Math.abs(denominator) < 1e-12) return null
+	const cosine = (Math.sin(altitude * DEGREE) - Math.sin(phi) * Math.sin(dec)) / denominator
+	if(cosine <= -1 || cosine >= 1) return null
+	return Math.acos(cosine) / DEGREE}
+
+function horizonOppositionError(star, julianDay, conditions, altitude, isRising = true) {
+	const jc = (julianDay - 2451545) / 36525
+	const rotation = mul(rotateX(getObliquity(jc)), rotateZ(-getAyanamsa(jc)))
+	const [starRA, starDec] = toTP(mdot(rotation, getStarPosition(star.index, julianDay)))
+	const moon = geoMoon(jc)[0]
+	const sun = translate(scale(moon, 1 / MASS_FACTOR), negate(helioEMB(jc)))
+	const [sunRA, sunDec] = toTP(normalize(mdot(rotation, sun)))
+	const starHourAngle = horizonHourAngle(starDec, conditions.latitude, altitude)
+	const sunHourAngle = horizonHourAngle(sunDec, conditions.latitude, altitude)
+	if(starHourAngle === null || sunHourAngle === null) return null
+	const direction = isRising ? -1 : 1
+	return mod(starRA - sunRA + direction * (starHourAngle + sunHourAngle), 360, -180)}
+
+function equatorialHorizonAltitudeError(rightAscension, declination, julianDay, conditions, altitude) {
+	const jc = (julianDay - 2451545) / 36525
+	const phi = conditions.latitude * DEGREE
+	const hourAngle = (getSidereal(jc, conditions.longitude) - rightAscension) * DEGREE
+	const sine = Math.sin(phi) * Math.sin(declination * DEGREE) +
+		Math.cos(phi) * Math.cos(declination * DEGREE) * Math.cos(hourAngle)
+	return Math.asin(clip(sine, -1, 1)) / DEGREE - altitude}
+
+function starHorizonAltitudeError(star, julianDay, conditions, altitude) {
+	const jc = (julianDay - 2451545) / 36525
+	const rotation = mul(rotateX(getObliquity(jc)), rotateZ(-getAyanamsa(jc)))
+	const [rightAscension, declination] = toTP(mdot(rotation, getStarPosition(star.index, julianDay)))
+	return equatorialHorizonAltitudeError(
+		rightAscension, declination, julianDay, conditions, altitude)}
+
+function sunHorizonAltitudeError(julianDay, conditions, altitude) {
+	const jc = (julianDay - 2451545) / 36525
+	const rotation = mul(rotateX(getObliquity(jc)), rotateZ(-getAyanamsa(jc)))
+	const moon = geoMoon(jc)[0]
+	const sun = translate(scale(moon, 1 / MASS_FACTOR), negate(helioEMB(jc)))
+	const [rightAscension, declination] = toTP(normalize(mdot(rotation, sun)))
+	return equatorialHorizonAltitudeError(
+		rightAscension, declination, julianDay, conditions, altitude)}
+
+function bothAboveMinute(star, crossingDay, conditions, altitude) {
+	const centralMinute = Math.round(crossingDay * 1440)
+	let best = null
+	for(let offset = -30; offset <= 30; offset++) {
+		const julianDay = (centralMinute + offset) / 1440
+		const starError = starHorizonAltitudeError(star, julianDay, conditions, altitude)
+		const sunError = sunHorizonAltitudeError(julianDay, conditions, altitude)
+		if(starError < -1e-9 || sunError < -1e-9) continue
+		const score = Math.max(starError, sunError)
+		if(!best || score < best.score) best = {julianDay, score}}
+	return best ? best.julianDay : null}
+
+function starCrossingNearOpposition(star, oppositionDay, conditions, altitude, isRising) {
+	const error = julianDay => starHorizonAltitudeError(star, julianDay, conditions, altitude)
+	const candidates = []
+	const start = oppositionDay - 1.5, end = oppositionDay + 1.5, step = 1 / 48
+	let previousDay = start, previousError = error(start)
+	for(let currentDay = start + step; currentDay <= end + 1e-9; currentDay += step) {
+		const currentError = error(currentDay)
+		const correctDirection = isRising ? currentError > previousError : currentError < previousError
+		if(previousError * currentError <= 0 && correctDirection) {
 			let low = previousDay, high = currentDay, lowError = previousError
-			for(let step = 0; step < 40; step++) {
+			for(let iteration = 0; iteration < 45; iteration++) {
 				const middle = (low + high) / 2
-				const middleError = longitudeError(middle)
+				const middleError = error(middle)
 				if(lowError * middleError <= 0) high = middle
 				else {low = middle; lowError = middleError}}
-			oppositionDay = (low + high) / 2}
+			candidates.push((low + high) / 2)}
+		previousDay = currentDay
+		previousError = currentError}
+	if(!candidates.length) return null
+	const visibleCandidates = candidates.map(crossingDay => ({crossingDay,
+		visibleMinute: bothAboveMinute(star, crossingDay, conditions, altitude)}))
+		.filter(candidate => candidate.visibleMinute !== null)
+	const eligible = visibleCandidates.length ? visibleCandidates : candidates.map(crossingDay => ({
+		crossingDay, visibleMinute: null}))
+	const best = eligible.reduce((closest, candidate) =>
+		Math.abs(horizonOppositionError(star, candidate.crossingDay, conditions, altitude, isRising)) <
+		Math.abs(horizonOppositionError(star, closest.crossingDay, conditions, altitude, isRising)) ?
+			candidate : closest)
+	return best.visibleMinute === null ? best.crossingDay : best.visibleMinute}
+
+function formatStarEvent(julianDay, longitude) {
+	const roundedDay = Math.round(julianDay * 1440) / 1440
+	let [year, month, day, time] = getGregorian(roundedDay, longitude)
+	let minuteOfDay = Math.round(time * 4)
+	if(minuteOfDay >= 1440) {
+		[year, month, day] = getGregorian(roundedDay + 1e-7, longitude)
+		minuteOfDay = 0}
+	const monthName = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][month - 1]
+	const hour = Math.floor(minuteOfDay / 60)
+	const minute = minuteOfDay % 60
+	const yearText = year < 0 ? "-" + String(Math.abs(year)).padStart(4, "0") :
+		String(year).padStart(4, "0")
+	const timeText = String(hour).padStart(2, "0") + ":" + String(minute).padStart(2, "0")
+	return {label: monthName + " " + day, julianDay: roundedDay,
+		date: year + "-" + String(month).padStart(2, "0") + "-" + String(day).padStart(2, "0"),
+		time: timeText, tooltip: yearText + " " + monthName + " " + day + " @ " + timeText}}
+
+function starOppositionEvent(star, centralYear, conditions, isRising = true) {
+	if(!Number.isFinite(centralYear)) return {label: "NA", julianDay: null}
+	const year = Math.round(centralYear)
+	const {latitude, longitude, horizon, refraction, temperature, pressure} = conditions
+	const timeZone = Math.round(longitude / 15)
+	const key = [star.index, year, latitude, longitude, horizon, refraction, temperature, pressure, isRising].join("|")
+	if(graph.oppositionDates.has(key)) return graph.oppositionDates.get(key)
+	const altitude = geometricHorizon(conditions)
+	const horizonError = julianDay => horizonOppositionError(star, julianDay, conditions, altitude, isRising)
+	const firstDay = getJulianDay(year, 1, 1, 0, timeZone)
+	const days = getYearDays(year)
+	let previousDay = firstDay, previousError = horizonError(firstDay), oppositionDay = null
+	for(let offset = 2; offset <= days + 1; offset += 2) {
+		const currentDay = firstDay + Math.min(offset, days)
+		const currentError = horizonError(currentDay)
+		if(previousError !== null && Math.abs(previousError) < 1e-10) oppositionDay = previousDay
+		else if(previousError !== null && currentError !== null &&
+			previousError * currentError <= 0 && Math.abs(currentError - previousError) < 180) {
+			let low = previousDay, high = currentDay, lowError = previousError
+			let valid = true
+			for(let step = 0; step < 40; step++) {
+				const middle = (low + high) / 2
+				const middleError = horizonError(middle)
+				if(middleError === null) {valid = false; break}
+				if(lowError * middleError <= 0) high = middle
+				else {low = middle; lowError = middleError}}
+			if(valid) oppositionDay = (low + high) / 2}
 		if(oppositionDay !== null) break
 		previousDay = currentDay
 		previousError = currentError}
-	let result = "N/A"
+	let result = {label: "NA", julianDay: null}
 	if(oppositionDay !== null) {
-		const [, month, day] = getGregorian(oppositionDay, longitude)
-		const monthName = ["January", "February", "March", "April", "May", "June",
-			"July", "August", "September", "October", "November", "December"][month - 1]
-		result = monthName + " " + day}
+		const crossingDay = starCrossingNearOpposition(
+			star, oppositionDay, conditions, altitude, isRising)
+		if(crossingDay !== null) result = formatStarEvent(crossingDay, longitude)}
 	graph.oppositionDates.set(key, result)
 	return result}
+
+function armillaEventURL(event, conditions) {
+	const query = new URLSearchParams({lat: String(conditions.latitude), lon: String(conditions.longitude),
+		date: event.date, time: event.time, refraction: String(conditions.refraction)})
+	return "index.html?" + query.toString()}
 
 function syncIntersectionHeaderColumns(list) {
 	const row = list.rows[0]
 	if(!row || row.cells.length !== 5) return
-	const widths = Array.from(row.cells, cell => cell.getBoundingClientRect().width)
+	const widths = Array.from(row.cells, cell => cell.getBoundingClientRect().width / pageScale)
 	const headerTable = document.querySelector(".intersectionHeaderTable")
 	const columns = headerTable.querySelectorAll("col")
 	columns.forEach((column, index) => {column.style.width = widths[index] + "px"})
@@ -546,33 +665,32 @@ function updateIntersectionPanel(intersections, conditions) {
 	const list = UI.intersectionList
 	const scroller = list.closest(".intersectionScroller")
 	const validSelection = intersections.find(item => item.id === graph.selectedIntersection)
-	if(!validSelection) graph.selectedIntersection = intersections.length ? intersections[0].id : null
+	if(!validSelection) {
+		const completeRange = intersections.find(item =>
+			item.start > graph.yearMin + 1e-6 && item.end < graph.yearMax - 1e-6)
+		graph.selectedIntersection = completeRange ? completeRange.id :
+			(intersections.length ? intersections[0].id : null)}
 	const scrollTop = scroller.scrollTop
 	list.replaceChildren()
 	list.setAttribute("aria-label", intersections.length +
 		" stars intersecting the azimuth uncertainty band")
-	if(!intersections.length) {
-		const row = document.createElement("tr")
-		const empty = document.createElement("td")
-		empty.className = "intersectionEmpty"
-		empty.colSpan = 5
-		empty.textContent = "No star intersects the selected band."
-		row.append(empty)
-		list.append(row)}
-	else for(const item of intersections) {
+	for(const item of intersections) {
 		const option = document.createElement("tr")
-		option.className = "intersectionOption"
+		const isSelected = item.id === graph.selectedIntersection
+		option.className = "intersectionOption" + (isSelected ? " selected" : "")
+		option.setAttribute("aria-selected", String(isSelected))
 		option.style.setProperty("--star-color", item.track.color)
 		const radio = document.createElement("input")
 		radio.type = "radio"
 		radio.name = "intersectionBand"
 		radio.value = item.id
-		radio.checked = item.id === graph.selectedIntersection
+		radio.checked = isSelected
 		radio.onchange = () => {
 			graph.selectedIntersection = item.id
 			requestGraphRender()}
 		option.onclick = event => {
-			if(event.target !== radio && !event.target.closest(".intersectionStar")) radio.click()}
+			if(event.target !== radio && !event.target.closest(".intersectionStar") &&
+				!event.target.closest(".intersectionDateLink")) radio.click()}
 		const starCell = document.createElement("td")
 		const starLabel = document.createElement("label")
 		starLabel.className = "intersectionStar"
@@ -581,12 +699,8 @@ function updateIntersectionPanel(intersections, conditions) {
 		starName.style.color = item.track.color
 		starLabel.append(radio, starName)
 		starCell.append(starLabel)
-		const bayerCell = document.createElement("td")
-		bayerCell.className = "intersectionBayer"
-		bayerCell.style.color = item.track.color
-		bayerCell.textContent = item.track.bayer
 		const centralYear = Number.isFinite(item.centralYear) ?
-			formatIntersectionYear(item.centralYear) : "N/A"
+			formatIntersectionYear(item.centralYear) : "NA"
 		const centralCell = document.createElement("td")
 		centralCell.className = "intersectionCentral"
 		centralCell.style.color = item.track.color
@@ -595,12 +709,23 @@ function updateIntersectionPanel(intersections, conditions) {
 		rangeCell.className = "intersectionRange"
 		rangeCell.style.color = item.track.color
 		rangeCell.textContent = "(" + formatIntersectionRange(item) + ")"
-		const dateCell = document.createElement("td")
-		dateCell.className = "intersectionDate"
-		dateCell.style.color = item.track.color
-		dateCell.textContent = starOppositionMonthDay(
-			item.track, item.centralYear, conditions.longitude)
-		option.append(starCell, bayerCell, centralCell, rangeCell, dateCell)
+		function eventCell(isRising) {
+			const cell = document.createElement("td")
+			cell.className = "intersectionDate"
+			cell.style.color = item.track.color
+			const event = starOppositionEvent(item.track, item.centralYear, conditions, isRising)
+			if(event.julianDay === null) cell.textContent = "NA"
+			else {
+				const link = document.createElement("a")
+				link.className = "intersectionDateLink"
+				link.href = armillaEventURL(event, conditions)
+				link.target = "_blank"
+				link.rel = "noopener"
+				link.textContent = event.label
+				link.title = event.tooltip
+				cell.append(link)}
+			return cell}
+		option.append(starCell, centralCell, rangeCell, eventCell(true), eventCell(false))
 		list.append(option)}
 	syncIntersectionHeaderColumns(list)
 	scroller.scrollTop = scrollTop
@@ -639,7 +764,7 @@ function drawAzimuthGraph() {
 	const canvas = UI.azimuthGraph
 	const width = canvas.clientWidth, height = canvas.clientHeight
 	if(!width || !height) return
-	const dpr = window.devicePixelRatio || 1
+	const dpr = (window.devicePixelRatio || 1) * pageScale
 	const pixelWidth = Math.round(width * dpr), pixelHeight = Math.round(height * dpr)
 	if(canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
 		canvas.width = pixelWidth; canvas.height = pixelHeight}
@@ -753,9 +878,9 @@ function drawAzimuthGraph() {
 			if(!first) first = point
 			last = point}
 		trackPaths.push({track, path, first, last})}
-	ctx.strokeStyle = "black"; ctx.lineWidth = 5.4
+	ctx.strokeStyle = "black"; ctx.lineWidth = 4.8
 	for(const item of trackPaths) ctx.stroke(item.path)
-	ctx.lineWidth = 2.4
+	ctx.lineWidth = 2
 	const coloredPaths = selectedIntersection ? [
 		...trackPaths.filter(item => item.track !== selectedIntersection.track),
 		...trackPaths.filter(item => item.track === selectedIntersection.track)
@@ -802,17 +927,14 @@ function drawAzimuthGraph() {
 			ctx.strokeText(label.track.name, 0, 0)
 			ctx.fillStyle = label.track.color; ctx.fillText(label.track.name, 0, 0)
 			ctx.restore()}}
-	if(!visible.length) {
-		ctx.font = "10pt sans-serif"; ctx.textAlign = "center"; ctx.fillStyle = "#ddd"
-		ctx.fillText("No selected stars cross this horizon in the displayed year range.", (left + right) / 2, (top + bottom) / 2)}
 	canvas.setAttribute("aria-label", "Rising and setting azimuths of " + upper.length +
 		" stars from AD " + graph.yearMin + " to " + graph.yearMax +
 		", at latitude " + conditions.latitude + " degrees. " +
 		(conditions.refraction ? "Atmospheric refraction included." : "Atmospheric refraction excluded."))}
 
 new ResizeObserver(requestGraphRender).observe(UI.azimuthGraph)
-window.addEventListener("resize", requestGraphRender)
-requestGraphRender()
+window.addEventListener("resize", syncViewportScale)
+syncViewportScale()
 </script>
 
 </body>

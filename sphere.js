@@ -45,12 +45,13 @@ function pushSeasonalTriangles() {
 	for(let triangle of SEASONAL_TRIANGLES) {
 		let stars = triangle.stars.map(name => STAR_LABEL_BY_NAME.get(name))
 		if(stars.some(star => !star)) continue
-		let vertices = stars.map(star => toTP(star.position))
+		let positions = stars.map(star => getStarPosition(star.index))
+		let vertices = positions.map(toTP)
 		for(let i = 0; i < vertices.length; i++) {
 			let a = vertices[i], b = vertices[(i + 1) % vertices.length]
 			pushLines({points: greatCircleArc(a[0], a[1], b[0], b[1]).map(fromNirayana),
 				color: triangle.color, width: 1.5})}
-		let center = normalize(stars.reduce((sum, star) => translate(sum, star.position), [0, 0, 0]))
+		let center = normalize(positions.reduce((sum, p) => translate(sum, p), [0, 0, 0]))
 		pushLabels([{position: fromNirayana(center), text: triangle.name, color: triangle.color,
 			edge: mode.darkTheme ? "black" : "white", border: 2, size: 12}])}}
 

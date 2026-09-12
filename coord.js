@@ -231,6 +231,12 @@ function applyURLParams() {
 		if(parsed !== null) {
 			param.time = parsed
 			updateTime()}}
+	let refraction = getQueryValue(query, ["refraction"])
+	if(refraction !== null) {
+		refraction = refraction.toLowerCase()
+		if(refraction === "true" || refraction === "false") {
+			show.atmosphericRefraction = refraction === "true"
+			UI.atmosphericRefractionCheckbox.checked = show.atmosphericRefraction}}
 	let modalValue = getQueryValue(query, ["modal"])
 	if(modalValue !== null) {
 		modalValue = modalValue.toLowerCase()

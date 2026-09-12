@@ -67,8 +67,7 @@ function drawLines(ctx, lines) {
 function getStarRenderVectors() {
 	let k = param.julianDay.toFixed(10)
 	if(!cache.stars || cache.stars.key !== k)
-		cache.stars = {key: k, vectors: STARS.map(p => {
-			return p[0] === 0 && p[1] === 0 && p[2] === 0 ? [0, 0, 0] : fromNirayana(p)})}
+		cache.stars = {key: k, vectors: STARS.map((p, i) => fromNirayana(getStarPosition(i)))}
 	if(!refractionEnabled()) return {vectors: cache.stars.vectors, fromMode: "equatorial"}
 	let rk = [k, param.sidereal.toFixed(10), param.latitude.toFixed(10)].join("|")
 	if(!cache.refractedStars || cache.refractedStars.key !== rk)
@@ -284,7 +283,7 @@ function render() {
 	if(show.starNames)
 		pushLabels(STAR_LABELS.map(label => ({
 			name: label.name,
-			...celestialRenderPosition(fromNirayana(label.position)),
+			...celestialRenderPosition(fromNirayana(getStarPosition(label.index))),
 			color: c,
 			edge: mode.darkTheme ? "black" : "white",
 			border: 2, size: 11, float: show.stars})))
