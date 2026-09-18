@@ -8,7 +8,7 @@
 <style>
 * {box-sizing: border-box}
 body {background: black; color: white; color-scheme: dark; font-family: sans-serif;
-	font-size: 10pt; margin: 12px; overflow-x: hidden}
+	font-size: 10pt; margin: 12px; min-width: 1176px; overflow-x: hidden}
 .controls {align-items: stretch; display: grid; gap: 12px;
 	grid-template-columns: repeat(3, max-content) minmax(0, 1fr); width: 100%; min-width: 0}
 .controlGroup, .graphPanel {background: black; border: 1px solid gray; border-radius: 10px; padding: 8px}
@@ -19,32 +19,33 @@ body {background: black; color: white; color-scheme: dark; font-family: sans-ser
 .intersectionScroller {height: calc(100% - 24px); overflow-x: hidden; overflow-y: auto;
 	scrollbar-gutter: stable}
 .intersectionHeaderTable, .intersectionTable {border-collapse: separate; border-spacing: 0;
-	font-size: 10pt; width: auto}
+	font-size: 9pt; width: 100%}
 .intersectionHeaderTable {table-layout: fixed}
 .intersectionTable {table-layout: auto}
 .intersectionSizingHeader {visibility: collapse}
 .intersectionHeaderTable, .intersectionHeaderTable th, .intersectionTable,
 .intersectionTable th, .intersectionTable td {border: 0}
 .intersectionHeader th {background: black; font-weight: 400; height: 24px; line-height: 24px;
-	padding: 0 10px; white-space: nowrap}
-.intersectionStarHeading {text-align: center}
+	padding: 0 4px; white-space: nowrap}
+.intersectionHeader th:nth-last-child(-n+2) {letter-spacing: -0.35px}
+.intersectionHeader th:first-child, .intersectionStarHeading {text-align: center}
 .intersectionOption {cursor: pointer; height: 24px}
-.intersectionOption td {height: 24px; line-height: 24px; padding: 0 10px; white-space: nowrap}
+.intersectionOption td {height: 24px; line-height: 24px; padding: 0 4px; white-space: nowrap}
+.intersectionOption td:nth-child(-n+2) {text-align: center}
+.intersectionOption:focus-visible {outline: 2px solid #80bfff; outline-offset: -2px}
 .intersectionOption:hover td {background: #1d1d1d}
 .intersectionOption.selected td {background: #303030}
 .intersectionOption.selected td:first-child {border-radius: 4px 0 0 4px}
 .intersectionOption.selected td:last-child {border-radius: 0 4px 4px 0}
 .intersectionOption:hover td:first-child {border-radius: 4px 0 0 4px}
 .intersectionOption:hover td:last-child {border-radius: 0 4px 4px 0}
-.intersectionStar {align-items: center; display: flex; gap: 4px; min-width: 0}
-.intersectionDate {min-width: 86px; text-align: center; width: 86px}
+.intersectionDate {min-width: 68px; text-align: center; width: 68px}
 .intersectionDateLink {border: 1px solid currentColor; border-radius: 4px; color: inherit;
-	display: block; line-height: 18px; margin: 0 auto; padding: 0 4px; text-decoration: none; width: 60px}
+	display: block; line-height: 18px; margin: 0 auto; padding: 0 3px; text-decoration: none; width: 54px}
 .intersectionDateLink:hover {background: #2a2a2a}
 .intersectionDateLink:focus-visible {outline: 2px solid #80bfff; outline-offset: 1px}
 .intersectionCentral {padding-right: 2px !important; text-align: right; width: 7ch}
-.intersectionRange {padding-left: 2px !important; text-align: left}
-.intersectionOption input {accent-color: var(--star-color); flex: 0 0 auto; margin: 0}
+.intersectionRange {padding-left: 2px !important; text-align: left; width: 1%}
 .intersectionOption span {min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap}
 .intersectionEmpty {color: #aaa; height: 24px; line-height: 24px; text-align: center}
 .graphPanel {grid-column: 1 / -1; min-width: 0; width: 100%; overflow: hidden}
@@ -119,8 +120,8 @@ input:focus-visible {outline: 2px solid #80bfff; outline-offset: 2px}
 	<div class="controlGroup intersectionGroup" role="group" aria-labelledby="intersectionTitle">
 		<div class="intersectionHeader" id="intersectionTitle">
 			<table class="intersectionHeaderTable">
-				<colgroup><col><col><col><col><col></colgroup>
-				<thead><tr><th class="intersectionStarHeading">Star</th>
+				<colgroup><col><col><col><col><col><col></colgroup>
+				<thead><tr><th>Nakshatra</th><th class="intersectionStarHeading">Star</th>
 					<th colspan="2">Year Range</th>
 					<th title="Star rises at its entered altitude as the Sun's center sets at 0° altitude.">Acron. Ris.*</th>
 					<th title="Star sets at its entered altitude as the Sun's center rises at 0° altitude.">Acron. Set.*</th></tr></thead>
@@ -129,13 +130,18 @@ input:focus-visible {outline: 2px solid #80bfff; outline-offset: 2px}
 		<div class="intersectionScroller">
 			<table class="intersectionTable">
 				<thead class="intersectionSizingHeader" aria-hidden="true">
-					<tr><th>Star</th><th colspan="2">Year Range</th><th>Acron. Ris.*</th><th>Acron. Set.*</th></tr>
+					<tr><th>Nakshatra</th><th>Star</th><th colspan="2">Year Range</th><th>Acron. Ris.*</th><th>Acron. Set.*</th></tr>
 				</thead>
 				<tbody class="intersectionList" id="intersectionList" role="radiogroup"
 					aria-label="Stars intersecting the azimuth uncertainty band" aria-live="polite"></tbody>
 			</table>
 		</div>
 	</div>
+	<section class="graphPanel" aria-label="Nakshatra azimuth–epoch graph">
+		<canvas class="graphCanvas" id="nakshatraGraph" width="1200" height="600" aria-label="Nakshatra principal star rising and setting azimuths versus year">
+			Your browser does not support the canvas element.
+		</canvas>
+	</section>
 	<section class="graphPanel" aria-label="Azimuth–epoch graph">
 		<canvas class="graphCanvas" id="azimuthGraph" width="1200" height="600" aria-label="Stellar rising and setting azimuths versus year">
 			Your browser does not support the canvas element.
@@ -155,11 +161,10 @@ input:focus-visible {outline: 2px solid #80bfff; outline-offset: 2px}
 <script src="astro.js"></script>
 <script>
 
-const initialPixelRatio = window.devicePixelRatio || 1
 let pageScale = 1
 
 function syncViewportScale() {
-	pageScale = initialPixelRatio / (window.devicePixelRatio || 1)
+	pageScale = Math.min(1, window.innerWidth / 1200)
 	document.body.style.zoom = String(pageScale)
 	requestGraphRender()}
 
@@ -297,9 +302,54 @@ const GRAPH_STAR_COLORS = {
 	Rigel: "#ffc137", Spica: "#e889b2", Sirius: "#6dda91", Antares: "#f2bd57",
 	Fomalhaut: "#ff8a65", Adhara: "#95b7ed", Shaula: "#b0d444", Canopus: "#ffb34f",
 	Achernar: "#83d0ee", Gacrux: "#bfa9e0"}
+const RISING_AXIS_COLOR = "#ff6f6f"
+const SETTING_AXIS_COLOR = "#70b7ff"
 const GRAPH_STARS = [...STAR_LABELS, {name: "Bellatrix", index: 28}]
 	.filter(star => GRAPH_STAR_COLORS[star.name]).map(star => ({
 	...star, color: GRAPH_STAR_COLORS[star.name]}))
+
+// The spreadsheet's principal (yogatārā) star represents each mansion. Its
+// three alternative asterisms are separate rows, as in the source workbook.
+const NAKSHATRA_DATA = [
+	["Aśvinī", "Sheratan", 108], ["Bharaṇī", "35 Ari", null],
+	["Kṛttikā", "Alcyone", 147], ["Rohiṇī", "Aldebaran", 12],
+	["Mṛgaśira", "Meissa", 255], ["Mṛgaśira**", "Alnilam", 31],
+	["Ārdrā", "Betelgeuse", 9], ["Ārdrā**", "Alhena", 52],
+	["Punarvasu", "Pollux", 16], ["Puṣya", "Asellus Australis", 484],
+	["Aśleṣā", "ε Hya", 256], ["Maghā", "Regulus", 22],
+	["P. Phalguņī", "Zosma", 98], ["U. Phalguņī", "Denebola", 63],
+	["Hasta", "Algorab", 166], ["Citrā", "Spica", 14],
+	["Svāti", "Arcturus", 5], ["Viśākha", "Zubenelgenubi", 124],
+	["Anurādhā", "Dschubba", 81], ["Jyeṣṭha", "Antares", 15],
+	["Mūla", "Shaula", 26], ["P. Aṣāḍha", "Kaus Media", 117],
+	["U. Aṣāḍha", "Nunki", 57], ["Śravaṇa", "Altair", 11],
+	["Dhaniṣṭa", "Rotanev", 344], ["Śatabhiṣaj", "λ Aqr", 386],
+	["Śatabhiṣaj**", "ζ Aqr", 569],
+	["P. Bhādrapadā", "Markab", 94], ["U. Bhādrapadā", "Alpheratz", 54],
+	["Revatī", "ζ Psc", null]]
+
+function addCatalogStar(raHours, declination, pmRa, pmDec) {
+	const ra = raHours * 15 * DEGREE, dec = declination * DEGREE
+	const x = Math.cos(dec) * Math.cos(ra), y = Math.cos(dec) * Math.sin(ra), z = Math.sin(dec)
+	const index = STARS.length
+	STARS.push(fromEquatorialJ2000([x, y, z]))
+	STAR_PROPER_MOTION.push(fromEquatorialJ2000(scale([
+		-Math.sin(ra) * pmRa - Math.cos(ra) * Math.sin(dec) * pmDec,
+		Math.cos(ra) * pmRa - Math.sin(ra) * Math.sin(dec) * pmDec,
+		Math.cos(dec) * pmDec], DEGREE / 3600000)))
+	return index}
+
+// HYG v4.1 J2000 positions and proper motions for stars absent from astro.js.
+NAKSHATRA_DATA[1][2] = addCatalogStar(2.724198, 27.707146, 3.51, -9.97)
+NAKSHATRA_DATA[29][2] = addCatalogStar(1.228857, 7.575354, 141.66, -55.62)
+const NAKSHATRA_COLORS = ["#8bd3f7", "#f6c66c", "#a9d77b", "#e89dc1", "#c0acf0", "#f29c72"]
+const GRAPH_NAKSHATRAS = NAKSHATRA_DATA.map(([nakshatra, name, index], i) => ({
+	nakshatra, name, index,
+	color: GRAPH_STAR_COLORS[name] || NAKSHATRA_COLORS[i % NAKSHATRA_COLORS.length]}))
+const NAKSHATRA_BY_INDEX = new Map(GRAPH_NAKSHATRAS.map(star => [star.index, star]))
+const ALL_GRAPH_STARS = [...GRAPH_STARS.map(star => ({
+	...star, nakshatra: NAKSHATRA_BY_INDEX.get(star.index)?.nakshatra || ""})),
+	...GRAPH_NAKSHATRAS.filter(star => !GRAPH_STARS.some(existing => existing.index === star.index))]
 
 function graphNumber(input) {
 	return parseNumber(input.value.replace(/^±/, ""))}
@@ -373,7 +423,7 @@ function getDeclinationTracks() {
 	const key = [graph.yearMin, graph.yearMax].join("|")
 	if(graph.declinationCache && graph.declinationCache.key === key)
 		return graph.declinationCache.tracks
-	const tracks = GRAPH_STARS.map(star => ({...star, points: []}))
+	const tracks = ALL_GRAPH_STARS.map(star => ({...star, points: []}))
 	const samples = 600
 	for(let i = 0; i <= samples; i++) {
 		const year = graph.yearMin + (graph.yearMax - graph.yearMin) * i / samples
@@ -633,7 +683,7 @@ function armillaEventURL(event, conditions) {
 
 function syncIntersectionHeaderColumns(list) {
 	const row = list.rows[0]
-	if(!row || row.cells.length !== 5) return
+	if(!row || row.cells.length !== 6) return
 	const widths = Array.from(row.cells, cell => cell.getBoundingClientRect().width / pageScale)
 	const headerTable = document.querySelector(".intersectionHeaderTable")
 	headerTable.querySelectorAll("col").forEach((column, index) => {
@@ -654,34 +704,35 @@ function updateIntersectionPanel(intersections, conditions) {
 		graph.selectedIntersection = completeRange ? completeRange.id :
 			(intersections.length ? intersections[0].id : null)}
 	const scrollTop = scroller.scrollTop
+	const focusedId = document.activeElement?.dataset.intersectionId
 	list.replaceChildren()
 	list.setAttribute("aria-label", intersections.length +
-		" stars intersecting the azimuth uncertainty band")
+		" stars and nakshatras intersecting the azimuth uncertainty band")
 	for(const item of intersections) {
 		const option = document.createElement("tr")
 		const isSelected = item.id === graph.selectedIntersection
 		option.className = "intersectionOption" + (isSelected ? " selected" : "")
-		option.setAttribute("aria-selected", String(isSelected))
-		option.style.setProperty("--star-color", item.track.color)
-		const radio = document.createElement("input")
-		radio.type = "radio"
-		radio.name = "intersectionBand"
-		radio.value = item.id
-		radio.checked = isSelected
-		radio.onchange = () => {
+		option.setAttribute("role", "radio")
+		option.setAttribute("aria-checked", String(isSelected))
+		option.dataset.intersectionId = item.id
+		option.tabIndex = 0
+		function select() {
 			graph.selectedIntersection = item.id
 			requestGraphRender()}
 		option.onclick = event => {
-			if(event.target !== radio && !event.target.closest(".intersectionStar") &&
-				!event.target.closest(".intersectionDateLink")) radio.click()}
+			if(!event.target.closest(".intersectionDateLink")) select()}
+		option.onkeydown = event => {
+			if(event.key === "Enter" || event.key === " ") {
+				event.preventDefault(); select()}}
+		const nakshatraCell = document.createElement("td")
+		nakshatraCell.className = "intersectionNakshatra"
+		nakshatraCell.textContent = item.track.nakshatra || ""
+		nakshatraCell.style.color = item.track.color
 		const starCell = document.createElement("td")
-		const starLabel = document.createElement("label")
-		starLabel.className = "intersectionStar"
 		const starName = document.createElement("span")
 		starName.textContent = item.track.name
 		starName.style.color = item.track.color
-		starLabel.append(radio, starName)
-		starCell.append(starLabel)
+		starCell.append(starName)
 		const centralCell = document.createElement("td")
 		centralCell.className = "intersectionCentral"
 		centralCell.style.color = item.track.color
@@ -707,8 +758,9 @@ function updateIntersectionPanel(intersections, conditions) {
 				link.title = event.tooltip
 				cell.append(link)}
 			return cell}
-		option.append(starCell, centralCell, rangeCell, eventCell(true), eventCell(false))
-		list.append(option)}
+		option.append(nakshatraCell, starCell, centralCell, rangeCell, eventCell(true), eventCell(false))
+		list.append(option)
+		if(focusedId === item.id) option.focus({preventScroll: true})}
 	syncIntersectionHeaderColumns(list)
 	scroller.scrollTop = scrollTop
 	return intersections.find(item => item.id === graph.selectedIntersection) || null}
@@ -716,7 +768,7 @@ function updateIntersectionPanel(intersections, conditions) {
 function requestGraphRender() {
 	if(graph.pending) return
 	graph.pending = true
-	requestAnimationFrame(() => {graph.pending = false; drawAzimuthGraph()})}
+	requestAnimationFrame(() => {graph.pending = false; drawGraphs()})}
 
 function spreadGraphLabels(labels, min, max, gap) {
 	labels.sort((a, b) => a.x - b.x)
@@ -796,15 +848,13 @@ function drawAcronychalGraph(selectedIntersection, conditions) {
 	ctx.font = "10pt sans-serif"
 	ctx.textBaseline = "middle"
 	ctx.textAlign = "center"
-	const risingAxisColor = "#ff6f6f"
-	const settingAxisColor = "#70b7ff"
-	ctx.fillStyle = settingAxisColor
+	ctx.fillStyle = SETTING_AXIS_COLOR
 	ctx.fillText("Setting Azimuth (°)", (left + right) / 2, 18)
-	ctx.fillStyle = risingAxisColor
+	ctx.fillStyle = RISING_AXIS_COLOR
 	ctx.fillText("Rising Azimuth (°)", (left + right) / 2, height - 17)
-	drawVerticalLabel(ctx, "Acronychal Rising Date*", 25, (top + bottom) / 2, risingAxisColor)
+	drawVerticalLabel(ctx, "Acronychal Rising Date*", 25, (top + bottom) / 2, RISING_AXIS_COLOR)
 	drawVerticalLabel(ctx, "Acronychal Setting Date*", width - 25,
-		(top + bottom) / 2, settingAxisColor)
+		(top + bottom) / 2, SETTING_AXIS_COLOR)
 	ctx.save()
 	ctx.globalAlpha = 0.22
 	ctx.fillStyle = star.color
@@ -814,6 +864,17 @@ function drawAcronychalGraph(selectedIntersection, conditions) {
 	ctx.fillRect(left, y(Math.min(yearMax, selectedIntersection.end)), right - left,
 		y(Math.max(yearMin, selectedIntersection.start)) - y(Math.min(yearMax, selectedIntersection.end)))
 	ctx.restore()
+	for(let majorIndex = 0; majorIndex < 8; majorIndex++) {
+		for(let minorIndex = 1; minorIndex < 10; minorIndex++) {
+			const azimuth = azimuthMin + (azimuthMax - azimuthMin) *
+				(majorIndex + minorIndex / 10) / 8
+			const px = Math.round(x(azimuth)) + 0.5
+			ctx.strokeStyle = "#777"
+			ctx.lineWidth = 0.3
+			ctx.beginPath()
+			ctx.moveTo(px, top); ctx.lineTo(px, top - 4)
+			ctx.moveTo(px, bottom); ctx.lineTo(px, bottom + 4)
+			ctx.stroke()}}
 	for(const azimuth of Array.from({length: 9}, (_, index) =>
 		azimuthMin + (azimuthMax - azimuthMin) * index / 8)) {
 		const px = Math.round(x(azimuth)) + 0.5
@@ -821,11 +882,13 @@ function drawAcronychalGraph(selectedIntersection, conditions) {
 		ctx.lineWidth = 0.3
 		ctx.beginPath()
 		ctx.moveTo(px, top); ctx.lineTo(px, bottom)
+		ctx.moveTo(px, top); ctx.lineTo(px, top - 9)
+		ctx.moveTo(px, bottom); ctx.lineTo(px, bottom + 9)
 		ctx.stroke()
 		ctx.textAlign = "center"
-		ctx.fillStyle = settingAxisColor
+		ctx.fillStyle = SETTING_AXIS_COLOR
 		ctx.fillText(detailAzimuthLabel(mod(360 - azimuth, 360)), px, top - 21)
-		ctx.fillStyle = risingAxisColor
+		ctx.fillStyle = RISING_AXIS_COLOR
 		ctx.fillText(detailAzimuthLabel(azimuth), px, bottom + 23)}
 	const yearTickStep = (yearMax - yearMin) / 8
 	const yearTicks = [centralYear]
@@ -844,10 +907,10 @@ function drawAcronychalGraph(selectedIntersection, conditions) {
 		ctx.beginPath(); ctx.moveTo(left, py); ctx.lineTo(right, py); ctx.stroke()
 		ctx.textBaseline = "middle"
 		ctx.textAlign = "right"
-		ctx.fillStyle = risingAxisColor
+		ctx.fillStyle = RISING_AXIS_COLOR
 		ctx.fillText(starOppositionEvent(star, year, conditions, true).label, left - 10, py)
 		ctx.textAlign = "left"
-		ctx.fillStyle = settingAxisColor
+		ctx.fillStyle = SETTING_AXIS_COLOR
 		ctx.fillText(starOppositionEvent(star, year, conditions, false).label, right + 10, py)
 		yearLabels.push({text: formatIntersectionYear(year), y: py})}
 	ctx.strokeStyle = "#aaa"
@@ -896,28 +959,35 @@ function drawAcronychalGraph(selectedIntersection, conditions) {
 	canvas.setAttribute("aria-label", star.name + " acronychal rising and setting detail from " +
 		formatIntersectionYear(yearMin) + " to " + formatIntersectionYear(yearMax))}
 
-function drawAzimuthGraph() {
-	const canvas = UI.azimuthGraph
+function graphAzimuthBounds(tracks, conditions) {
+	let lowest = conditions.rising - conditions.uncertainty
+	let highest = conditions.rising + conditions.uncertainty
+	for(const track of tracks) for(const point of track.points) if(point) {
+		lowest = Math.min(lowest, point.azimuth)
+		highest = Math.max(highest, point.azimuth)}
+	const extent = Math.min(90, Math.max(5,
+		Math.ceil((Math.max(90 - lowest, highest - 90) + 1) / 5) * 5))
+	return {min: 90 - extent, max: 90 + extent}}
+
+function drawAzimuthGraph(canvas, tracks, selectedIntersection, conditions, nakshatrasOnly = false) {
 	const prepared = prepareGraphCanvas(canvas)
 	if(!prepared) return
 	const {ctx, width, height} = prepared
-	const conditions = graphConditions()
-	if(!conditions) {drawAcronychalGraph(null, null); return}
-	const tracks = getGraphTracks(conditions)
-	const min = 0, max = 180
+	const {min, max} = graphAzimuthBounds(tracks, conditions)
 	const left = 82, right = width - 82, top = 62, bottom = height - 64
 	const labelSpace = 72
 	const trackTop = top + labelSpace, trackBottom = bottom - labelSpace
 	const x = azimuth => left + (azimuth - min) / (max - min) * (right - left)
 	const y = year => trackBottom - (year - graph.yearMin) / (graph.yearMax - graph.yearMin) * (trackBottom - trackTop)
-	graph.layout = {left, right, top, bottom, min, max, x, y, tracks}
-	const selectedIntersection = updateIntersectionPanel(uncertaintyIntersections(tracks, conditions), conditions)
+	if(!nakshatrasOnly) graph.layout = {left, right, top, bottom, min, max, x, y, tracks}
 	ctx.font = "10pt sans-serif"
 	ctx.textAlign = "center"
 	ctx.textBaseline = "middle"
-	ctx.fillStyle = "#ededed"
+	ctx.fillStyle = SETTING_AXIS_COLOR
 	ctx.fillText("Setting Azimuth (°)", (left + right) / 2, 18)
+	ctx.fillStyle = RISING_AXIS_COLOR
 	ctx.fillText("Rising Azimuth (°)", (left + right) / 2, height - 17)
+	ctx.fillStyle = "#ededed"
 	drawVerticalLabel(ctx, "Year (AD)", 25, (top + bottom) / 2)
 	drawVerticalLabel(ctx, "Year (AD)", width - 25, (top + bottom) / 2)
 
@@ -952,8 +1022,9 @@ function drawAzimuthGraph() {
 		ctx.moveTo(px, bottom); ctx.lineTo(px, bottom + (major ? 9 : 4))
 		ctx.stroke()
 		if(major) {
-			ctx.fillStyle = "#ddd"
+			ctx.fillStyle = SETTING_AXIS_COLOR
 			ctx.fillText(graphAzimuthLabel((360 - azimuth) % 360), px, top - 21)
+			ctx.fillStyle = RISING_AXIS_COLOR
 			ctx.fillText(graphAzimuthLabel(azimuth), px, bottom + 23)}}
 	ctx.setLineDash([])
 	const yearStep = 500
@@ -1015,23 +1086,23 @@ function drawAzimuthGraph() {
 		ctx.beginPath(); ctx.arc(x(conditions.rising), y(selectedIntersection.centralYear), 3, 0, 2 * Math.PI)
 		ctx.fillStyle = selectedIntersection.track.color; ctx.fill()}
 	ctx.restore()
-	ctx.font = "10pt sans-serif"
+	ctx.font = nakshatrasOnly ? "8pt sans-serif" : "10pt sans-serif"
 	const sideLabelLanes = {left: [], right: []}
 	function placeSideLabel(label) {
 		const side = Math.abs(label.x - left) <= Math.abs(label.x - right) ? "left" : "right"
-		const halfHeight = ctx.measureText(label.track.name).width / 2 + 3
+		const halfHeight = ctx.measureText(nakshatrasOnly ? label.track.nakshatra : label.track.name).width / 2 + 3
 		const start = label.y - halfHeight, end = label.y + halfHeight
 		let lane = 0
 		while(sideLabelLanes[side][lane] &&
 			sideLabelLanes[side][lane].some(item => start < item.end && end > item.start)) lane++
 		if(!sideLabelLanes[side][lane]) sideLabelLanes[side][lane] = []
 		sideLabelLanes[side][lane].push({start, end})
-		label.labelX = side === "left" ? left + lane * 14 : right - lane * 14}
+		label.labelX = side === "left" ? left + lane * 12 : right - lane * 12}
 	for(const [labels, isUpper] of [[upper, true], [lower, false]]) {
 		const edgeYear = isUpper ? graph.yearMax : graph.yearMin
 		const edgeLabels = labels.filter(label => Math.abs(label.year - edgeYear) < 1e-6)
 		const internalLabels = labels.filter(label => Math.abs(label.year - edgeYear) >= 1e-6)
-		spreadGraphLabels(edgeLabels, left + 8, right - 8, 15)
+		spreadGraphLabels(edgeLabels, left + 8, right - 8, nakshatrasOnly ? 12 : 15)
 		for(const label of internalLabels) placeSideLabel(label)
 		for(const label of [...edgeLabels, ...internalLabels]) {
 			const sideLabel = Math.abs(label.year - edgeYear) >= 1e-6
@@ -1040,17 +1111,32 @@ function drawAzimuthGraph() {
 			ctx.textAlign = sideLabel ? "center" : (isUpper ? "left" : "right")
 			ctx.textBaseline = "middle"
 			ctx.strokeStyle = "black"; ctx.lineWidth = 3
-			ctx.strokeText(label.track.name, 0, 0)
-			ctx.fillStyle = label.track.color; ctx.fillText(label.track.name, 0, 0)
+			const labelText = nakshatrasOnly ? label.track.nakshatra : label.track.name
+			ctx.strokeText(labelText, 0, 0)
+			ctx.fillStyle = label.track.color; ctx.fillText(labelText, 0, 0)
 			ctx.restore()}}
-	canvas.setAttribute("aria-label", "Rising and setting azimuths of " + upper.length +
-		" stars from AD " + graph.yearMin + " to " + graph.yearMax +
+	canvas.setAttribute("aria-label", "Rising and setting azimuths of " + tracks.length +
+		(nakshatrasOnly ? " nakshatra principal stars" : " stars") +
+		" from AD " + graph.yearMin + " to " + graph.yearMax +
+		", rising azimuth " + min + " to " + max + " degrees" +
 		", at latitude " + conditions.latitude + " degrees. " +
-		(conditions.refraction ? "Atmospheric refraction included." : "Atmospheric refraction excluded."))
-	drawAcronychalGraph(selectedIntersection, conditions)}
+		(conditions.refraction ? "Atmospheric refraction included." : "Atmospheric refraction excluded."))}
+
+function drawGraphs() {
+	const conditions = graphConditions()
+	if(!conditions) {drawAcronychalGraph(null, null); return}
+	const tracks = getGraphTracks(conditions)
+	const selected = updateIntersectionPanel(uncertaintyIntersections(tracks, conditions), conditions)
+	const nakshatraTracks = tracks.filter(track => NAKSHATRA_BY_INDEX.has(track.index))
+	const starTracks = tracks.filter(track => GRAPH_STARS.some(star => star.index === track.index))
+	if(selected && !starTracks.includes(selected.track)) starTracks.push(selected.track)
+	drawAzimuthGraph(UI.nakshatraGraph, nakshatraTracks, selected, conditions, true)
+	drawAzimuthGraph(UI.azimuthGraph, starTracks, selected, conditions)
+	drawAcronychalGraph(selected, conditions)}
 
 const graphResizeObserver = new ResizeObserver(requestGraphRender)
 graphResizeObserver.observe(UI.azimuthGraph)
+graphResizeObserver.observe(UI.nakshatraGraph)
 graphResizeObserver.observe(UI.acronychalGraph)
 window.addEventListener("resize", syncViewportScale)
 syncViewportScale()
