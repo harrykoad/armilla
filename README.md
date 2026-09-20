@@ -1,8 +1,14 @@
 # Armilla
 
-**Armilla** is an interactive celestial-sphere application for astronomy education, while **Astrolabe** is an analytical module for exploring possible stellar alignments in archaeoastronomical research. Together, they connect astronomical visualization with the investigation of historical orientations, sacred sites, monuments, and traditional stellar knowledge.
+**Armilla** is an interactive web-based celestial-sphere application for astronomy education. It supports the study of coordinate systems, sidereal astronomy, observer-based sky geometry, and the changing appearance of the sky across locations and historical epochs.
 
-## Applications
+## Overview
+
+Armilla models the sky for a selected location, date, and time. It allows users to examine the relationship between the local horizon, celestial equator, ecliptic, zodiac, stars, Sun, Moon, planets, lunar nodes, and selected astronomical phenomena.
+
+Armilla is not only a sky viewer. It presents the astronomical structure behind observation, including spherical geometry, sidereal reference frames, precession, coordinate transformation, and the changing appearance of the sky from different places on Earth.
+
+## Modules
 
 ### Armilla
 
@@ -22,12 +28,6 @@ Astrolabe plots how stellar rising and setting azimuths change across historical
 https://harrykoad.github.io/armilla/astrolabe.html
 ```
 
-## Overview
-
-Armilla models the sky for a selected location, date, and time. It allows users to examine the relationship between the local horizon, celestial equator, ecliptic, zodiac, stars, Sun, Moon, planets, lunar nodes, and selected astronomical phenomena.
-
-Armilla is not only a sky viewer. It presents the astronomical structure behind observation, including spherical geometry, sidereal reference frames, precession, coordinate transformation, and the changing appearance of the sky from different places on Earth.
-
 ## Astronomical Basis
 
 Armilla is based on principles from spherical astronomy, positional astronomy, and traditional sidereal sky reckoning. Calendar date and civil time are converted into Julian Day, including the fractional day, and then into Julian Century relative to the J2000.0 epoch. These values are used as time arguments for sidereal time, obliquity, ayanāṃśa, and celestial body computations.
@@ -40,7 +40,7 @@ Armilla includes long-term precessional change for interpreting historical sky p
 
 Although stars are conventionally described as “fixed,” Armilla and Astrolabe account for their catalogued proper motions when calculating positions at different epochs. This is especially important in Astrolabe's long-term analysis, where accumulated stellar motion can affect a star's calculated rising and setting directions.
 
-Both applications also account for atmospheric refraction when that option is enabled. Armilla applies refraction to apparent horizontal positions, while Astrolabe converts the entered apparent horizon altitude to the corresponding geometric altitude using the selected temperature and pressure. This keeps horizon-crossing and rising or setting calculations consistent with the displayed observational conditions.
+Both modules also account for atmospheric refraction when that option is enabled. Armilla applies refraction to apparent horizontal positions, while Astrolabe converts the entered apparent horizon altitude to the corresponding geometric altitude using the selected temperature and pressure. This keeps horizon-crossing and rising or setting calculations consistent with the displayed observational conditions.
 
 The observer is modeled from geodetic latitude and longitude, with Earth shape parameters used for topocentric geometry. This supports local horizon, zenith, meridian, rising and setting directions, and visible-sky relationships from a specific place on Earth.
 
@@ -64,25 +64,11 @@ Armilla's supplementary diagrams extend this interpretive use. Its horary-style 
 
 Astrolabe identifies astronomical possibilities, not archaeological conclusions. A correspondence between a structure's orientation and a stellar rising or setting direction does not by itself demonstrate intentional alignment. Interpretation still requires reliable field measurements, local horizon-altitude data, chronological evidence, cultural context, atmospheric-refraction considerations, and independent ephemeris verification.
 
-## Examples
-
-A specific Armilla sky configuration can be shared through URL parameters:
-
-```text
-https://harrykoad.github.io/armilla/?lat=8.64&lon=99.90&date=1996-03-29&time=15:30&modal=true
-```
-
-Astrolabe can be opened directly for stellar-orientation analysis:
-
-```text
-https://harrykoad.github.io/armilla/astrolabe.html
-```
-
 ## Technical Implementation
 
-Armilla and Astrolabe are client-side web applications built with HTML, CSS, JavaScript, and the HTML5 Canvas API. They run entirely in the browser and do not require a server-side runtime.
+The Armilla project is built with HTML, CSS, JavaScript, and the HTML5 Canvas API. Its modules run entirely in the browser and do not require a server-side runtime.
 
-The applications use consistent models for stellar positions, precession, atmospheric refraction, horizon geometry, sidereal time, and calendar conversion. This allows an event identified analytically in Astrolabe to be examined coherently in Armilla. The codebase separates astronomical computation, coordinate transformation, rendering, user interaction, supplementary diagrams, and application state management into focused files.
+The modules use consistent models for stellar positions, precession, atmospheric refraction, horizon geometry, sidereal time, and calendar conversion. This allows an event identified analytically in Astrolabe to be examined coherently in Armilla. The codebase separates astronomical computation, coordinate transformation, rendering, user interaction, supplementary diagrams, and application state management into focused files.
 
 ```text
 armilla/
@@ -102,7 +88,7 @@ armilla/
 
 Armilla is intended for astronomy education, visualization, and conceptual study. Astrolabe is intended for exploratory analysis of possible historical stellar orientations. Its long-term curves account for precession and catalogued stellar proper motion, and its horizon calculations can include atmospheric refraction under the selected conditions. Reported event dates are numerical estimates and may differ by up to one day for a selected historical year.
 
-Neither application is intended to replace high-precision ephemeris systems, observatory-grade astrometric software, navigation tools, archaeological evidence, or formal archaeoastronomical field analysis without independent verification.
+Neither module is intended to replace high-precision ephemeris systems, observatory-grade astrometric software, navigation tools, archaeological evidence, or formal archaeoastronomical field analysis without independent verification.
 
 ## Author
 
