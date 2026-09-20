@@ -1,12 +1,10 @@
-# Armilla
+# The Armilla Project
 
-**Armilla** is an interactive web-based celestial-sphere module for astronomy education. It supports the study of coordinate systems, sidereal astronomy, observer-based sky geometry, and the changing appearance of the sky across locations and historical epochs.
+The Armilla Project combines two complementary astronomical modules. **Armilla** is an interactive celestial sphere for astronomy education, while **Astrolabe** is an analytical tool for exploratory archaeoastronomical research.
 
-## Overview
+Armilla models the sky for a selected location, date, and time. It presents the relationships among the local horizon, celestial equator, ecliptic, zodiac, stars, Sun, Moon, planets, lunar nodes, and selected astronomical phenomena. Its visual environment helps users study spherical geometry, coordinate systems, sidereal reference frames, precession, and the changing appearance of the sky from different places on Earth.
 
-Armilla models the sky for a selected location, date, and time. It allows users to examine the relationship between the local horizon, celestial equator, ecliptic, zodiac, stars, Sun, Moon, planets, lunar nodes, and selected astronomical phenomena.
-
-Armilla is not only a sky viewer. It presents the astronomical structure behind observation, including spherical geometry, sidereal reference frames, precession, coordinate transformation, and the changing appearance of the sky from different places on Earth.
+Astrolabe complements this visualization by examining how stellar and nakṣatra rising and setting directions change across historical epochs. It can compare those directions with the measured orientation and horizon altitude of a sacred site, monument, temple, or other structure, identify possible stellar candidates, and estimate periods when an alignment may have occurred. Calculated events can then be opened in Armilla for visual inspection of the corresponding sky.
 
 ## Armilla for Astronomical Education
 
@@ -24,7 +22,7 @@ https://harrykoad.github.io/armilla/
 
 ## Astrolabe for Archaeoastronomical Research
 
-Astrolabe is an interactive astronomical module for exploratory archaeoastronomical research. A user can enter the measured orientation and horizon altitude of a sacred site, monument, temple, or other structure, apply an uncertainty range, and identify stars or nakṣatras whose rising or setting directions intersect that range.
+Astrolabe is an interactive astronomical module for exploratory archaeoastronomical research. A user can enter the measured orientation and horizon altitude of a sacred site, monument, temple, or other structure, apply an uncertainty range, and identify stars or nakṣatras (Indian lunar mansions) whose acronychal rising or cosmical setting directions intersect that range.
 
 Astrolabe plots how stellar rising and setting azimuths change across historical epochs because of precession. It estimates possible alignment year ranges and calculates approximate acronychal-rising and cosmical-setting dates. Each calculated event can be opened in Armilla for visual inspection of the corresponding sky, location, date, and time.
 
