@@ -4,6 +4,18 @@ const DEGREE = PI / 180
 
 function mod(m, n, d = 0) {return ((m - d) % n + n) % n + d}
 function clip(n, min, max) {return Math.max(min, Math.min(max, n))}
+function unwrapPeriodic(value, reference, period) {
+	return reference + mod(value - reference, period, -period / 2)}
+
+function bisectRoot(fn, low, high, iterations = 40, lowValue = fn(low)) {
+	if(lowValue === null) return null
+	for(let i = 0; i < iterations; i++) {
+		const middle = (low + high) / 2
+		const middleValue = fn(middle)
+		if(middleValue === null) return null
+		if(lowValue * middleValue <= 0) high = middle
+		else {low = middle; lowValue = middleValue}}
+	return (low + high) / 2}
 
 function toDMS(degree, range = 360, offset = 0, decimal = 2) {
 	let t = mod(degree, range, offset)

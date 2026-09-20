@@ -34,6 +34,15 @@ function apparentAltitude(alt, temp = 26.5, pres = 1013.25) {
 		+ 1.18359542336086e+8) * alt
 		+ 1.00000000000000e+8)}
 
+function getGeometricAltitude(apparent, temp = 26.5, pres = 1013.25) {
+	if(pres === 0 || Math.abs(apparent) === 90) return apparent
+	let low = -90, high = 90
+	for(let i = 0; i < 55; i++) {
+		const middle = (low + high) / 2
+		if(apparentAltitude(middle, temp, pres) < apparent) low = middle
+		else high = middle}
+	return (low + high) / 2}
+
 function refractHorizontal(point) {
 	let [x, y, z] = point
 	let horizontal = Math.hypot(x, y)
@@ -83,8 +92,11 @@ function getObliquity(jc = param.julianCentury) {
 	return 23.4392794444 - jc * (46.836769 + jc * (0.0001831 - jc *
 		(0.0020034 - jc * (0.000000576 + jc * 0.0000000434)))) / 3600}
 
+function getEquatorialRotation(jc = param.julianCentury) {
+	return mul(rotateX(getObliquity(jc)), rotateZ(-getAyanamsa(jc)))}
+
 function updateNirayana() {
-	matrix.fromNirayana = mul(rotateX(param.obliquity), rotateZ(-param.ayanamsa))
+	matrix.fromNirayana = getEquatorialRotation()
 	matrix.toNirayana = transpose(matrix.fromNirayana)}
 
 param.ayanamsaJ2000 = getAyanamsa(0)
@@ -97,6 +109,27 @@ function getSidereal(jc = param.julianCentury, lon = param.longitude) {
 	return mod(mod(280.46061837504 + 13184999.4888224000575 * jc, 360) +
 		lon + (0.014506 + jc * (4612.156534 + jc * (1.3915817 - jc *
 		(0.00000044 + jc * (0.000029956 + jc * 0.0000000368))))) / 3600, 360)}
+
+function getHorizonHourAngle(declination, latitude, altitude) {
+	const phi = latitude * DEGREE, dec = declination * DEGREE
+	const denominator = Math.cos(phi) * Math.cos(dec)
+	if(Math.abs(denominator) < 1e-12) return null
+	const cosine = (Math.sin(altitude * DEGREE) - Math.sin(phi) * Math.sin(dec)) / denominator
+	return cosine <= -1 || cosine >= 1 ? null : Math.acos(cosine) / DEGREE}
+
+function getRisingAzimuth(declination, latitude, altitude) {
+	const phi = latitude * DEGREE, h = altitude * DEGREE
+	const denominator = Math.cos(phi) * Math.cos(h)
+	if(Math.abs(denominator) < 1e-12) return null
+	const cosine = (Math.sin(declination * DEGREE) - Math.sin(phi) * Math.sin(h)) / denominator
+	return cosine <= -1 || cosine >= 1 ? null : Math.acos(cosine) / DEGREE}
+
+function getEquatorialAltitude(rightAscension, declination, julianDay = param.julianDay,
+	latitude = param.latitude, longitude = param.longitude) {
+	const jc = (julianDay - 2451545) / 36525
+	const phi = latitude * DEGREE, dec = declination * DEGREE
+	return Math.asin(clip(Math.sin(phi) * Math.sin(dec) + Math.cos(phi) * Math.cos(dec) *
+		Math.cos((getSidereal(jc, longitude) - rightAscension) * DEGREE), -1, 1)) / DEGREE}
 
 function updateHorizontal() {
 	matrix.fromHorizontal = mul(rotateZ(90 + param.sidereal), rotateX(90 - param.latitude))

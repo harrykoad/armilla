@@ -130,6 +130,9 @@ function helioEMB(jc = param.julianCentury) {
 	return mdot(mul(rotateZ(OMG + param.ayanamsaJ2000), mul(rotateX(i), rotateZ(nu + omg))),
 		[helioDistance(nu, a, e), 0, 0])}
 
+function getGeocentricSunPosition(jc = param.julianCentury, moon = geoMoon(jc)[0]) {
+	return translate(scale(moon, 1 / MASS_FACTOR), negate(helioEMB(jc)))}
+
 function helioPlanets(jc = param.julianCentury) {
 	let a = [0.38709843,
 		0.72332102 - 0.00000026 * jc,  1.52371243 + 0.00000097 * jc,  5.20248019 - 0.00002864 * jc,
@@ -165,7 +168,7 @@ function helioPlanets(jc = param.julianCentury) {
 
 function solarSystem(jc = param.julianCentury) {
 	let gm = geoMoon(jc)
-	let gs = translate(scale(gm[0], 1 / MASS_FACTOR), negate(helioEMB(jc)))
+	let gs = getGeocentricSunPosition(jc, gm[0])
 	let gp = helioPlanets(jc).map(p => translate(p, gs))
 	return [/* Moon */gm[0], /*	Sun */gs, /* Mercury */gp[0], /* Venus */gp[1], /* Mars */gp[2],
 		/* Jupiter */gp[3], /* Saturn */gp[4], /* Uranus */gp[5], /* Neptune */gp[6], /* Rahu */gm[1]]}

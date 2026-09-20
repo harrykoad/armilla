@@ -109,7 +109,7 @@ function updateHoraryStars(jd) {
 function lunarState(julianDay, latitude, longitude) {
 	let jc = (julianDay - 2451545) / 36525
 	let gm = geoMoon(jc)[0]
-	let gs = translate(scale(gm, 1 / MASS_FACTOR), negate(helioEMB(jc)))
+	let gs = getGeocentricSunPosition(jc, gm)
 	let go = getGeoObserver(getSidereal(jc, longitude), latitude, getAyanamsa(jc), getObliquity(jc))
 	let tm = normalize(translate(gm, negate(go)))
 	let ts = normalize(translate(gs, negate(go)))
@@ -143,8 +143,8 @@ function lunarSearch(t0, latitude, longitude) {
 		let [gm, gs, go, nks, phs] = cachedLunarState(jd)
 		if(data.length) {
 			let p = data[data.length - 1]
-			nks = p[1] + mod(nks - p[1], 27, -13.5)
-			phs = p[2] + mod(phs - p[2], 360, -180)}
+			nks = unwrapPeriodic(nks, p[1], 27)
+			phs = unwrapPeriodic(phs, p[2], 360)}
 		data.push([jd, nks, phs])}
 	let eventTime = jd => {
 		jd = Math.floor(jd * 1440) / 1440
@@ -159,9 +159,8 @@ function lunarSearch(t0, latitude, longitude) {
 		let i = clip(Math.round((jd - data[0][0]) / dt), 0, data.length - 1)
 		let reference = data[i]
 		let state = cachedLunarState(jd)
-		return [
-			reference[1] + mod(state[3] - reference[1], 27, -13.5),
-			reference[2] + mod(state[4] - reference[2], 360, -180)]}
+		return [unwrapPeriodic(state[3], reference[1], 27),
+			unwrapPeriodic(state[4], reference[2], 360)]}
 	let refine = (lo, hi, key, target) => {
 		let period = key === 0 ? 27 : 360
 		let minute = Math.floor(lo * 1440)
