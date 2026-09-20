@@ -208,7 +208,7 @@ input:focus-visible {outline: 2px solid #80bfff; outline-offset: 2px}
 	</section>
 	<footer class="footnotes" aria-label="Chart notes">
 		<p><span class="footnoteMarker">*</span><span>Acronychal rising and cosmical setting occur when the star, at the specified altitude, respectively rises at sunset and sets at sunrise. Their dates are given in the Gregorian calendar for the central year only. Clicking each date links to the Armilla page, which displays the celestial sphere for the specified observational parameters.</span></p>
-		<p><span class="footnoteMarker">**</span><span>The Indian lunar mansions (nakṣatras) and their principal stars (yogatārās) are adapted from the <i>Sūryasiddhānta</i>. Nakṣatras marked with a double asterisk (**) represent alternative forms used in various Indian-influenced cultural traditions. Several bright stars not associated with nakṣatras are also included for reference.</span></p>
+		<p><span class="footnoteMarker">**</span><span>The Indian lunar mansions (nakṣatras) and their principal stars (yogatārās) are adapted from the <i>Sūryasiddhānta</i>. Nakṣatras marked with an asterisk (*) represent alternative forms used in various Indian-influenced cultural traditions. Several bright stars not associated with nakṣatras are also included for reference.</span></p>
 		<p><span class="footnoteMarker">***</span><span>Acronychal rising and cosmical setting dates shown for selected years are approximate and may differ by up to one day for a given year.</span></p>
 		<p class="footnoteCredit">© <span id="copyrightYear"></span> Peeravit Koad, Walailak University, Thailand. Astrolabe is an interactive astronomical module within the Armilla project. Visit this project on GitHub: <a href="https://github.com/harrykoad/armilla" target="_blank" rel="noopener">github.com/harrykoad/armilla</a>.</p>
 	</footer>
@@ -363,8 +363,8 @@ const GRAPH_STARS = [...STAR_LABELS, {name: "Bellatrix", index: 28}]
 const NAKSHATRA_DATA = [
 	["Aśvinī", "Sheratan", 108], ["Bharaṇī", "35 Ari", null],
 	["Kṛttikā", "Alcyone", 147], ["Rohiṇī", "Aldebaran", 12],
-	["Mṛgaśira", "Meissa", 255], ["Mṛgaśira**", "Alnilam", 31],
-	["Ārdrā", "Betelgeuse", 9], ["Ārdrā**", "Alhena", 52],
+	["Mṛgaśira", "Meissa", 255], ["Mṛgaśira*", "Alnilam", 31],
+	["Ārdrā", "Betelgeuse", 9], ["Ārdrā*", "Alhena", 52],
 	["Punarvasu", "Pollux", 16], ["Puṣya", "Asellus Aus.", 484],
 	["Aśleṣā", "ε Hya", 256], ["Maghā", "Regulus", 22],
 	["P. Phalguņī", "Zosma", 98], ["U. Phalguņī", "Denebola", 63],
@@ -374,24 +374,13 @@ const NAKSHATRA_DATA = [
 	["Mūla", "Shaula", 26], ["P. Aṣāḍha", "Kaus Media", 117],
 	["U. Aṣāḍha", "Nunki", 57], ["Śravaṇa", "Altair", 11],
 	["Dhaniṣṭa", "Rotanev", 344], ["Śatabhiṣaj", "λ Aqr", 386],
-	["Śatabhiṣaj**", "ζ Aqr", 569],
+	["Śatabhiṣaj*", "ζ¹ Aqr", 569],
 	["P. Bhādrapadā", "Markab", 94], ["U. Bhādrapadā", "Alpheratz", 54],
 	["Revatī", "ζ Psc", null]]
 
-function addCatalogStar(raHours, declination, pmRa, pmDec) {
-	const ra = raHours * 15 * DEGREE, dec = declination * DEGREE
-	const x = Math.cos(dec) * Math.cos(ra), y = Math.cos(dec) * Math.sin(ra), z = Math.sin(dec)
-	const index = STARS.length
-	STARS.push(fromEquatorialJ2000([x, y, z]))
-	STAR_PROPER_MOTION.push(fromEquatorialJ2000(scale([
-		-Math.sin(ra) * pmRa - Math.cos(ra) * Math.sin(dec) * pmDec,
-		Math.cos(ra) * pmRa - Math.sin(ra) * Math.sin(dec) * pmDec,
-		Math.cos(dec) * pmDec], DEGREE / 3600000)))
-	return index}
-
-// HYG v4.1 J2000 positions and proper motions for stars absent from astro.js.
-NAKSHATRA_DATA[1][2] = addCatalogStar(2.724198, 27.707146, 3.51, -9.97)
-NAKSHATRA_DATA[29][2] = addCatalogStar(1.228857, 7.575354, 141.66, -55.62)
+// These faint yogatārās now use the shared records in astro.js.
+NAKSHATRA_DATA[1][2] = FAINT_NAKSHATRA_STAR_INDEX.get("35 Ari")
+NAKSHATRA_DATA[29][2] = FAINT_NAKSHATRA_STAR_INDEX.get("ζ Psc")
 const NAKSHATRA_COLORS = ["#8bd3f7", "#f6c66c", "#a9d77b", "#e89dc1", "#c0acf0", "#f29c72"]
 const GRAPH_NAKSHATRAS = NAKSHATRA_DATA.map(([nakshatra, name, index], i) => ({
 	nakshatra, name, index,

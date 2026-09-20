@@ -1,4 +1,20 @@
+// Workbook stars fainter than, or otherwise absent from, the built-in catalog.
+// Values are J2000 RA (degrees), declination, μα cos δ, and μδ (mas/year).
+const FAINT_NAKSHATRA_STARS = [
+	["35 Ari", 40.862970, 27.707146, 3.51, -9.97],
+	["39 Ari", 41.977200, 29.247118, 148.42, -125.76],
+	["23 Tau", 56.581560, 23.948358, 21.17, -42.67],
+	["19 Tau", 56.302050, 24.467278, 19.35, -41.63],
+	["φ¹ Ori", 83.705160, 9.489579, -1.24, -2.49],
+	["φ² Ori", 84.226620, 9.290673, 96.84, -304.18],
+	["η Cnc", 128.177085, 20.441162, -44.65, -44.71],
+	["θ Cnc", 127.898880, 18.094420, -60.05, -56.50],
+	["93 Leo", 176.996430, 20.218931, -145.47, -4.04],
+	["ζ Psc", 18.432855, 7.575354, 141.66, -55.62]
+]
 const STARS = initStars()
+const FAINT_NAKSHATRA_STAR_INDEX = new Map(FAINT_NAKSHATRA_STARS.map(
+	(star, i) => [star[0], STARS.length - FAINT_NAKSHATRA_STARS.length + i]))
 const STAR_PROPER_MOTION = initStarProperMotion()
 const STAR_PAIR_MOTION = initStarPairMotion()
 const STAR_LABELS = initStarNames()
@@ -11,6 +27,68 @@ const CONSTELLATION_NAMES = initConstellationNames()
 const ZODIAC = [6, 76, 37, 21, 45, 84, 47, 69, 75, 11, 4, 64]
 const ZODIAC_NAMES = new Set(["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
 	"Libra", "Scorpius", "Sagittarius", "Capricornus", "Aquarius", "Pisces"])
+// J2000 right ascension, declination, and proper motion from the workbook's star list.
+// A final true value marks the principal star (yogatārā).
+const NAKSHATRAS = [
+	{name: "Aśvinī", stars: [[31.793325,23.462423,190.73,-145.77],[28.660020,20.808035,96.32,-108.80,true],[28.382316,19.294537,79.42,-99.10]]},
+	{name: "Bharaṇī", stars: [[40.862970,27.707146,3.51,-9.97,true],[41.977200,29.247118,148.42,-125.76],[42.495945,27.260507,65.47,-116.59]]},
+	{name: "Kṛttikā", stars: [[57.290595,24.053415,17.77,-44.70],[56.871150,24.105137,19.35,-43.11,true],[56.581560,23.948358,21.17,-42.67],[56.218905,24.113339,21.55,-44.92],[56.302050,24.467278,19.35,-41.63],[56.456685,24.367748,21.09,-45.03]]},
+	{name: "Rohiṇī", stars: [[68.980155,16.509301,62.78,-189.36,true],[67.165575,15.870883,108.66,-26.39],[64.948335,15.627642,115.29,-23.86],[65.733705,17.542514,107.75,-28.84],[67.154145,19.180431,107.23,-36.77]]},
+	{name: "Mṛgaśira", stars: [[83.784495,9.934158,-1.03,-1.86,true],[83.705160,9.489579,-1.24,-2.49],[84.226620,9.290673,96.84,-304.18]]},
+	{name: "Mṛgaśira*", stars: [[83.001675,-0.299092,1.67,0.56],[84.053385,-1.201920,1.49,-1.06,true],[85.189695,-1.942572,3.99,2.54]]},
+	{name: "Ārdrā", stars: [[88.792935,7.407063,27.33,10.86,true]]},
+	{name: "Ārdrā*", stars: [[101.322360,12.895591,-115.16,-190.91],[99.427920,16.399252,-2.04,-66.92,true],[97.240785,20.212133,-5.98,-14.08],[95.740095,22.513586,56.84,-108.79]]},
+	{name: "Punarvasu", stars: [[116.329155,28.026199,-625.69,-45.95,true],[113.649510,31.888276,-206.33,-148.18],[111.431685,27.798080,-121.28,-84.43],[113.980620,26.895741,-39.58,-108.08],[116.111895,24.397993,-22.45,-56.24]]},
+	{name: "Puṣya", stars: [[131.171250,18.154309,-17.10,-228.46,true],[130.821465,21.468501,-106.94,-39.25],[128.177085,20.441162,-44.65,-44.71],[127.898880,18.094420,-60.05,-56.50]]},
+	{name: "Aśleṣā", stars: [[131.693805,6.418809,-231.04,-40.17,true],[129.414030,5.703782,-70.27,-6.99],[129.689325,3.341435,-19.03,-16.29],[130.806150,3.398662,-19.14,-1.29],[132.108210,5.837812,-17.51,-29.79],[133.848450,5.945563,-99.76,14.65]]},
+	{name: "Maghā", stars: [[145.287645,9.892308,-143.67,-37.45],[152.092980,11.967207,-249.40,4.91,true],[151.833135,16.762664,-1.94,-0.53],[154.993095,19.841489,310.77,-152.88],[154.172565,23.417311,19.84,-7.30]]},
+	{name: "P. Phalguņī", stars: [[168.527070,20.523717,143.31,-130.43,true],[168.560025,15.429570,-59.01,-79.37]]},
+	{name: "U. Phalguņī", stars: [[177.264945,14.572060,-499.02,-113.78,true],[176.996430,20.218931,-145.47,-4.04]]},
+	{name: "Hasta", stars: [[188.596815,-23.396759,0.86,-56.00],[187.466085,-16.515432,-209.97,-139.30,true],[183.951555,-17.541929,-159.58,22.31],[182.531190,-22.619766,-71.52,10.55],[182.103375,-24.728875,100.18,-39.33]]},
+	{name: "Citrā", stars: [[201.298245,-11.161322,-42.50,-31.73,true]]},
+	{name: "Svāti", stars: [[213.915450,19.182410,-1093.45,-1999.40,true]]},
+	{name: "Viśākha", stars: [[222.719655,-16.041778,-105.69,-69.00,true],[229.251735,-9.382917,-96.39,-20.76],[233.881575,-14.789537,65.67,6.93],[226.017585,-25.281965,-71.85,-44.69]]},
+	{name: "Anurādhā", stars: [[241.359300,-19.805453,-6.75,-24.89],[240.083355,-22.621710,-8.67,-36.90,true],[239.712975,-26.114105,-12.00,-25.71],[239.221155,-29.214073,-15.20,-25.10]]},
+	{name: "Jyeṣṭha", stars: [[245.297145,-25.592796,-10.03,-18.03],[247.351920,-26.432002,-10.16,-23.21,true],[248.970645,-28.216016,-8.59,-22.50]]},
+	{name: "Mūla", stars: [[263.402175,-37.103821,-8.90,-29.95,true],[265.621980,-39.029983,-6.49,-25.55],[266.896170,-40.126997,0.44,-6.40],[264.329700,-42.997824,6.06,-0.95],[258.038280,-43.239189,22.01,-287.41],[253.645965,-42.361313,-126.55,-227.77],[252.967635,-38.047380,-8.84,-21.60],[252.541200,-34.293232,-611.83,-255.87]]},
+	{name: "P. Aṣāḍha", stars: [[275.248500,-29.828103,29.96,-26.38,true],[276.043020,-34.384616,-39.61,-124.05]]},
+	{name: "U. Aṣāḍha", stars: [[283.816350,-26.296722,13.87,-52.65,true],[285.652980,-29.880105,-14.10,3.66]]},
+	{name: "Śravaṇa", stars: [[296.564910,10.613261,15.72,-3.08],[297.695820,8.868322,536.82,385.54,true],[298.828305,6.406763,46.35,-481.32]]},
+	{name: "Dhaniṣṭa", stars: [[309.387240,14.595087,118.28,-47.65,true],[309.909525,15.912072,54.14,7.91],[311.664600,16.124296,-25.88,-196.27],[310.864725,15.074581,-19.61,-41.74]]},
+	{name: "Śatabhiṣaj", stars: [[343.153650,-7.579599,19.51,32.71,true]]},
+	{name: "Śatabhiṣaj*", stars: [[337.207965,-0.019972,191.32,37.47,true],[335.414070,-1.387331,129.24,8.90],[338.839080,-0.117498,88.56,-56.10],[336.319260,1.377401,18.38,3.35]]},
+	{name: "P. Bhādrapadā", stars: [[346.190220,15.205264,61.10,-42.56,true],[345.943515,28.082789,187.76,137.61]]},
+	{name: "U. Bhādrapadā", stars: [[2.096865,29.090432,135.68,-162.95,true],[3.308970,15.183596,4.70,-8.24]]},
+	{name: "Revatī", stars: [[18.432855,7.575354,141.66,-55.62,true]]}
+]
+const NAKSHATRA_FIGURES = [
+	[0,1, 1,2],                                      // Aśvinī
+	[0,1, 1,2, 2,0],                                 // Bharaṇī
+	[0,1, 1,2, 2,3, 3,4, 4,5, 5,1],                 // Kṛttikā
+	[0,1, 1,2, 2,3, 3,4],                            // Rohiṇī
+	[0,1, 1,2, 2,0],                                 // Mṛgaśira
+	[0,1, 1,2],                                      // Mṛgaśira*
+	[],                                               // Ārdrā
+	[0,1, 1,2, 2,3],                                 // Ārdrā*
+	[4,3, 3,2, 2,1, 1,0, 0,3],                      // Punarvasu
+	[0,1, 1,2, 2,3, 3,0],                            // Puṣya
+	[5,4, 4,3, 3,2, 2,1, 1,0, 0,4],                 // Aśleṣā
+	[0,1, 1,2, 2,3, 3,4],                            // Maghā
+	[0,1], [0,1],                                    // P./U. Phalguņī
+	[0,1, 0,2, 0,3, 0,4],                            // Hasta
+	[], [],                                           // Citrā, Svāti
+	[0,1, 1,2, 2,3, 3,0],                            // Viśākha
+	[0,1, 1,2, 2,3],                                 // Anurādhā
+	[0,1, 1,2],                                      // Jyeṣṭha
+	[0,1, 1,2, 2,3, 3,4, 4,5, 5,6, 6,7],            // Mūla
+	[0,1], [0,1],                                    // P./U. Aṣāḍha
+	[0,1, 1,2],                                      // Śravaṇa
+	[0,1, 1,2, 2,3],                                 // Dhaniṣṭa
+	[],                                               // Śatabhiṣaj
+	[0,1, 0,2, 0,3],                                 // Śatabhiṣaj*
+	[0,1], [0,1],                                    // P./U. Bhādrapadā
+	[]                                                // Revatī
+]
 const EARTH_A = 6378.137
 const EARTH_E2 = 0.00669438
 const KM_PER_AU = 149597870.7
@@ -361,9 +439,12 @@ function initStars() {
 		+ 4849,-24751,+20917,   +23563,-15341,-16826,   + 8713,+24623,-19786,   + 8796,+21456,-23151,   -30287,+12500,-  364,
 		-27548,+17129,- 4620,   +11491,+11859,-28302,   -30210,+12594,- 1566,   +14523,+12258,-26693,   +15410,+12636,-26011,
 		+15715,+13488,-25393]
-	return Array.from({length: s.length / 3}, (_, i) => {
+	let stars = Array.from({length: s.length / 3}, (_, i) => {
 		let [x, y, z] = s.slice(3 * i, 3 * i + 3)
-		return x === 0 && y === 0 && z === 0 ? [0, 0, 0] : fromEquatorialJ2000(scale([x, y, z], 1 / 32767))})}
+		return x === 0 && y === 0 && z === 0 ? [0, 0, 0] : fromEquatorialJ2000(scale([x, y, z], 1 / 32767))})
+	stars.push(...FAINT_NAKSHATRA_STARS.map(([, ra, dec]) =>
+		fromEquatorialJ2000(toXYZ(ra, dec))))
+	return stars}
 
 function initStarProperMotion() {
 	let m = [
@@ -516,6 +597,8 @@ function initStarProperMotion() {
 		121.5, -279.7,   13.65, 60.2,   -40.2, 0.6,   58.8, 193.1,   3.45, -2.5,   -40.2, -22.2,
 		-62.4, -47.2,   -144.45, -63.9,   -48.9, -12.8,   56.55, 5.2,   183, 1.1,   528, 219.2
 	]
+	for(let [, , dec, pmRa, pmDec] of FAINT_NAKSHATRA_STARS)
+		m.push(pmRa / Math.cos(dec * DEGREE), pmDec)
 	let toJ2000 = transpose(matrix.fromEquatorialJ2000)
 	return STARS.map((p, i) => {
 		let [pmRa, pmDec] = m.slice(2 * i, 2 * i + 2)
@@ -551,6 +634,25 @@ function getStarPosition(index, jd = param.julianDay) {
 		return normalize(translate(translate(scale(position, c), scale(cross(pair.axis, position), s)),
 			scale(pair.axis, vdot(pair.axis, position) * (1 - c))))}
 	return normalize(translate(position, scale(STAR_PROPER_MOTION[index], years)))}
+
+function getNakshatraStarPosition(star, jd = param.julianDay) {
+	let [raDegrees, declination, pmRa, pmDec] = star
+	let ra = raDegrees * DEGREE, dec = declination * DEGREE
+	let position = fromEquatorialJ2000([
+		Math.cos(dec) * Math.cos(ra), Math.cos(dec) * Math.sin(ra), Math.sin(dec)])
+	if(star.catalogIndex === undefined) {
+		let bestIndex = -1, bestDot = -1
+		for(let i = 0; i < STARS.length; i++) {
+			if(STARS[i][0] === 0 && STARS[i][1] === 0 && STARS[i][2] === 0) continue
+			let dot = vdot(position, normalize(STARS[i]))
+			if(dot > bestDot) {bestDot = dot; bestIndex = i}}
+		star.catalogIndex = bestDot > Math.cos(0.05 * DEGREE) ? bestIndex : -1}
+	if(star.catalogIndex >= 0) return getStarPosition(star.catalogIndex, jd)
+	let velocity = fromEquatorialJ2000(scale([
+		-Math.sin(ra) * pmRa - Math.cos(ra) * Math.sin(dec) * pmDec,
+		 Math.cos(ra) * pmRa - Math.sin(ra) * Math.sin(dec) * pmDec,
+		 Math.cos(dec) * pmDec], DEGREE / 3600000))
+	return normalize(translate(position, scale(velocity, (jd - 2451545) / 365.25)))}
 
 function initStarNames() {
 	let data = [
@@ -658,30 +760,30 @@ function initConstellations() {return [
 function initConstellationNames() {
 	let data = [
 		[3, 39, "Andromeda"], [156, -36, "Antlia"], [234, -77, "Apus"],
-		[335, -8, "Aquarius"], [292, 3, "Aquila"], [267, -56, "Ara"],
+		[326, 0, "Aquarius"], [292, 3, "Aquila"], [267, -56, "Ara"],
 		[34, 20, "Aries"], [82, 38, "Auriga"], [223, 35, "Boötes"],
-		[75, -40, "Caelum"], [74, 66, "Camelopardalis"], [131, 21, "Cancer"],
+		[75, -40, "Caelum"], [74, 66, "Camelopardalis"], [128, 13, "Cancer"],
 		[192, 40, "Canes\nVenatici"], [108, -20, "Canis\nMajor"], [116, 9, "Canis\nMinor"],
-		[314, -21, "Capricornus"], [117, -60, "Carina"], [11, 66, "Cassiopeia"],
+		[318, -24, "Capricornus"], [117, -60, "Carina"], [11, 66, "Cassiopeia"],
 		[199, -45, "Centaurus"], [330, 64, "Cepheus"], [23, -12, "Cetus"],
 		[153, -79, "Chamaeleon"], [226, -62, "Circinus"], [90, -38, "Columba"],
 		[192, 23, "Coma\nBerenices"], [282, -39, "Corona\nAustralis"], [236, 29, "Corona\nBorealis"],
 		[186, -20, "Corvus"], [174, -14, "Crater"], [193, -57, "Crux"],
 		[299, 40, "Cygnus"], [310, 14, "Delphinus"], [76, -59, "Dorado"],
 		[241, 59, "Draco"], [318, 8, "Equuleus"], [60, -30, "Eridanus"],
-		[42, -28, "Fornax"], [107, 25, "Gemini"], [342, -44, "Grus"],
+		[42, -28, "Fornax"], [110, 37, "Gemini"], [342, -44, "Grus"],
 		[253, 24, "Hercules"], [51, -52, "Horologium"], [139, -3, "Hydra\n(Caput)"],
 		[201, -28, "Hydra\n(Cauda)"], [32, -73, "Hydrus"], [319, -53, "Indus"],
-		[330, 43, "Lacerta"], [161, 13, "Leo"], [157, 34, "Leo\nMinor"],
-		[73, -19, "Lepus"], [229, -20, "Libra"], [236, -37, "Lupus"],
+		[330, 43, "Lacerta"], [160, 24, "Leo"], [157, 34, "Leo\nMinor"],
+		[73, -19, "Lepus"], [232, -23, "Libra"], [236, -37, "Lupus"],
 		[120, 46, "Lynx"], [285, 40, "Lyra"], [83, -75, "Mensa"],
-		[315, -37, "Microscopium"], [108, -1, "Monoceros"], [178, -71, "Musca"],
+		[315, -37, "Microscopium"], [115, -2, "Monoceros"], [178, -71, "Musca"],
 		[244, -48, "Norma"], [300, -85, "Octans"], [258, 0, "Ophiuchus"],
 		[85, 4, "Orion"], [297, -62, "Pavo"], [338, 18, "Pegasus"],
 		[50, 45, "Perseus"], [11, -49, "Phoenix"], [92, -58, "Pictor"],
-		[16, 15, "Pisces"], [333, -28, "Piscis\nAustrinus"], [117, -34, "Puppis"],
+		[18, 13, "Pisces"], [333, -28, "Piscis\nAustrinus"], [117, -34, "Puppis"],
 		[127, -31, "Pyxis"], [61, -62, "Reticulum"], [298, 19, "Sagitta"],
-		[281, -23, "Sagittarius"], [251, -31, "Scorpius"], [357, -33, "Sculptor"],
+		[295, -25, "Sagittarius"], [252, -38, "Scorpius"], [357, -33, "Sculptor"],
 		[280, -10, "Scutum"], [240, 10, "Serpens\nCaput"], [280, 1, "Serpens\nCauda"],
 		[153, -5, "Sextans"], [63, 14, "Taurus"], [276, -47, "Telescopium"],
 		[31, 32, "Triangulum"], [240, -67, "Triangulum\nAustrale"], [348, -63, "Tucana"],

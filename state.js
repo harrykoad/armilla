@@ -1,7 +1,7 @@
 const UI = new Proxy({}, {get(obj, id) {if(!obj[id]) obj[id] = document.getElementById(id); return obj[id]}})
 
-const buffer = {backLines: [], backStars: [], backPoints: [], backTexts: [],
-	frontLines: [], frontStars: [], frontPoints: [], frontTexts: []}
+const buffer = {backLines: [], backNakshatras: [], backFigures: [], backStars: [], backPoints: [], backTexts: [],
+	frontLines: [], frontNakshatras: [], frontFigures: [], frontStars: [], frontPoints: [], frontTexts: []}
 const cache = {stars: null, refractedStars: null, graticule: {}, solarSystem: null, analemma: null, lunar: null}
 const color = {ecliptic: "red", equatorial: "blue", horizontal: "#00c000", galactic: "#c0c000",
 	constellations: "gray", zodiac: "orange", moon: "#c0c000", sun: "red", mercury: "green", venus: "cyan",
@@ -21,6 +21,7 @@ const modal = {temp: {fallback: null, year: null, month: null, day: null,
 const show = {sphere: true, stars: true, starNames: false, milkyWay: true, constellations: true, zodiac: true,
 	constellationNames: false, seasonalTriangles: false,
 	ecliptic: true, eclipticAxes: true, eclipticMeridian: false, eclipticGraticule: false, precessionCircles: false,
+	nakshatras: false, nakshatraNames: false,
 	equator: true, equatorialAxes: true, equatorialMeridian: false, equatorialGraticule: false, circumpolarCircles: false,
 	horizon: true, horizontalAxes: true, horizontalMeridian: false, horizontalGraticule: true, observerMeridian: false,
 	sun: true, moon: true, planets: false, analemma: false, moonsOrbit: false, eclipses: false,
