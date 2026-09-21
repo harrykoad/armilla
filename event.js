@@ -41,22 +41,6 @@ UI.orientationDropdown.onchange = () => {
 	let oldMode = mode.orientation
 	let newMode = UI.orientationDropdown.value
 	if(oldMode === newMode) return
-	let a = UI.analemmaCheckbox.parentElement
-	let r = UI.atmosphericRefractionCheckbox.parentElement
-	if(newMode === "horizontal") {
-		UI.analemmaCheckbox.disabled = false
-		a.style.color = mode.darkTheme ? "white" : "black"
-		UI.atmosphericRefractionCheckbox.disabled = false
-		r.style.color = ""}
-	else {
-		UI.analemmaCheckbox.disabled = true
-		UI.analemmaCheckbox.checked = false
-		show.analemma = false
-		a.style.color = "gray"
-		UI.atmosphericRefractionCheckbox.disabled = true
-		UI.atmosphericRefractionCheckbox.checked = false
-		show.atmosphericRefraction = false
-		r.style.color = "gray"}
 	let a0 = 0; a1 = 0
 	let p = toScreen([0, 0, 1], newMode, oldMode)
 	if(p[1] !== 0 || p[2] !== 0) a1 = Math.atan2(p[1], p[2]) / DEGREE
@@ -82,6 +66,17 @@ UI.orientationDropdown.onchange = () => {
 
 	animate()}
 
+UI.viewModeDropdown.onchange = () => {
+	mode.viewMode = UI.viewModeDropdown.value
+	UI.surfaceLabel.textContent = mode.viewMode === "planetarium" ?
+		"Earth's Ground" : "Celestial Sphere"
+	input.dragging = false
+	input.activePointers.clear()
+	input.pinchStartDist = null
+	clampViewZoom()
+	update.sky = true
+	render()}
+
 UI.darkThemeCheckbox.onchange = () => {
 	mode.darkTheme = UI.darkThemeCheckbox.checked
 	let i = mode.darkTheme ? 0 : 1
@@ -91,9 +86,12 @@ UI.darkThemeCheckbox.onchange = () => {
 	document.querySelectorAll(".box, .modal").forEach(e => e.style.background = ["black", "white"][i])
 	document.querySelectorAll(".colorLegend").forEach(e => e.style.borderColor = ["white","black"][i])
 	document.querySelectorAll('input[type="radio"]').forEach(e => {e.style.accentColor = ["white","black"][i]})
-	document.querySelectorAll("#orientationDropdown, .shortButton, .setButton, .longButton, .panelScrollButton").forEach(e => {
+	document.querySelectorAll("#orientationDropdown, #viewModeDropdown, .shortButton, .setButton, .longButton").forEach(e => {
 		e.style.background = ["#3b3b3b", "#efefef"][i]
 		e.style.color = ["white", "black"][i]})
+	for(let e of document.querySelectorAll(".panelScrollButton")) {
+		e.style.background = ["#efefef", "#3b3b3b"][i]
+		e.style.color = ["black", "white"][i]}
 	UI.modalBackground.style.background = ["rgba(255, 255, 255, 0.5)", "rgba(0, 0, 0, 0.5)"][i]
 	update.sky = true
 	render()}
@@ -227,7 +225,8 @@ window.onpointermove = e => {
 	input.lastX = x
 	input.lastY = y
 	let sensitivity = 500 / (view.r0 * view.f)
-	view.yaw = mod(view.yaw + dx * sensitivity, 360)
+	let horizontalDirection = mode.viewMode === "planetarium" ? -1 : 1
+	view.yaw = mod(view.yaw + horizontalDirection * dx * sensitivity, 360)
 	view.pitch = clip(view.pitch + dy * sensitivity, -90, 90)
 	update.view = true
 	update.sky = true

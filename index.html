@@ -57,7 +57,7 @@ canvas:active{cursor: grabbing}
 #leftPanel input[type="checkbox"], #rightPanel input[type="checkbox"] {cursor: pointer}
 #leftPanel{left: 10px}
 #rightPanel{right: 10px}
-.panelScrollButton{background: #3b3b3b; border: 2px solid gray; border-radius: 50%; color: white;
+.panelScrollButton{background: #efefef; border: 2px solid gray; border-radius: 50%; color: black;
 	cursor: pointer; display: none; font-size: 14px; font-weight: bold; height: 32px; padding: 0px; position: fixed;
 	width: 32px; z-index: 1000}
 #leftPanelScrollUp, #leftPanelScrollDown{left: 110px; transform: translateX(-50%)}
@@ -65,9 +65,11 @@ canvas:active{cursor: grabbing}
 #leftPanelScrollUp, #rightPanelScrollUp{top: 10px}
 #leftPanelScrollDown, #rightPanelScrollDown{bottom: 10px}
 .box{background: black; border-radius: 10px; border: 1px solid gray; margin-bottom: 10px; padding: 8px}
-.columns{column-gap: 0px; display: grid; grid-template-columns: 45% 55%; margin-top: 2px}
+.columns{column-gap: 0px; display: grid; grid-template-columns: 50% 50%; margin-top: 2px}
 .row{align-items: center; display: flex; justify-content: flex-start; margin-top: 2px}
-#orientationDropdown{background: black; border-radius: 5px; border: 1px solid gray;
+.dropdownRow{column-gap: 8px; display: grid; grid-template-columns: auto 1fr}
+.dropdownRow select{box-sizing: border-box; text-align: center; text-align-last: center; width: 100%}
+#orientationDropdown, #viewModeDropdown{background: black; border-radius: 5px; border: 1px solid gray;
 	color: white; font-size: 12px; padding: 2px 4px}
 .colorLegend{border-radius: 50%; border: 1.5px solid white; display: inline-block; height: 12.5px;
 	margin-bottom: 5px; margin-right: 5px; vertical-align: middle; width: 12.5px}
@@ -98,41 +100,45 @@ input[type="radio"] {accent-color: white}
 <div id="leftPanel">
 
 <div class="box">
-	<div class="row">&nbsp;Orientation&nbsp;
-		<select id="orientationDropdown" style="background: #3b3b3b; color: white; cursor: pointer">
-			<option value="ecliptic">Ecliptic</option>
-			<option value="equatorial">Equatorial</option>
-			<option value="horizontal" selected>Horizontal</option>
-		</select>
-	</div>
-	<div class="row"><input type="checkbox" id="darkThemeCheckbox" checked>&nbsp;Black Background</div>
-	<div class="row"><input type="checkbox" id="sphereCheckbox" checked>&nbsp;Celestial Sphere</div>
-	<div class="row"><input type="checkbox" id="drawCheckbox">&nbsp;Draw (Disable Movement)</div>
-	<span class="horizontalLine"></span>
 	<div class="columns">
 		<div class="row"><input type="checkbox" id="milkyWayCheckbox" checked>&nbsp;Milky Way</div>
 		<div class="row"><input type="checkbox" id="zodiacCheckbox" checked>&nbsp;Zodiac</div>
 		<div class="row"><input type="checkbox" id="starsCheckbox" checked>&nbsp;Stars</div>
-		<div class="row"><input type="checkbox" id="constellationsCheckbox" checked>&nbsp;Constellations</div>
+		<div class="row" style="font-size: 11px"><input type="checkbox" id="constellationsCheckbox" checked>&nbsp;Constellations</div>
 		<div class="row"><input type="checkbox" id="starNamesCheckbox">&nbsp;S. Names</div>
 		<div class="row"><input type="checkbox" id="constellationNamesCheckbox">&nbsp;C. Names</div>
 	</div>
-	<div class="row"><input type="checkbox" id="seasonalTrianglesCheckbox">&nbsp;Summer/Winter Triangles</div>
-</div>
-
-<div class="box">
-	<span class="colorLegend" id="eclipticLegend"></span><b>Ecliptic System (Nirāyana)</b>
-	<div class="columns">
-		<div class="row"><input type="checkbox" id="eclipticCheckbox" checked>&nbsp;Ecliptic</div>
-		<div class="row"><input type="checkbox" id="eclipticMeridianCheckbox">&nbsp;0° Meridian</div>
-		<div class="row"><input type="checkbox" id="eclipticAxesCheckbox" checked>&nbsp;Axes</div>
-		<div class="row"><input type="checkbox" id="eclipticGraticuleCheckbox">&nbsp;Graticule</div>
-	</div>
-	<div class="row"><input type="checkbox" id="precessionCirclesCheckbox">&nbsp;Precession Circles</div>
-	<span class="horizontalLine"></span>
 	<div class="columns">
 		<div class="row"><input type="checkbox" id="nakshatrasCheckbox">&nbsp;Nakṣatras</div>
 		<div class="row"><input type="checkbox" id="nakshatraNamesCheckbox">&nbsp;N. Names</div>
+	</div>
+	<div class="row"><input type="checkbox" id="seasonalTrianglesCheckbox">&nbsp;Summer/Winter Triangles</div>
+	<div class="row"><input type="checkbox" id="properMotionCheckbox" checked>&nbsp;Proper Motion</div>
+	<span class="horizontalLine"></span>
+	<div class="columns">
+		<div class="row"><input type="checkbox" id="sunCheckbox" checked>&nbsp;Sun</div>
+		<div class="row"><input type="checkbox" id="planetsCheckbox">&nbsp;Planets</div>
+		<div class="row"><input type="checkbox" id="moonCheckbox" checked>&nbsp;Moon</div>
+		<div class="row"><input type="checkbox" id="moonsOrbitCheckbox">&nbsp;Moon's Orbit</div>
+	</div>
+	<div class="row" style="white-space: nowrap"><input type="checkbox" id="eclipsesCheckbox">&nbsp;Umbra/Penumbra Sections</div>
+</div>
+
+<div class="box">
+	<span class="colorLegend" id="horizontalLegend"></span><b>Horizontal System</b>
+	<div class="columns">
+		<div class="row"><input type="checkbox" id="horizonCheckbox" checked>&nbsp;Horizon</div>
+		<div class="row"><input type="checkbox" id="horizontalMeridianCheckbox">&nbsp;0° Meridian</div>
+		<div class="row"><input type="checkbox" id="horizontalAxesCheckbox" checked>&nbsp;Axes</div>
+		<div class="row"><input type="checkbox" id="horizontalGraticuleCheckbox" checked>&nbsp;Graticule</div>
+	</div>
+	<div class="row"><input type="checkbox" id="observerMeridianCheckbox">&nbsp;Observer's Meridian</div>
+	<span class="horizontalLine"></span>
+	<div class="columns">
+		<div class="row"><input type="checkbox" id="atmosphericRefractionCheckbox" checked>&nbsp;Refraction</div>
+		<div class="row"><input type="checkbox" id="rainbowCheckbox">&nbsp;Rainbow</div>
+		<div class="row"><input type="checkbox" id="analemmaCheckbox">&nbsp;Analemma</div>
+		<div class="row"><input type="checkbox" id="haloCheckbox">&nbsp;Halos</div>
 	</div>
 </div>
 
@@ -148,35 +154,33 @@ input[type="radio"] {accent-color: white}
 </div>
 
 <div class="box">
-	<span class="colorLegend" id="horizontalLegend"></span><b>Horizontal System</b>
+	<span class="colorLegend" id="eclipticLegend"></span><b>Ecliptic System (Nirāyana)</b>
 	<div class="columns">
-		<div class="row"><input type="checkbox" id="horizonCheckbox" checked>&nbsp;Horizon</div>
-		<div class="row"><input type="checkbox" id="horizontalMeridianCheckbox">&nbsp;0° Meridian</div>
-		<div class="row"><input type="checkbox" id="horizontalAxesCheckbox" checked>&nbsp;Axes</div>
-		<div class="row"><input type="checkbox" id="horizontalGraticuleCheckbox" checked>&nbsp;Graticule</div>
+		<div class="row"><input type="checkbox" id="eclipticCheckbox" checked>&nbsp;Ecliptic</div>
+		<div class="row"><input type="checkbox" id="eclipticMeridianCheckbox">&nbsp;0° Meridian</div>
+		<div class="row"><input type="checkbox" id="eclipticAxesCheckbox" checked>&nbsp;Axes</div>
+		<div class="row"><input type="checkbox" id="eclipticGraticuleCheckbox">&nbsp;Graticule</div>
 	</div>
-	<div class="row"><input type="checkbox" id="observerMeridianCheckbox">&nbsp;Observer's Meridian</div>
+	<div class="row"><input type="checkbox" id="precessionCirclesCheckbox">&nbsp;Precession Circles</div>
 </div>
 
 <div class="box">
-	<div class="columns">
-		<div class="row"><input type="checkbox" id="sunCheckbox" checked>&nbsp;Sun</div>
-		<div class="row"><input type="checkbox" id="analemmaCheckbox">&nbsp;Analemma</div>
-		<div class="row"><input type="checkbox" id="moonCheckbox" checked>&nbsp;Moon</div>
-		<div class="row"><input type="checkbox" id="moonsOrbitCheckbox">&nbsp;Moon's Orbit</div>
-		<div class="row"><input type="checkbox" id="planetsCheckbox">&nbsp;Planets</div>
-		<div class="row"><input type="checkbox" id="eclipsesCheckbox">&nbsp;Eclipses</div>
+	<div class="row dropdownRow"><span>View Mode</span>
+		<select id="viewModeDropdown" style="background: #3b3b3b; color: white; cursor: pointer">
+			<option value="armillarium" selected>Armillarium</option>
+			<option value="planetarium">Planetarium</option>
+		</select>
 	</div>
-	<span class="horizontalLine"></span>
-	<div class="row"><input type="checkbox" id="atmosphericRefractionCheckbox" checked>&nbsp;Atmospheric Refraction</div>
-	<div class="columns">
-		<div class="row"><input type="checkbox" id="haloCheckbox">&nbsp;Halo</div>
-		<div class="row"><input type="checkbox" id="rainbowCheckbox">&nbsp;Rainbow</div>
+	<div class="row dropdownRow"><span>Orientation</span>
+		<select id="orientationDropdown" style="background: #3b3b3b; color: white; cursor: pointer">
+			<option value="horizontal" selected>Horizontal</option>
+			<option value="equatorial">Equatorial</option>
+			<option value="ecliptic">Ecliptic</option>
+		</select>
 	</div>
-</div>
-
-<div class="panelFooter">Visit this project on GitHub:
-	<a href="https://github.com/harrykoad/armilla" target="_blank" rel="noopener">github.com/harrykoad/armilla</a>
+	<div class="row"><input type="checkbox" id="darkThemeCheckbox" checked>&nbsp;Black Background</div>
+	<div class="row"><input type="checkbox" id="surfaceCheckbox" checked>&nbsp;<span id="surfaceLabel">Celestial Sphere</span></div>
+	<div class="row"><input type="checkbox" id="drawCheckbox">&nbsp;Draw (Disable Movement)</div>
 </div>
 
 </div>
@@ -251,6 +255,9 @@ input[type="radio"] {accent-color: white}
 </div>
 
 <div class="panelFooter" id="copyrightFooter"></div>
+<div class="panelFooter">Visit this project on GitHub:
+	<a href="https://github.com/harrykoad/armilla" target="_blank" rel="noopener">github.com/harrykoad/armilla</a>.
+</div>
 
 </div>
 
@@ -304,7 +311,7 @@ input[type="radio"] {accent-color: white}
 <script src="modal.js"></script>
 <script src="event.js"></script>
 <script>
-UI.copyrightFooter.innerHTML = "\u00a9 " + new Date().getUTCFullYear() + " Peeravit Koad<br>Walailak University, Thailand"
+UI.copyrightFooter.innerHTML = "\u00a9 " + new Date().getUTCFullYear() + " Peeravit Koad<br>Walailak University, Thailand."
 </script>
 
 </body>

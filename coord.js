@@ -56,7 +56,7 @@ function refractHorizontal(point) {
 	return translate(point, refraction)}
 
 function refractionEnabled() {
-	return mode.orientation === "horizontal" && show.atmosphericRefraction}
+	return show.atmosphericRefraction}
 
 function getJulianDay(year = param.year, month = param.month, day = param.day,
 	time = param.time, timeZone = param.timeZone) {

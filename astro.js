@@ -625,8 +625,9 @@ function initStarPairMotion() {
 	return motions}
 
 function getStarPosition(index, jd = param.julianDay) {
-	let years = (jd - 2451545) / 365.25
 	let position = normalize(STARS[index])
+	if(!show.properMotion) return position
+	let years = (jd - 2451545) / 365.25
 	let pair = STAR_PAIR_MOTION.get(index)
 	if(pair) {
 		let angle = Math.atan(pair.rate * years)
@@ -648,6 +649,7 @@ function getNakshatraStarPosition(star, jd = param.julianDay) {
 			if(dot > bestDot) {bestDot = dot; bestIndex = i}}
 		star.catalogIndex = bestDot > Math.cos(0.05 * DEGREE) ? bestIndex : -1}
 	if(star.catalogIndex >= 0) return getStarPosition(star.catalogIndex, jd)
+	if(!show.properMotion) return position
 	let velocity = fromEquatorialJ2000(scale([
 		-Math.sin(ra) * pmRa - Math.cos(ra) * Math.sin(dec) * pmDec,
 		 Math.cos(ra) * pmRa - Math.sin(ra) * Math.sin(dec) * pmDec,
