@@ -314,20 +314,19 @@ function getPlanetariumHorizon() {
 	let points = localHorizon().map(point => project(point, "horizontal"))
 	return {points}}
 
-function planetariumEdgeIsDiscontinuous(a, b) {
-	let [camera0, screen0] = a, [camera1, screen1] = b
-	return camera0[0] < 0 && camera1[0] < 0 &&
-		camera0[1] * camera1[1] + camera0[2] * camera1[2] < 0 ||
-		Math.hypot(screen1[0] - screen0[0], screen1[1] - screen0[1]) >
-		Math.hypot(view.w, view.h)}
-
 function drawPlanetariumGround(horizon = getPlanetariumHorizon()) {
 	CTX.fillStyle = mode.darkTheme ? "rgb(0, 20, 0)" : "rgb(235, 255, 235)"
 	CTX.beginPath()
 	let center = fromScreen([1, 0, 0], mode.orientation, "horizontal")
-	if(isAtOrAboveHorizon(center, "horizontal"))
-		CTX.rect(0, 0, view.w, view.h)
 	let points = horizon.points
+	let centerInside = false
+	for(let i = 0, j = points.length - 1; i < points.length; j = i++) {
+		let [xi, yi] = points[i][1], [xj, yj] = points[j][1]
+		if((yi > view.y0) !== (yj > view.y0) &&
+			view.x0 < (xj - xi) * (view.y0 - yi) / (yj - yi) + xi)
+			centerInside = !centerInside}
+	let centerIsGround = !isAtOrAboveHorizon(center, "horizontal")
+	if(centerIsGround !== centerInside) CTX.rect(0, 0, view.w, view.h)
 	if(points.length > 0) {
 		CTX.moveTo(points[0][1][0], points[0][1][1])
 		for(let i = 1; i < points.length; i++)
@@ -346,7 +345,12 @@ function drawPlanetariumHorizon(horizon = getPlanetariumHorizon()) {
 	CTX.moveTo(points[0][1][0], points[0][1][1])
 	for(let i = 1; i < points.length; i++) {
 		let previous = points[i - 1], current = points[i]
-		if(planetariumEdgeIsDiscontinuous(previous, current))
+		let [previousCamera, previousScreen] = previous
+		let [currentCamera, currentScreen] = current
+		if(previousCamera[0] < 0 && currentCamera[0] < 0 &&
+			previousCamera[1] * currentCamera[1] + previousCamera[2] * currentCamera[2] < 0 ||
+			Math.hypot(currentScreen[0] - previousScreen[0], currentScreen[1] - previousScreen[1]) >
+			Math.hypot(view.w, view.h))
 			CTX.moveTo(current[1][0], current[1][1])
 		else CTX.lineTo(current[1][0], current[1][1])}
 	CTX.stroke()}
