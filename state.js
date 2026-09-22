@@ -11,15 +11,15 @@ const input = {dragging: false, lastX: 0, lastY: 0, drawing: false, drawPath: []
 const matrix = {fromNirayana: null, toNirayana: null, fromHorizontal: null, toHorizontal: null,
 	fromEquatorialJ2000: null, fromGalactic: null, fromScreen: null, toScreen: null}
 const mode = {viewMode: "armillarium", orientation: "horizontal", darkTheme: true, draw: false}
-const param = {latitude: 8.64, longitude: 99.90, timeZone: 7, year: 2000, month: 1, day: 1,
+const param = {latitude: 8.64, longitude: 99.90, elevation: 0, timeZone: 7, year: 2000, month: 1, day: 1,
 	time: 180, dayOfYear: 1, yearDays: 366, julianDay: 0, julianCentury: 0,
 	ayanamsa: 0, ayanamsaJ2000: 0, obliquity: 0, obliquityJ2000: 0, sidereal: 0}
 const modal = {temp: {fallback: null, year: null, month: null, day: null,
-		hour: null, minute: null, longitude: null, julianDay: null},
+		hour: null, minute: null, longitude: null, elevation: null, julianDay: null},
 	horary: {frame: [], slots: [], stars: [], constellations: [], zodiac: []},
 	world: {map: new Image(), graticule: [], equator: []}}
 const show = {surface: true, stars: true, starNames: false, milkyWay: true, constellations: true, zodiac: true,
-	constellationNames: false, seasonalTriangles: false, properMotion: true,
+	constellationNames: true, seasonalTriangles: false, properMotion: true,
 	ecliptic: true, eclipticAxes: true, eclipticMeridian: false, eclipticGraticule: false, precessionCircles: false,
 	nakshatras: false, nakshatraNames: false,
 	equator: true, equatorialAxes: true, equatorialMeridian: false, equatorialGraticule: false, circumpolarCircles: false,

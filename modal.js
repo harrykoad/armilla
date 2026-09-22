@@ -106,11 +106,11 @@ function updateHoraryStars(jd) {
 				modal.horary.zodiac.push([a.position, b.position])}}
 	modal.horary.stars = modal.horary.stars.filter(s => s && s.position)}
 
-function lunarState(julianDay, latitude, longitude) {
+function lunarState(julianDay, latitude, longitude, elevation = 0) {
 	let jc = (julianDay - 2451545) / 36525
 	let gm = geoMoon(jc)[0]
 	let gs = getGeocentricSunPosition(jc, gm)
-	let go = getGeoObserver(getSidereal(jc, longitude), latitude, getAyanamsa(jc), getObliquity(jc))
+	let go = getGeoObserver(getSidereal(jc, longitude), latitude, getAyanamsa(jc), getObliquity(jc), elevation)
 	let tm = normalize(translate(gm, negate(go)))
 	let ts = normalize(translate(gs, negate(go)))
 	let l = toTP(tm)[0]
@@ -118,8 +118,8 @@ function lunarState(julianDay, latitude, longitude) {
 	if(mod(l - toTP(ts)[0], 360) > 180) p = 360 - p
 	return [gm, gs, go, l * 27 / 360, p]}
 
-function lunarSearch(t0, latitude, longitude) {
-	let k = [latitude.toFixed(10), longitude.toFixed(10)].join("|")
+function lunarSearch(t0, latitude, longitude, elevation = 0) {
+	let k = [latitude.toFixed(10), longitude.toFixed(10), elevation.toFixed(0)].join("|")
 	if(!cache.lunar || cache.lunar.key !== k)
 		cache.lunar = {key: k, states: new Map()}
 	let lunarCache = cache.lunar
@@ -130,7 +130,7 @@ function lunarSearch(t0, latitude, longitude) {
 			lunarCache.states.delete(key)
 			lunarCache.states.set(key, state)
 			return state}
-		let state = lunarState(jd, latitude, longitude)
+		let state = lunarState(jd, latitude, longitude, elevation)
 		lunarCache.states.set(key, state)
 		if(lunarCache.states.size > 5000)
 			lunarCache.states.delete(lunarCache.states.keys().next().value)
@@ -236,14 +236,19 @@ function updateModal() {
 	let col = mode.darkTheme ? "white" : "black"
 	let latitude = Number(UI.latitudeInput.value.replace("−", "-"))
 	let longitude = modal.temp.longitude
+	let elevation = modal.temp.elevation
 	let jd = modal.temp.julianDay
+	let horizonDip = getHorizonDip(latitude, elevation)
+	UI.modalHorizonValue.textContent = (horizonDip > 0.00001 ? "−" : "") + horizonDip.toFixed(2) + "°"
+	let timeZone = Math.round(longitude / 15)
+	UI.modalDayOfWeekValue.textContent = getDayOfWeek(jd, timeZone)
 	updateHoraryStars(jd)
 	let jc = (jd - 2451545) / 36525
 	let ayanamsa = getAyanamsa(jc)
 	let obliquity = getObliquity(jc)
 	let sidereal = getSidereal(jc, longitude)
 	let ss = solarSystem(jc).map(normalize)
-	let lagna = getTopoLagna(sidereal, latitude, ayanamsa, obliquity)
+	let lagna = getTopoLagna(sidereal, latitude, ayanamsa, obliquity, elevation)
 	let obj = [
 		{position: ss[8], label: "N", name: "Neptune", color: color.neptune},
 		{position: ss[7], label: "U", name: "Uranus", color: color.uranus},
@@ -261,7 +266,7 @@ function updateModal() {
 	let mEN = mul(rotateZ(ayanamsa), rotateX(-obliquity))
 	let equatorN = gc.map(p => toTP(mdot(mEN, p)))
 	let mHN = mul(mEN, mul(rotateZ(90 + sidereal), rotateX(90 - latitude)))
-	let horizonN = gc.map(p => toTP(mdot(mHN, p)))
+	let horizonN = localHorizon(latitude, elevation).map(p => toTP(mdot(mHN, p)))
 	let mNW = mul(rotateZ(longitude - sidereal), transpose(mEN))
 
 	{// Horary Chart
@@ -388,8 +393,8 @@ function updateModal() {
 		ctx.fillStyle = mode.darkTheme ? "black" : "white"
 		ctx.fillRect(0, 0, w, h)
 		let cx = 30, cy = 30, rmax = 30, rmin = 25.42
-		let lunar = lunarSearch(jd, latitude, longitude)
-		let [gm, gs, go] = lunarState(jd, latitude, longitude)
+		let lunar = lunarSearch(jd, latitude, longitude, elevation)
+		let [gm, gs, go] = lunarState(jd, latitude, longitude, elevation)
 		let lunarLight = normalize(translate(gs, negate(gm)))
 		let lunarView = normalize(translate(go, negate(gm)))
 		let lunarUp = normalize(translate(normalize(go),

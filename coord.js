@@ -58,6 +58,13 @@ function refractHorizontal(point) {
 function refractionEnabled() {
 	return show.atmosphericRefraction}
 
+function formatTimeZone(timeZone) {
+	return timeZone === 0 ? "UTC" : "UTC" + (timeZone >= 0 ? "+" : "−") + Math.abs(timeZone)}
+
+function getDayOfWeek(julianDay, timeZone) {
+	return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][
+		mod(Math.floor(julianDay + timeZone / 24 + 1.5), 7)]}
+
 function getJulianDay(year = param.year, month = param.month, day = param.day,
 	time = param.time, timeZone = param.timeZone) {
 	let [h, m, s] = toDMS(time / 15, 24)
@@ -137,14 +144,13 @@ function updateHorizontal() {
 
 function updateTime() {
 	let t = param.time
-	let [h, m, s] = toDMS(t / 15, 24)
+	let [h, m] = toDMS(t / 15, 24)
 	UI.timeValue.textContent = String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0")
 	UI.timeSlider.value = t
 	let jd = getJulianDay()
 	param.julianDay = jd
 	UI.julianDayValue.textContent = jd > 0 ? jd.toFixed(5) : "−" + Math.abs(jd).toFixed(5)
-	UI.dayOfWeekValue.textContent = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][
-		mod(Math.floor(jd + param.timeZone / 24 + 1.5), 7)]
+	UI.dayOfWeekValue.textContent = getDayOfWeek(jd, param.timeZone)
 	let jc = (jd - 2451545) / 36525
 	param.julianCentury = jc
 	param.ayanamsa = getAyanamsa()
@@ -155,21 +161,18 @@ function updateTime() {
 	param.sidereal = getSidereal()
 	UI.siderealValue.textContent = formatHourAngle(param.sidereal, 2)
 	updateHorizontal()
-	geoObserver = getGeoObserver()
+	geoObserver = getGeoObserver(param.sidereal, param.latitude, param.ayanamsa,
+		param.obliquity, param.elevation)
 	update.sky = true}
-
-function getDayOfYear(yearDays = param.yearDays, month = param.month, day = param.day) {
-	let doy = day
-	let days = getMonthDays(yearDays)
-	for(let i = 0; i < month - 1; i++) doy += days[i]
-	return doy}
 
 function updateMonthDay(yearDays = param.yearDays, month = param.month, day = param.day) {
 	param.month = month
 	param.day = day
-	UI.monthDayValue.textContent = ["January", "February", "March", "April", "May", "June", "July",
-		"August", "September", "October", "November", "December"][month - 1] + " " + day
-	param.dayOfYear = getDayOfYear()
+	UI.monthDayValue.textContent = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
+		"Aug", "Sep", "Oct", "Nov", "Dec"][month - 1] + " " + day
+	param.dayOfYear = day
+	let days = getMonthDays(yearDays)
+	for(let i = 0; i < month - 1; i++) param.dayOfYear += days[i]
 	UI.dayOfYearSlider.value = param.dayOfYear
 	updateTime()}
 
@@ -250,6 +253,14 @@ function applyURLParams() {
 			UI.longitudeSlider.value = param.longitude
 			updateLongitude()
 			UI.longitudeSlider.value = param.longitude}}
+	let elevationValue = getQueryValue(query, ["elev", "elevation"])
+	if(elevationValue !== null) {
+		let elevation = Number(elevationValue)
+		if(Number.isFinite(elevation)) {
+			param.elevation = clip(Math.round(elevation), Number(UI.elevationSlider.min),
+				Number(UI.elevationSlider.max))
+			UI.elevationSlider.value = param.elevation
+			updateElevation()}}
 	let date = getQueryValue(query, ["date"])
 	if(date !== null) {
 		let parsed = parseURLDate(date)
@@ -278,7 +289,8 @@ function applyURLParams() {
 
 function updateLatitude(latitude = param.latitude) {
 	let l = Math.abs(latitude)
-	UI.latitudeValue.textContent = l < 0.005 ? "0.00°" : l.toFixed(2) + "° " + (latitude > 0 ? "N" : "S")}
+	UI.latitudeValue.textContent = l < 0.005 ? "0.00°" : l.toFixed(2) + "° " + (latitude > 0 ? "N" : "S")
+	updateElevation()}
 
 function updateLongitude(longitude = param.longitude) {
 	let l = mod(longitude, 360, -180)
@@ -288,8 +300,17 @@ function updateLongitude(longitude = param.longitude) {
 		Math.abs(al - 180) < 0.005 ? "180.00°" : al.toFixed(2) + "° " + (param.longitude > 0 ? "E" : "W")
 	param.timeZone = Math.round(param.longitude / 15)
 	let tz = param.timeZone
-	UI.timeZoneValue.textContent = tz === 0 ? "UTC" : "UTC" + (tz >= 0 ? "+" : "−") + Math.abs(tz)
+	UI.timeZoneValue.textContent = formatTimeZone(tz)
 	updateTime()}
+
+function updateElevation(elevation = param.elevation) {
+	param.elevation = elevation
+	let horizonDip = getHorizonDip(param.latitude, elevation)
+	let horizonText = (horizonDip > 0.00001 ? "−" : "") + horizonDip.toFixed(2) + "°"
+	UI.elevationValue.textContent = elevation.toLocaleString("en-US") + " m (Hor. " + horizonText + ")"
+	geoObserver = getGeoObserver(param.sidereal, param.latitude, param.ayanamsa,
+		param.obliquity, param.elevation)
+	update.sky = true}
 
 function changeSystem(point, fromMode, toMode) {
 	if(fromMode === "horizontal") point = fromHorizontal(point)

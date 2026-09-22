@@ -97,23 +97,54 @@ const MOON_R = 1737.4
 const SUN_R = 695700
 let geoObserver = [0, 0, 0]
 
+function getHorizonDip(latitude = param.latitude, elevation = param.elevation, azimuth = null) {
+	if(elevation <= 0) return 0
+	let p = latitude * DEGREE
+	let sp = Math.sin(p)
+	let w = Math.sqrt(1 - EARTH_E2 * sp * sp)
+	let meridional = EARTH_A * (1 - EARTH_E2) / Math.pow(w, 3)
+	let primeVertical = EARTH_A / w
+	let radius = Math.sqrt(meridional * primeVertical)
+	if(azimuth !== null) {
+		let a = azimuth * DEGREE
+		radius = 1 / (Math.pow(Math.sin(a), 2) / meridional +
+			Math.pow(Math.cos(a), 2) / primeVertical)}
+	return Math.acos(clip(radius / (radius + elevation / 1000), -1, 1)) / DEGREE}
+
 function getGeoObserver(
 	sidereal = param.sidereal, latitude = param.latitude,
-	ayanamsa = param.ayanamsa, obliquity = param.obliquity) {
+	ayanamsa = param.ayanamsa, obliquity = param.obliquity,
+	elevation = 0) {
 	let p = latitude * DEGREE
 	let t = sidereal * DEGREE
 	let cp = Math.cos(p), sp = Math.sin(p)
+	let n = EARTH_A / Math.sqrt(1 - EARTH_E2 * sp * sp)
+	let h = elevation / 1000
 	return mdot(transpose(mul(rotateX(obliquity), rotateZ(-ayanamsa))),
-		scale([cp * Math.cos(t), cp * Math.sin(t), sp * (1 - EARTH_E2)],
-		EARTH_A / Math.sqrt(1 - EARTH_E2 * sp * sp) / KM_PER_AU))}
+		[(n + h) * cp * Math.cos(t) / KM_PER_AU,
+		 (n + h) * cp * Math.sin(t) / KM_PER_AU,
+		 (n * (1 - EARTH_E2) + h) * sp / KM_PER_AU])}
 
 function getTopoLagna(
 	sidereal = param.sidereal, latitude = param.latitude,
-	ayanamsa = param.ayanamsa, obliquity = param.obliquity) {
+	ayanamsa = param.ayanamsa, obliquity = param.obliquity, elevation = 0) {
 	let m = mul(mul(rotateX(-(90 - latitude)), rotateZ(-(90 + sidereal))),
 		mul(rotateX(obliquity), rotateZ(-ayanamsa)))
-	let n = toXYZ(mod(Math.atan2(-m[6], m[7]) / DEGREE, 360), 0)
-	return mdot(m, n)[0] >= 0 ? n : negate(n)}
+	let altitudeFromHorizon = longitude => {
+		let horizontal = mdot(m, toXYZ(longitude, 0))
+		let [azimuth, altitude] = toTP(horizontal)
+		return altitude + getHorizonDip(latitude, elevation, azimuth)}
+	let roots = []
+	let longitude0 = 0, value0 = altitudeFromHorizon(longitude0)
+	for(let longitude1 = 2; longitude1 <= 360; longitude1 += 2) {
+		let value1 = altitudeFromHorizon(longitude1)
+		if(value0 === 0 || value0 * value1 < 0)
+			roots.push(bisectRoot(altitudeFromHorizon, longitude0, longitude1, 45, value0))
+		longitude0 = longitude1
+		value0 = value1}
+	if(roots.length === 0) return toXYZ(0, 0)
+	return roots.map(longitude => toXYZ(mod(longitude, 360), 0)).reduce((east, candidate) =>
+		mdot(m, candidate)[0] > mdot(m, east)[0] ? candidate : east)}
 
 function geoMoon(jc = param.julianCentury) {
 	let lp = mod(218.3166328333 + jc * (1732559343.3328 - jc *

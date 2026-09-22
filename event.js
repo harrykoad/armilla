@@ -117,26 +117,71 @@ UI.eclipticLegend.style.background = color.ecliptic
 UI.equatorialLegend.style.background = color.equatorial
 UI.horizontalLegend.style.background = color.horizontal
 
-document.querySelectorAll('input[type="range"]').forEach(s =>
+function getRangeCoarseStep(s) {
+	let min = parseFloat(s.min)
+	let max = parseFloat(s.max)
+	let baseStep = parseFloat(s.step)
+	let n = Math.round(Math.sqrt((max - min) / baseStep))
+	return parseFloat(s.dataset.coarseStep) || Math.round((max - min) / n / baseStep) * baseStep}
+
+function snapRangeValue(s, value, step = getRangeCoarseStep(s)) {
+	let min = parseFloat(s.min)
+	let max = parseFloat(s.max)
+	value = Math.round(value / step) * step
+	return parseFloat(Math.max(min, Math.min(max, value)).toFixed(10))}
+
+function getMonthStops(s) {
+	let stops = [1]
+	for(let days of getMonthDays()) stops.push(stops[stops.length - 1] + days)
+	stops[stops.length - 1] = parseFloat(s.max)
+	return stops}
+
+function snapRangeCoarse(s, value) {
+	if(s.dataset.coarseUnit !== "month") return snapRangeValue(s, value)
+	return getMonthStops(s).reduce((nearest, stop) =>
+		Math.abs(stop - value) < Math.abs(nearest - value) ? stop : nearest)}
+
+function moveRangeCoarse(s, value, dir) {
+	if(s.dataset.coarseUnit !== "month") {
+		let step = getRangeCoarseStep(s)
+		return snapRangeValue(s, snapRangeValue(s, value, step) + dir * step, step)}
+	let stops = getMonthStops(s)
+	let snapped = snapRangeCoarse(s, value)
+	let i = stops.indexOf(snapped)
+	return stops[Math.max(0, Math.min(stops.length - 1, i + dir))]}
+
+document.querySelectorAll('input[type="range"]').forEach(s => {
+	let coarsePointer = false
+	s.addEventListener("pointerdown", e => {coarsePointer = e.shiftKey})
+	s.addEventListener("pointerup", () => {coarsePointer = false})
+	s.addEventListener("pointercancel", () => {coarsePointer = false})
+	s.addEventListener("input", () => {
+		if(coarsePointer) s.value = snapRangeCoarse(s, parseFloat(s.value))}, {capture: true})
+	s.addEventListener("keydown", e => {
+		if(!e.shiftKey || !["ArrowLeft", "ArrowDown", "ArrowRight", "ArrowUp"].includes(e.key)) return
+		e.preventDefault()
+		let dir = e.key === "ArrowRight" || e.key === "ArrowUp" ? 1 : -1
+		s.value = moveRangeCoarse(s, parseFloat(s.value), dir)
+		s.dispatchEvent(new Event("input"))})
 	s.addEventListener("wheel", e => {
 		e.preventDefault()
 		let min = parseFloat(s.min)
 		let max = parseFloat(s.max)
 		let current = parseFloat(s.value)
-		let range = max - min
 		let baseStep = parseFloat(s.step)
-		let n = Math.round(Math.sqrt(range / baseStep))
-		let step = e.shiftKey ? range / n : baseStep
+		let coarseStep = getRangeCoarseStep(s)
+		let step = e.shiftKey ? coarseStep : baseStep
 		let dir = Math.sign(e.deltaY)
 		if((dir > 0 && current <= min) || (dir < 0 && current >= max)) return
-		let value = min + Math.round((current - dir * step - min) / baseStep) * baseStep
+		let value = e.shiftKey ? moveRangeCoarse(s, current, -dir) : current - dir * step
+		if(!e.shiftKey) value = min + Math.round((value - min) / baseStep) * baseStep
 		if(value < min) value = min
 		if(value > max) value = max
 		value = parseFloat(value.toFixed(10))
 		if(value === current) return
 		s.value = value
 		s.dispatchEvent(new Event("input"))},
-		{passive: false}))
+		{passive: false})})
 
 UI.latitudeSlider.oninput = () => {
 	param.latitude = parseFloat(UI.latitudeSlider.value)
@@ -150,11 +195,20 @@ UI.longitudeSlider.oninput = () => {
 	updateLongitude()
 	render()}
 
+UI.elevationSlider.oninput = () => {
+	updateElevation(parseFloat(UI.elevationSlider.value))
+	render()}
+
 UI.hereButton.onclick = () => navigator.geolocation.getCurrentPosition(p => {
 	param.latitude = Math.round(mod(p.coords.latitude, 180, -90) * 100) / 100
 	updateLatitude()
 	param.longitude = Math.round(mod(p.coords.longitude, 360, -180) * 100) / 100
 	updateLongitude()
+	if(Number.isFinite(p.coords.altitude)) {
+		param.elevation = clip(Math.round(p.coords.altitude), Number(UI.elevationSlider.min),
+			Number(UI.elevationSlider.max))
+		UI.elevationSlider.value = param.elevation
+		updateElevation()}
 	render()}, error => alert("Location access failed."))
 
 UI.yearSlider.oninput = () => {
@@ -253,8 +307,8 @@ window.onresize = () => {
 	update.sky = true
 	render()}
 
-document.querySelectorAll(".setButton").forEach(e => {e.onclick = () => {
-	let [h, m, s] = toDMS(param.time / 15, 24)
+function populateModalFromParameters() {
+	let [h, m] = toDMS(param.time / 15, 24)
 	modal.temp.fallback = null
 	modal.temp.year = param.year
 	modal.temp.month = param.month
@@ -262,9 +316,11 @@ document.querySelectorAll(".setButton").forEach(e => {e.onclick = () => {
 	modal.temp.hour = h
 	modal.temp.minute = m
 	modal.temp.longitude = param.longitude
+	modal.temp.elevation = param.elevation
 	modal.temp.julianDay = param.julianDay
 	UI.latitudeInput.value = formatSignedAngleDecimal(param.latitude, 2).replace("°", "")
 	UI.longitudeInput.value = formatSignedAngleDecimal(modal.temp.longitude, 2).replace("°", "")
+	UI.elevationInput.value = modal.temp.elevation.toLocaleString("en-US")
 	UI.timeZoneInput.textContent = UI.timeZoneValue.textContent
 	UI[param.year < 1 ? "eraBC" : "eraAD"].checked = true
 	UI.yearInput.value = param.year > 0 ? param.year : Math.abs(param.year - 1)
@@ -274,8 +330,12 @@ document.querySelectorAll(".setButton").forEach(e => {e.onclick = () => {
 	UI.minuteInput.value = String(m).padStart(2, "0")
 	UI.julianDayInput.value = modal.temp.julianDay < 0 ? "−" + Math.abs(modal.temp.julianDay).toFixed(5) : modal.temp.julianDay.toFixed(5)
 	updateModal()
-	UI.modalBackground.style.display = "flex"}})
+	UI.modalBackground.style.display = "flex"}
+
+document.querySelectorAll(".setButton").forEach(e => {e.onclick = populateModalFromParameters})
 UI.modalSetButton.onclick = () => {
+	param.elevation = modal.temp.elevation
+	UI.elevationSlider.value = param.elevation
 	param.latitude = Number(UI.latitudeInput.value.replace("−", "-"))
 	updateLatitude()
 	param.longitude = modal.temp.longitude
@@ -290,38 +350,11 @@ UI.modalSetButton.onclick = () => {
 UI.modalCancelButton.onclick = () => {
 	UI.modalBackground.style.display = "none"}
 
-function normalizeModalInputs() {
-	UI.latitudeInput.value = param.latitude.toFixed(2)
-	UI.longitudeInput.value = modal.temp.longitude.toFixed(2)
-	UI.julianDayInput.value = modal.temp.julianDay.toFixed(5)}
-
 function setModalVisible(visible) {
 	if(!visible) {
 		UI.modalBackground.style.display = "none"
 		return}
-	let [h, m, s] = toDMS(param.time / 15, 24)
-	modal.temp.fallback = null
-	modal.temp.year = param.year
-	modal.temp.month = param.month
-	modal.temp.day = param.day
-	modal.temp.hour = h
-	modal.temp.minute = m
-	modal.temp.longitude = param.longitude
-	modal.temp.julianDay = param.julianDay
-	UI.latitudeInput.value = formatSignedAngleDecimal(param.latitude, 2).replace("ยฐ", "")
-	UI.longitudeInput.value = formatSignedAngleDecimal(modal.temp.longitude, 2).replace("ยฐ", "")
-	UI.timeZoneInput.textContent = UI.timeZoneValue.textContent
-	UI[param.year < 1 ? "eraBC" : "eraAD"].checked = true
-	UI.yearInput.value = param.year > 0 ? param.year : Math.abs(param.year - 1)
-	UI.monthInput.value = param.month
-	UI.dayInput.value = param.day
-	UI.hourInput.value = String(h).padStart(2, "0")
-	UI.minuteInput.value = String(m).padStart(2, "0")
-	UI.julianDayInput.value = modal.temp.julianDay < 0 ?
-		"โ’" + Math.abs(modal.temp.julianDay).toFixed(5) : modal.temp.julianDay.toFixed(5)
-	normalizeModalInputs()
-	UI.modalBackground.style.display = "flex"
-	updateModal()}
+	populateModalFromParameters()}
 
 setDateTime()
 updateLatitude()
@@ -352,7 +385,7 @@ function setLocationFromMap(event) {
 	UI.longitudeInput.value = al < 0.005 ? "0.00" : Math.abs(al - 180) < 0.005 ?
 		"180.00" : (modal.temp.longitude > 0 ? "+" : "−") + al.toFixed(2)
 	let tz = Math.round(modal.temp.longitude / 15)
-	UI.timeZoneInput.textContent = tz === 0 ? "UTC" : "UTC" + (tz >= 0 ? "+" : "−") + Math.abs(tz)
+	UI.timeZoneInput.textContent = formatTimeZone(tz)
 	setJulianDayModal()}
 
 UI.worldMap.onpointerdown = e => {
@@ -372,8 +405,8 @@ UI.worldMap.onpointerup = e => {
 UI.worldMap.onpointercancel = UI.worldMap.onpointerup
 
 function parseNumber(e, fallback = modal.temp.fallback) {
-	let n = Number(e.value.trim().replace("−", "-"))
-	if(!Number.isFinite(n)) n = Number(String(fallback).replace("−", "-"))
+	let n = Number(e.value.trim().replace("−", "-").replace(/,/g, ""))
+	if(!Number.isFinite(n)) n = Number(String(fallback).replace("−", "-").replace(/,/g, ""))
 	return Number.isFinite(n) ? n : null}
 
 function addNudgeListeners(elem, step) {
@@ -405,6 +438,24 @@ addNudgeListeners(UI.latitudeInput, step => {
 			Math.round(clip(l + step, -90, 90) * 100) / 100, 2).replace("°", "")
 	updateModal()})
 
+function updateElevationModal(elevation) {
+	modal.temp.elevation = Math.round(clip(elevation,
+		Number(UI.elevationSlider.min), Number(UI.elevationSlider.max)))
+	UI.elevationInput.value = modal.temp.elevation.toLocaleString("en-US")
+	updateModal()}
+
+UI.elevationInput.onchange = () => {
+	let text = UI.elevationInput.value.trim().replace("−", "-").replace(/,/g, "")
+	let elevation = text === "" ? NaN : Number(text)
+	if(!Number.isFinite(elevation) || elevation < Number(UI.elevationSlider.min) || elevation > Number(UI.elevationSlider.max)) {
+		alert("Please enter a valid elevation from 0 m to 10,000 m.")
+		UI.elevationInput.value = modal.temp.fallback
+		UI.elevationInput.select()}
+	else updateElevationModal(elevation)}
+addNudgeListeners(UI.elevationInput, step => {
+	let elevation = parseNumber(UI.elevationInput)
+	if(elevation !== null) updateElevationModal(elevation + step)})
+
 function updateLongitudeModal(longitude) {
 	let l = Math.round(longitude * 100) / 100
 	modal.temp.longitude = l === -180 ? 180 : l
@@ -412,7 +463,7 @@ function updateLongitudeModal(longitude) {
 	UI.longitudeInput.value = a < 0.005 ? "0.00" : Math.abs(a - 180) < 0.005 ?
 		"180.00" : (modal.temp.longitude > 0 ? "+" : "−") + a.toFixed(2)
 	let tz = Math.round(modal.temp.longitude / 15)
-	UI.timeZoneInput.textContent = tz === 0 ? "UTC" : "UTC" + (tz >= 0 ? "+" : "−") + Math.abs(tz)
+	UI.timeZoneInput.textContent = formatTimeZone(tz)
 	setJulianDayModal()}
 
 UI.longitudeInput.onchange = () => {
@@ -514,7 +565,7 @@ function updateJulianDayModal(jd) {
 	modal.temp.julianDay = jd
 	UI.julianDayInput.value = jd < 0 ? "−" + Math.abs(jd).toFixed(5) : jd.toFixed(5)
 	let [Y, M, D, t] = getGregorian(jd, modal.temp.longitude)
-	let [h, m, s] = toDMS(t / 15, 24)
+	let [h, m] = toDMS(t / 15, 24)
 	updateYearModal(Y, false)
 	modal.temp.month = M
 	UI.monthInput.value = M

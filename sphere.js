@@ -13,6 +13,12 @@ function parallel(phi) {
 	for(let t = 0; t <= 360; t += 2) pts.push(toXYZ(t, phi))
 	return pts}
 
+function localHorizon(latitude = param.latitude, elevation = param.elevation) {
+	let pts = []
+	for(let t = 0; t <= 360; t += 2)
+		pts.push(toXYZ(t, -getHorizonDip(latitude, elevation, t)))
+	return pts}
+
 function greatCircleArc(theta0, phi0, theta1, phi1, dir = 1) {
 	let p0 = toXYZ(theta0, phi0), p1 = toXYZ(theta1, phi1)
 	let a1 = Math.acos(clip(vdot(p0, p1), -1, 1))
@@ -56,7 +62,7 @@ function pushSeasonalTriangles() {
 			edge: mode.darkTheme ? "black" : "white", border: 2, size: 12}])}}
 
 function pushAnalemma() {
-	let k = [param.latitude.toFixed(10), param.longitude.toFixed(10),
+	let k = [param.latitude.toFixed(10), param.longitude.toFixed(10), param.elevation.toFixed(0),
 		param.year, param.dayOfYear, param.time.toFixed(10)].join("|")
 	if(!cache.analemma || cache.analemma.key !== k) {
 		let v = []
@@ -65,7 +71,8 @@ function pushAnalemma() {
 			let jc = (jd0 + d - 2451545) / 36525
 			let sidereal = getSidereal(jc, param.longitude)
 			let ts = translate(scale(geoMoon(jc)[0], 1 / MASS_FACTOR),
-				negate(translate(helioEMB(jc), getGeoObserver(sidereal, param.latitude))))
+				negate(translate(helioEMB(jc), getGeoObserver(sidereal, param.latitude,
+					getAyanamsa(jc), getObliquity(jc), param.elevation))))
 			v.push(normalize(mdot(mul(rotateX(-(90 - param.latitude)),
 				rotateZ(-(90 + sidereal))), fromNirayana(ts))))}
 		cache.analemma = {key: k, vectors: v}}
@@ -131,11 +138,11 @@ function pushSolarSystem() {
 		pushLines({points: parallel(90 - Math.atan(EARTH_A * (dS + dM) / dS / dM) / DEGREE).map(rA),
 			color: color.sun, width: 2, dash: [5, 5]})}
 	if(show.halo) {
-		if(altS >= 0) {
+		if(isAtOrAboveHorizon(v[1])) {
 			let ph = parallel(90 - HALO_PRIMARY).map(fS)
 			let p = []
 			for(let i = 0; i < ph.length; i++) {
-				if(toTP(toHorizontal(ph[i]))[1] > 0) p.push(ph[i])
+				if(isAtOrAboveHorizon(ph[i])) p.push(ph[i])
 				else {
 					if(p.length > 1) pushLines({points: p, color: color.sun, width: 2})
 					p = []}}
@@ -143,16 +150,16 @@ function pushSolarSystem() {
 			let sh = parallel(90 - HALO_SECONDARY).map(fS)
 			p = []
 			for(let i = 0; i < sh.length; i++) {
-				if(toTP(toHorizontal(sh[i]))[1] > 0) p.push(sh[i])
+				if(isAtOrAboveHorizon(sh[i])) p.push(sh[i])
 				else {
 					if(p.length > 1) pushLines({points: p, color: color.sun, width: 2, dash: [5, 5]})
 					p = []}}
 			if(p.length > 1) pushLines({points: p, color: color.sun, width: 2, dash: [5, 5]})}
-		else if(altM >= 0 && fullMoon) {
+		else if(isAtOrAboveHorizon(v[0]) && fullMoon) {
 			let ph = parallel(90 - HALO_PRIMARY).map(fM)
 			let p = []
 			for(let i = 0; i < ph.length; i++) {
-				if(toTP(toHorizontal(ph[i]))[1] > 0) p.push(ph[i])
+				if(isAtOrAboveHorizon(ph[i])) p.push(ph[i])
 				else {
 					if(p.length > 1) pushLines({points: p, color: color.moon, width: 2})
 					p = []}}
@@ -160,18 +167,18 @@ function pushSolarSystem() {
 			let sh = parallel(90 - HALO_SECONDARY).map(fM)
 			p = []
 			for(let i = 0; i < sh.length; i++) {
-				if(toTP(toHorizontal(sh[i]))[1] > 0) p.push(sh[i])
+				if(isAtOrAboveHorizon(sh[i])) p.push(sh[i])
 				else {
 					if(p.length > 1) pushLines({points: p, color: color.moon, width: 2, dash: [5, 5]})
 					p = []}}
 			if(p.length > 1) pushLines({points: p, color: color.moon, width: 2, dash: [5, 5]})}}
 	if(show.rainbow) {
-		if(altS >= 0 && altS <= RAINBOW_SECONDARY) {
+		if(isAtOrAboveHorizon(v[1]) && altS <= RAINBOW_SECONDARY) {
 			pushPoints([{position: aS, point: {size: 5, color: color.sun, border: 0}}])
 			let pr = parallel(90 - RAINBOW_PRIMARY).map(faS)
 			let p = []
 			for(let i = 0; i < pr.length; i++) {
-				if(toTP(toHorizontal(pr[i]))[1] > 0) p.push(pr[i])
+				if(isAtOrAboveHorizon(pr[i])) p.push(pr[i])
 				else {
 					if(p.length > 1) pushLines({points: p, color: color.sun, width: 2})
 					p = []}}
@@ -179,17 +186,17 @@ function pushSolarSystem() {
 			let sr = parallel(90 - RAINBOW_SECONDARY).map(faS)
 			p = []
 			for(let i = 0; i < sr.length; i++) {
-				if(toTP(toHorizontal(sr[i]))[1] > 0) p.push(sr[i])
+				if(isAtOrAboveHorizon(sr[i])) p.push(sr[i])
 				else {
 					if(p.length > 1) pushLines({points: p, color: color.sun, width: 2, dash: [5, 5]})
 					p = []}}
 			if(p.length > 1) pushLines({points: p, color: color.sun, width: 2, dash: [5, 5]})}
-		else if(altM >= 0 && altM <= RAINBOW_SECONDARY && fullMoon) {
+		else if(isAtOrAboveHorizon(v[0]) && altM <= RAINBOW_SECONDARY && fullMoon) {
 			pushPoints([{position: aM, point: {size: 5, color: color.moon, border: 0}}])
 			let pr = parallel(90 - RAINBOW_PRIMARY).map(faM)
 			let p = []
 			for(let i = 0; i < pr.length; i++) {
-				if(toTP(toHorizontal(pr[i]))[1] > 0) p.push(pr[i])
+				if(isAtOrAboveHorizon(pr[i])) p.push(pr[i])
 				else {
 					if(p.length > 1) pushLines({points: p, color: color.moon, width: 2})
 					p = []}}
@@ -197,7 +204,7 @@ function pushSolarSystem() {
 			let sr = parallel(90 - RAINBOW_SECONDARY).map(faM)
 			p = []
 			for(let i = 0; i < sr.length; i++) {
-				if(toTP(toHorizontal(sr[i]))[1] > 0) p.push(sr[i])
+				if(isAtOrAboveHorizon(sr[i])) p.push(sr[i])
 				else {
 					if(p.length > 1) pushLines({points: p, color: color.moon, width: 2, dash: [5, 5]})
 					p = []}}

@@ -4,14 +4,11 @@ const PLANETARIUM_MAX_FOV = 200
 function getPlanetariumScale() {
 	return view.r0 / (0.9 * 2 * Math.tan(22.5 * DEGREE))}
 
-function getPlanetariumRadiusForFov(fov, base = Math.min(view.w, view.h)) {
-	let scale = 0.5 * base / (2 * Math.tan(0.25 * fov * DEGREE))
-	return scale * 0.9 * 2 * Math.tan(22.5 * DEGREE)}
-
 function clampViewZoom() {
 	let base = Math.min(view.w, view.h)
 	let rMin = mode.viewMode === "planetarium" ?
-		getPlanetariumRadiusForFov(PLANETARIUM_MAX_FOV, base) : 0.45 * base
+		0.5 * base / (2 * Math.tan(0.25 * PLANETARIUM_MAX_FOV * DEGREE)) *
+			0.9 * 2 * Math.tan(22.5 * DEGREE) : 0.45 * base
 	let rMax = 20 * base
 	view.r0 = Math.max(rMin, Math.min(rMax, view.r0))
 	updatePlanetariumCullLimit()}
@@ -64,7 +61,8 @@ function celestialRenderPosition(point) {
 
 function isAtOrAboveHorizon(point, fromMode = "equatorial") {
 	let horizontal = fromMode === "horizontal" ? point : changeSystem(point, fromMode, "horizontal")
-	return horizontal[2] >= -1e-10}
+	let [azimuth, altitude] = toTP(horizontal)
+	return altitude >= -getHorizonDip(param.latitude, param.elevation, azimuth) - 1e-10}
 
 function sampleGreatCircleSegment(a, b) {
 	let p0 = normalize(a), p1 = normalize(b)
@@ -321,13 +319,16 @@ function drawSphere() {
 function getPlanetariumHorizon() {
 	let zenith = toScreen([0, 0, 1], "horizontal", mode.orientation)
 	let scale = 2 * getPlanetariumScale()
-	if(Math.abs(zenith[0]) < 1e-6) {
+	let altitude = -getHorizonDip() * DEGREE
+	let level = Math.sin(altitude)
+	let a = zenith[0] + level
+	if(Math.abs(a) < 1e-6) {
 		let value = ([x, y]) => zenith[1] * (view.x0 - x) / scale +
-			zenith[2] * (view.y0 - y) / scale
+			zenith[2] * (view.y0 - y) / scale + (zenith[0] - level) / 2
 		return {type: "line", value}}
-	let u = zenith[1] / zenith[0], v = zenith[2] / zenith[0]
+	let u = zenith[1] / a, v = zenith[2] / a
 	return {type: "circle", x: view.x0 - scale * u, y: view.y0 - scale * v,
-		radius: scale / Math.abs(zenith[0]), groundInside: zenith[0] < 0}}
+		radius: scale * Math.sqrt(1 - level * level) / Math.abs(a), groundInside: a < 0}}
 
 function clipGroundHalfPlane(value) {
 	let polygon = [[0, 0], [view.w, 0], [view.w, view.h], [0, view.h]]
@@ -453,7 +454,11 @@ function render() {
 	if(show.eclipticMeridian) pushLines({points: meridian(0).map(fromNirayana), color: color.ecliptic, width: 3})
 	if(show.equator) pushLines({points: parallel(0), color: color.equatorial, width: 3})
 	if(show.equatorialMeridian) pushLines({points: meridian(0), color: color.equatorial, width: 3})
-	if(show.horizon) pushLines({points: parallel(0).map(fromHorizontal), color: color.horizontal, width: 3})
+	let horizonDip = getHorizonDip()
+	if(show.horizon) {
+		pushLines({points: localHorizon().map(fromHorizontal), color: color.horizontal, width: 3})
+		if(horizonDip > 0 && !show.horizontalGraticule)
+			pushLines({points: parallel(0).map(fromHorizontal), color: "rgba(0, 192, 0, 0.65)", width: 1})}
 	if(show.horizontalMeridian) pushLines({points: meridian(90).map(fromHorizontal), color: color.horizontal, width: 3})
 	if(show.observerMeridian) pushLines({points: meridian(param.sidereal), color: color.horizontal, width: 3})
 	if(show.seasonalTriangles) pushSeasonalTriangles()
@@ -490,12 +495,17 @@ function render() {
 			point: {size: 5, color: color.equatorial},
 			text: {text: ["VE", "AE", "6ʰ", "18ʰ", "NCP", "SCP"][i], color: c}})))}
 	if(show.horizontalAxes) {
-		pushPoints(AXES.map((axis, i) => ({
+		let cardinalAzimuths = [0, 180, 90, 270]
+		let horizontalAxes = cardinalAzimuths.map(azimuth =>
+			toXYZ(azimuth, -getHorizonDip(param.latitude, param.elevation, azimuth)))
+		horizontalAxes.push(AXES[4], AXES[5])
+		pushPoints(horizontalAxes.map((axis, i) => ({
 			position: fromHorizontal(axis),
 			point: {size: 5, color: color.horizontal},
 			text: {text: ["East", "West", "North", "South", "Zenith", "Nadir"][i], color: c}})))
 		pushPoints([{
-			position: fromNirayana(getTopoLagna()),
+			position: fromNirayana(getTopoLagna(param.sidereal, param.latitude,
+				param.ayanamsa, param.obliquity, param.elevation)),
 			point: {size: 6, color: color.horizontal, border: 2, edge: c},
 			text: {text: "Lagna", color: c}}])}
 
