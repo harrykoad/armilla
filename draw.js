@@ -1,5 +1,5 @@
 const CTX = UI.sky.getContext("2d", {alpha: false})
-const PLANETARIUM_MAX_FOV = 200
+const PLANETARIUM_MAX_FOV = 195
 
 function getPlanetariumScale() {
 	return view.r0 / (0.9 * 2 * Math.tan(22.5 * DEGREE))}
@@ -34,17 +34,18 @@ function resize() {
 function project(point, fromMode = "equatorial") {
 	let oriented = fromMode === mode.orientation ? point : changeSystem(point, fromMode, mode.orientation)
 	let camera3D = mdot(matrix.toScreen, oriented)
+	return [camera3D, projectCamera(camera3D)]}
+
+function projectCamera(camera3D) {
 	let s
-	if(mode.viewMode === "planetarium")
-		s = 2 * getPlanetariumScale() / Math.max(1 + camera3D[0], 0.001)
+	if(renderState.planetarium)
+		s = 2 * renderState.scale / Math.max(1 + camera3D[0], 0.001)
 	else s = view.r0 * view.f / (view.f - camera3D[0])
-	let direction = mode.viewMode === "planetarium" ? -1 : 1
-	let screen2D = [view.x0 + direction * camera3D[1] * s, view.y0 - camera3D[2] * s]
-	return [camera3D, screen2D]}
+	return [view.x0 + renderState.direction * camera3D[1] * s, view.y0 - camera3D[2] * s]}
 
 function isVisibleSide(camera3D) {
 	if(mode.viewMode === "armillarium") return camera3D[0] >= view.z0
-	return camera3D[0] / Math.hypot(...camera3D) > -0.999999}
+	return isVisiblePoint(camera3D)}
 
 function isVisiblePoint(camera3D) {
 	if(mode.viewMode === "armillarium") return camera3D[0] >= view.z0
@@ -60,27 +61,16 @@ function celestialRenderPosition(point) {
 		{position: point, fromMode: "equatorial"}}
 
 function isAtOrAboveHorizon(point, fromMode = "equatorial") {
+	let cached = cache.horizonVisibility.get(point)
+	if(cached && cached.fromMode === fromMode) return cached.value
 	let horizontal = fromMode === "horizontal" ? point : changeSystem(point, fromMode, "horizontal")
 	let [azimuth, altitude] = toTP(horizontal)
-	return altitude >= -getHorizonDip(param.latitude, param.elevation, azimuth) - 1e-10}
-
-function sampleGreatCircleSegment(a, b) {
-	let p0 = normalize(a), p1 = normalize(b)
-	let angle = Math.acos(clip(vdot(p0, p1), -1, 1))
-	if(angle < 1e-10) return [p0, p1]
-	let sine = Math.sin(angle)
-	if(Math.abs(sine) < 1e-10) return [p0, p1]
-	let steps = Math.max(1, Math.ceil(angle / (2 * DEGREE)))
-	return Array.from({length: steps + 1}, (_, i) => {
-		let t = i / steps
-		return normalize(translate(
-			scale(p0, Math.sin((1 - t) * angle) / sine),
-			scale(p1, Math.sin(t * angle) / sine)))})}
+	let value = altitude >= -getHorizonDip(param.latitude, param.elevation, azimuth) - 1e-10
+	cache.horizonVisibility.set(point, {fromMode, value})
+	return value}
 
 function pushLines(lines) {
 	let {points, color, width, dash = [], fromMode = "equatorial", layer = "lines"} = lines
-	if(mode.viewMode === "planetarium" && points.length === 2)
-		points = sampleGreatCircleSegment(points[0], points[1])
 	let pts = []
 	let side = null
 
@@ -248,10 +238,11 @@ function pushPoints(points) {
 
 function pushLabels(labels) {
 	for(let label of labels) {
-		let [c3D, s2D] = project(label.position, label.fromMode || "equatorial")
+		let fromMode = label.fromMode || "equatorial"
+		let [c3D, s2D] = project(label.position, fromMode)
 		if(mode.viewMode === "planetarium" && !isVisiblePoint(c3D)) continue
 		let text = {...label, position: s2D,
-			aboveHorizon: isAtOrAboveHorizon(label.position, label.fromMode || "equatorial")}
+			aboveHorizon: isAtOrAboveHorizon(label.position, fromMode)}
 		delete text.name
 		delete text.fromMode
 		if(text.text === undefined) text.text = label.name
@@ -273,8 +264,9 @@ function pushLabels(labels) {
 		if(isVisiblePoint(c3D)) buffer.frontTexts.push(text)
 		else if(canDrawBackSide()) buffer.backTexts.push(text)}}
 
-function drawPoints(ctx, points) {
+function drawPoints(ctx, points, aboveHorizonOnly = false) {
 	for(let p of points) {
+		if(aboveHorizonOnly && !p.aboveHorizon) continue
 		ctx.beginPath()
 		ctx.arc(p.position[0], p.position[1], p.size || 3, 0, TWO_PI)
 		ctx.fillStyle = p.color || "white"
@@ -284,8 +276,9 @@ function drawPoints(ctx, points) {
 			ctx.strokeStyle = p.edge
 			ctx.stroke()}}}
 
-function drawTexts(ctx, texts) {
+function drawTexts(ctx, texts, aboveHorizonOnly = false) {
 	for(let t of texts) {
+		if(aboveHorizonOnly && !t.aboveHorizon) continue
 		ctx.font = (t.weight ? t.weight + " " : "") + (t.size || 12) + "px sans-serif"
 		ctx.textAlign = t.align || "center"
 		ctx.textBaseline = t.baseline || "middle"
@@ -343,8 +336,7 @@ function clipGroundHalfPlane(value) {
 			clipped.push([a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k])}}
 	return clipped}
 
-function drawPlanetariumGround() {
-	let horizon = getPlanetariumHorizon()
+function drawPlanetariumGround(horizon = getPlanetariumHorizon()) {
 	CTX.fillStyle = mode.darkTheme ? "rgb(0, 20, 0)" : "rgb(235, 255, 235)"
 	CTX.beginPath()
 	if(horizon.type === "circle") {
@@ -360,9 +352,8 @@ function drawPlanetariumGround() {
 	CTX.closePath()
 	CTX.fill()}
 
-function drawPlanetariumHorizon() {
+function drawPlanetariumHorizon(horizon = getPlanetariumHorizon()) {
 	if(!show.horizon) return
-	let horizon = getPlanetariumHorizon()
 	CTX.strokeStyle = color.horizontal
 	CTX.lineWidth = 3
 	CTX.setLineDash([])
@@ -421,6 +412,12 @@ function drawCrosshair() {
 const AXES = [[+1,  0,  0], [-1,  0,  0], [ 0, +1,  0], [ 0, -1,  0], [ 0,  0, +1], [ 0,  0, -1]]
 
 function render() {
+	if(renderState.pending) return
+	renderState.pending = true
+	requestAnimationFrame(renderNow)}
+
+function renderNow() {
+	renderState.pending = false
 	if(update.view) {
 		let mTS = mul(rotateY(view.pitch), rotateZ(view.yaw))
 		if (view.orienting) mTS = mul(rotateX(view.roll), mTS)
@@ -429,6 +426,11 @@ function render() {
 		update.view = false}
 	if(!update.sky) return
 	update.sky = false
+	renderState.planetarium = mode.viewMode === "planetarium"
+	renderState.scale = renderState.planetarium ? getPlanetariumScale() : 1
+	renderState.direction = renderState.planetarium ? -1 : 1
+	renderState.horizon = null
+	cache.horizonVisibility.clear()
 
 	for(let g in buffer) buffer[g].length = 0
 
@@ -544,10 +546,11 @@ function render() {
 	drawPoints(CTX, buffer.frontPoints)
 	drawTexts(CTX, buffer.frontTexts)
 	if(mode.viewMode === "planetarium" && show.surface) {
-		drawPlanetariumGround()
-		drawPlanetariumHorizon()
-		drawPoints(CTX, buffer.frontPoints.filter(p => p.aboveHorizon))
-		drawTexts(CTX, buffer.frontTexts.filter(t => t.aboveHorizon))}
+		renderState.horizon = getPlanetariumHorizon()
+		drawPlanetariumGround(renderState.horizon)
+		drawPlanetariumHorizon(renderState.horizon)
+		drawPoints(CTX, buffer.frontPoints, true)
+		drawTexts(CTX, buffer.frontTexts, true)}
 
 	drawPath()
 	drawCrosshair()}
