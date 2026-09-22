@@ -1,21 +1,23 @@
 const CTX = UI.sky.getContext("2d", {alpha: false})
 const PLANETARIUM_MAX_FOV = 195
+const PLANETARIUM_INITIAL_FOV = 90
 
 function getPlanetariumScale() {
-	return view.r0 / (0.9 * 2 * Math.tan(22.5 * DEGREE))}
+	return view.r0 / (2 * Math.tan(0.25 * PLANETARIUM_INITIAL_FOV * DEGREE))}
 
 function clampViewZoom() {
 	let base = Math.min(view.w, view.h)
 	let rMin = mode.viewMode === "planetarium" ?
-		0.5 * base / (2 * Math.tan(0.25 * PLANETARIUM_MAX_FOV * DEGREE)) *
-			0.9 * 2 * Math.tan(22.5 * DEGREE) : 0.45 * base
+		0.5 * base * Math.tan(0.25 * PLANETARIUM_INITIAL_FOV * DEGREE) /
+			Math.tan(0.25 * PLANETARIUM_MAX_FOV * DEGREE) : 0.45 * base
 	let rMax = 20 * base
 	view.r0 = Math.max(rMin, Math.min(rMax, view.r0))
 	updatePlanetariumCullLimit()}
 
 function updatePlanetariumCullLimit() {
-	let tangent = Math.hypot(view.w, view.h) / (4 * getPlanetariumScale())
-	view.diagonalCos = (1 - tangent * tangent) / (1 + tangent * tangent)}
+	let angle = Math.min(Math.PI, 2 * Math.atan(
+		Math.hypot(view.w, view.h) / (4 * getPlanetariumScale())))
+	view.diagCos = Math.cos(angle)}
 
 function resize() {
 	let dpr = 2 //window.devicePixelRatio || 1
@@ -36,12 +38,7 @@ function project(point, fromMode = "equatorial") {
 	let camera3D = mdot(matrix.toScreen, oriented)
 	return [camera3D, projectCamera(camera3D)]}
 
-function projectCamera(camera3D) {
-	let s
-	if(renderState.planetarium)
-		s = 2 * renderState.scale / Math.max(1 + camera3D[0], 0.001)
-	else s = view.r0 * view.f / (view.f - camera3D[0])
-	return [view.x0 + renderState.direction * camera3D[1] * s, view.y0 - camera3D[2] * s]}
+let projectCamera
 
 function isVisibleSide(camera3D) {
 	if(mode.viewMode === "armillarium") return camera3D[0] >= view.z0
@@ -49,7 +46,7 @@ function isVisibleSide(camera3D) {
 
 function isVisiblePoint(camera3D) {
 	if(mode.viewMode === "armillarium") return camera3D[0] >= view.z0
-	return camera3D[0] / Math.hypot(...camera3D) >= view.diagonalCos
+	return camera3D[0] / Math.hypot(...camera3D) >= view.diagCos
 }
 
 function canDrawBackSide() {
@@ -73,6 +70,7 @@ function pushLines(lines) {
 	let {points, color, width, dash = [], fromMode = "equatorial", layer = "lines"} = lines
 	let pts = []
 	let side = null
+	let previousCamera = null
 
 	function flush() {
 		if(pts.length < 2) {pts = []; return}
@@ -83,9 +81,13 @@ function pushLines(lines) {
 
 	for(let p of points) {
 		let [c3D, s2D] = project(p, fromMode)
-		if(mode.viewMode === "planetarium" && points.length > 2 && pts.length > 0 &&
+		let wrapsAntipode = mode.viewMode === "planetarium" && previousCamera &&
+			previousCamera[0] < 0 && c3D[0] < 0 &&
+			previousCamera[1] * c3D[1] + previousCamera[2] * c3D[2] < 0
+		let jumpsAcrossMap = mode.viewMode === "planetarium" && pts.length > 0 &&
 			Math.hypot(s2D[0] - pts[pts.length - 1][0], s2D[1] - pts[pts.length - 1][1]) >
-			2 * Math.hypot(view.w, view.h)) {
+			Math.hypot(view.w, view.h)
+		if(wrapsAntipode || jumpsAcrossMap) {
 			flush()
 			side = null}
 		let currentSide = isVisibleSide(c3D)
@@ -97,8 +99,9 @@ function pushLines(lines) {
 				pts.push(mean)
 				flush()
 				pts = [mean]}
-			side = currentSide}
-		pts.push(s2D)}
+				side = currentSide}
+		pts.push(s2D)
+		previousCamera = c3D}
 	flush()}
 
 function drawLines(ctx, lines) {
@@ -153,7 +156,6 @@ function drawStars(stars) {
 			CTX.fill()}}}
 
 function pushNakshatras() {
-	let sector = 0
 	for(let n = 0; n < NAKSHATRAS.length; n++) {
 		let nakshatra = NAKSHATRAS[n]
 		let positions = nakshatra.stars.map(star => getNakshatraStarPosition(star))
@@ -169,15 +171,14 @@ function pushNakshatras() {
 				let marker = {position: s2D, yogatara: nakshatra.stars[i][4] === true}
 				if(isVisiblePoint(c3D)) buffer.frontNakshatras.push(marker)
 				else if(canDrawBackSide()) buffer.backNakshatras.push(marker)}}
-		if(show.nakshatraNames && !nakshatra.name.endsWith("*")) {
+		if(show.nakshatraNames) {
 			pushLabels([{
-				name: nakshatra.name,
-				position: fromNirayana(toXYZ((sector + 0.5) * 360 / 27, 0)),
+				name: NAKSHATRA_NAMES[n],
+				position: fromNirayana(toXYZ((n + 0.5) * 360 / 27, 0)),
 				fromMode: "equatorial",
 				color: color.galactic,
 				edge: mode.darkTheme ? "black" : "white",
-				border: 2, size: 11}])}
-		if(!nakshatra.name.endsWith("*")) sector++}
+				border: 2, size: 11}])}}
 }
 
 function drawNakshatras(markers) {
@@ -310,47 +311,29 @@ function drawSphere() {
 	CTX.stroke()}
 
 function getPlanetariumHorizon() {
-	let zenith = toScreen([0, 0, 1], "horizontal", mode.orientation)
-	let scale = 2 * getPlanetariumScale()
-	let altitude = -getHorizonDip() * DEGREE
-	let level = Math.sin(altitude)
-	let a = zenith[0] + level
-	if(Math.abs(a) < 1e-6) {
-		let value = ([x, y]) => zenith[1] * (view.x0 - x) / scale +
-			zenith[2] * (view.y0 - y) / scale + (zenith[0] - level) / 2
-		return {type: "line", value}}
-	let u = zenith[1] / a, v = zenith[2] / a
-	return {type: "circle", x: view.x0 - scale * u, y: view.y0 - scale * v,
-		radius: scale * Math.sqrt(1 - level * level) / Math.abs(a), groundInside: a < 0}}
+	let points = localHorizon().map(point => project(point, "horizontal"))
+	return {points}}
 
-function clipGroundHalfPlane(value) {
-	let polygon = [[0, 0], [view.w, 0], [view.w, view.h], [0, view.h]]
-	let clipped = []
-	for(let i = 0; i < polygon.length; i++) {
-		let a = polygon[i], b = polygon[(i + 1) % polygon.length]
-		let va = value(a), vb = value(b)
-		let aGround = va <= 0, bGround = vb <= 0
-		if(aGround) clipped.push(a)
-		if(aGround !== bGround) {
-			let k = va / (va - vb)
-			clipped.push([a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k])}}
-	return clipped}
+function planetariumEdgeIsDiscontinuous(a, b) {
+	let [camera0, screen0] = a, [camera1, screen1] = b
+	return camera0[0] < 0 && camera1[0] < 0 &&
+		camera0[1] * camera1[1] + camera0[2] * camera1[2] < 0 ||
+		Math.hypot(screen1[0] - screen0[0], screen1[1] - screen0[1]) >
+		Math.hypot(view.w, view.h)}
 
 function drawPlanetariumGround(horizon = getPlanetariumHorizon()) {
 	CTX.fillStyle = mode.darkTheme ? "rgb(0, 20, 0)" : "rgb(235, 255, 235)"
 	CTX.beginPath()
-	if(horizon.type === "circle") {
-		if(!horizon.groundInside) CTX.rect(0, 0, view.w, view.h)
-		CTX.moveTo(horizon.x + horizon.radius, horizon.y)
-		CTX.arc(horizon.x, horizon.y, horizon.radius, 0, TWO_PI)
-		CTX.fill(horizon.groundInside ? "nonzero" : "evenodd")
-		return}
-	let clipped = clipGroundHalfPlane(horizon.value)
-	if(clipped.length < 3) return
-	CTX.moveTo(clipped[0][0], clipped[0][1])
-	for(let i = 1; i < clipped.length; i++) CTX.lineTo(clipped[i][0], clipped[i][1])
-	CTX.closePath()
-	CTX.fill()}
+	let center = fromScreen([1, 0, 0], mode.orientation, "horizontal")
+	if(isAtOrAboveHorizon(center, "horizontal"))
+		CTX.rect(0, 0, view.w, view.h)
+	let points = horizon.points
+	if(points.length > 0) {
+		CTX.moveTo(points[0][1][0], points[0][1][1])
+		for(let i = 1; i < points.length; i++)
+			CTX.lineTo(points[i][1][0], points[i][1][1])
+		CTX.closePath()}
+	CTX.fill("evenodd")}
 
 function drawPlanetariumHorizon(horizon = getPlanetariumHorizon()) {
 	if(!show.horizon) return
@@ -358,23 +341,14 @@ function drawPlanetariumHorizon(horizon = getPlanetariumHorizon()) {
 	CTX.lineWidth = 3
 	CTX.setLineDash([])
 	CTX.beginPath()
-	if(horizon.type === "circle") {
-		CTX.arc(horizon.x, horizon.y, horizon.radius, 0, TWO_PI)
-		CTX.stroke()
-		return}
-	let {value} = horizon
-	let corners = [[0, 0], [view.w, 0], [view.w, view.h], [0, view.h]]
-	let crossings = []
-	for(let i = 0; i < corners.length; i++) {
-		let a = corners[i], b = corners[(i + 1) % corners.length]
-		let va = value(a), vb = value(b)
-		if(Math.abs(va) < 1e-10) crossings.push(a)
-		if(va * vb < 0) {
-			let k = va / (va - vb)
-			crossings.push([a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k])}}
-	if(crossings.length < 2) return
-	CTX.moveTo(crossings[0][0], crossings[0][1])
-	CTX.lineTo(crossings[1][0], crossings[1][1])
+	let points = horizon.points
+	if(points.length < 2) return
+	CTX.moveTo(points[0][1][0], points[0][1][1])
+	for(let i = 1; i < points.length; i++) {
+		let previous = points[i - 1], current = points[i]
+		if(planetariumEdgeIsDiscontinuous(previous, current))
+			CTX.moveTo(current[1][0], current[1][1])
+		else CTX.lineTo(current[1][0], current[1][1])}
 	CTX.stroke()}
 
 function drawPath() {
@@ -411,13 +385,13 @@ function drawCrosshair() {
 
 const AXES = [[+1,  0,  0], [-1,  0,  0], [ 0, +1,  0], [ 0, -1,  0], [ 0,  0, +1], [ 0,  0, -1]]
 
-function render() {
-	if(renderState.pending) return
-	renderState.pending = true
-	requestAnimationFrame(renderNow)}
+function requestSkyRender() {
+	if(update.frame) return
+	update.frame = true
+	requestAnimationFrame(renderSky)}
 
-function renderNow() {
-	renderState.pending = false
+function renderSky() {
+	update.frame = false
 	if(update.view) {
 		let mTS = mul(rotateY(view.pitch), rotateZ(view.yaw))
 		if (view.orienting) mTS = mul(rotateX(view.roll), mTS)
@@ -426,10 +400,18 @@ function renderNow() {
 		update.view = false}
 	if(!update.sky) return
 	update.sky = false
-	renderState.planetarium = mode.viewMode === "planetarium"
-	renderState.scale = renderState.planetarium ? getPlanetariumScale() : 1
-	renderState.direction = renderState.planetarium ? -1 : 1
-	renderState.horizon = null
+	let planetarium = mode.viewMode === "planetarium"
+	if(planetarium) {
+		let scale = getPlanetariumScale()
+		projectCamera = camera3D => {
+			let length = Math.hypot(...camera3D)
+			let s = 2 * scale / Math.max(length + camera3D[0], 0.001)
+			return [view.x0 - camera3D[1] * s, view.y0 - camera3D[2] * s]}}
+	else {
+		let scale = view.r0 * view.f
+		projectCamera = camera3D => {
+			let s = scale / (view.f - camera3D[0])
+			return [view.x0 + camera3D[1] * s, view.y0 - camera3D[2] * s]}}
 	cache.horizonVisibility.clear()
 
 	for(let g in buffer) buffer[g].length = 0
@@ -452,7 +434,7 @@ function renderNow() {
 		pushLines({points: parallel(param.latitude - 90), color: color.equatorial, width: 2, dash: [5, 5]})}
 
 	if(show.ecliptic) pushLines({points: parallel(0).map(fromNirayana), color: color.ecliptic, width: 3})
-	if(show.nakshatras) pushNakshatraBoundaryTicks()
+	if(show.nakshatraNames) pushNakshatraBoundaryTicks()
 	if(show.eclipticMeridian) pushLines({points: meridian(0).map(fromNirayana), color: color.ecliptic, width: 3})
 	if(show.equator) pushLines({points: parallel(0), color: color.equatorial, width: 3})
 	if(show.equatorialMeridian) pushLines({points: meridian(0), color: color.equatorial, width: 3})
@@ -546,9 +528,9 @@ function renderNow() {
 	drawPoints(CTX, buffer.frontPoints)
 	drawTexts(CTX, buffer.frontTexts)
 	if(mode.viewMode === "planetarium" && show.surface) {
-		renderState.horizon = getPlanetariumHorizon()
-		drawPlanetariumGround(renderState.horizon)
-		drawPlanetariumHorizon(renderState.horizon)
+		let horizon = getPlanetariumHorizon()
+		drawPlanetariumGround(horizon)
+		drawPlanetariumHorizon(horizon)
 		drawPoints(CTX, buffer.frontPoints, true)
 		drawTexts(CTX, buffer.frontTexts, true)}
 
@@ -559,4 +541,4 @@ function zoomInOut(scale) {
 	view.r0 *= scale
 	clampViewZoom()
 	update.sky = true
-	render()}
+	requestSkyRender()}

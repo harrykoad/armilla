@@ -138,8 +138,8 @@ input:focus-visible {outline: 2px solid #80bfff; outline-offset: 2px}
 	</div>
 	<div class="controlGroup atmosphericGroup" role="group" aria-label="Atmospheric conditions">
 		<div class="field checkboxField">
-			<input type="checkbox" id="atmosphericRefractionCheckbox" name="atmosphericRefraction" checked>
-			<label class="checkboxLabel" for="atmosphericRefractionCheckbox">Atmospheric Refraction</label>
+			<input type="checkbox" id="refractionCheckbox" name="refraction" checked>
+			<label class="checkboxLabel" for="refractionCheckbox">Atmospheric Refraction</label>
 		</div>
 		<div class="field">
 			<label for="temperatureInput">Temperature:</label>
@@ -221,7 +221,6 @@ input:focus-visible {outline: 2px solid #80bfff; outline-offset: 2px}
 <script>
 
 document.getElementById("copyrightYear").textContent = new Date().getUTCFullYear()
-
 function bindInputControls(input, commit, nudge) {
 	input.onchange = commit
 	input.onkeydown = event => {
@@ -289,7 +288,7 @@ function setupScalarInput(input, parse, valid, format, error, adjust) {
 setupCoordinateInput("latitudeInput", 90, false)
 setupCoordinateInput("longitudeInput", 180, true)
 setupCoordinateInput("horizonAltitudeInput", 90, false)
-UI.atmosphericRefractionCheckbox.onchange = () => requestGraphRender()
+UI.refractionCheckbox.onchange = () => requestGraphRender()
 setupScalarInput(UI.temperatureInput, value => Number(parseNumber(value).toFixed(1)),
 	value => value > -273, value => value.toFixed(1),
 	"Please enter a valid temperature above −273°C.",
@@ -361,22 +360,22 @@ const GRAPH_STARS = [...STAR_LABELS, {name: "Bellatrix", index: 28}]
 // The spreadsheet's principal (yogatārā) star represents each mansion. Its
 // three alternative asterisms are separate rows, as in the source workbook.
 const NAKSHATRA_DATA = [
-	["Aśvinī", "Sheratan", 108], ["Bharaṇī", "35 Ari", null],
-	["Kṛttikā", "Alcyone", 147], ["Rohiṇī", "Aldebaran", 12],
-	["Mṛgaśira", "Meissa", 255], ["Mṛgaśira*", "Alnilam", 31],
-	["Ārdrā", "Betelgeuse", 9], ["Ārdrā*", "Alhena", 52],
-	["Punarvasu", "Pollux", 16], ["Puṣya", "Asellus Aus.", 484],
-	["Aśleṣā", "ε Hya", 256], ["Maghā", "Regulus", 22],
-	["P. Phalguņī", "Zosma", 98], ["U. Phalguņī", "Denebola", 63],
-	["Hasta", "Algorab", 166], ["Citrā", "Spica", 14],
-	["Svāti", "Arcturus", 5], ["Viśākha", "Zubenelgenubi", 124],
-	["Anurādhā", "Dschubba", 81], ["Jyeṣṭha", "Antares", 15],
-	["Mūla", "Shaula", 26], ["P. Aṣāḍha", "Kaus Media", 117],
-	["U. Aṣāḍha", "Nunki", 57], ["Śravaṇa", "Altair", 11],
-	["Dhaniṣṭa", "Rotanev", 344], ["Śatabhiṣaj", "λ Aqr", 386],
-	["Śatabhiṣaj*", "ζ¹ Aqr", 569],
-	["P. Bhādrapadā", "Markab", 94], ["U. Bhādrapadā", "Alpheratz", 54],
-	["Revatī", "ζ Psc", null]]
+	[NAKSHATRA_NAMES[0], "Sheratan", 108], [NAKSHATRA_NAMES[1], "35 Ari", null],
+	[NAKSHATRA_NAMES[2], "Alcyone", 147], [NAKSHATRA_NAMES[3], "Aldebaran", 12],
+	[NAKSHATRA_NAMES[4], "Meissa", 255], [NAKSHATRA_NAMES[4], "Alnilam", 31],
+	[NAKSHATRA_NAMES[5], "Betelgeuse", 9], [NAKSHATRA_NAMES[5], "Alhena", 52],
+	[NAKSHATRA_NAMES[6], "Pollux", 16], [NAKSHATRA_NAMES[7], "Asellus Aus.", 484],
+	[NAKSHATRA_NAMES[8], "ε Hya", 256], [NAKSHATRA_NAMES[9], "Regulus", 22],
+	[NAKSHATRA_NAMES[10], "Zosma", 98], [NAKSHATRA_NAMES[11], "Denebola", 63],
+	[NAKSHATRA_NAMES[12], "Algorab", 166], [NAKSHATRA_NAMES[13], "Spica", 14],
+	[NAKSHATRA_NAMES[14], "Arcturus", 5], [NAKSHATRA_NAMES[15], "Zubenelgenubi", 124],
+	[NAKSHATRA_NAMES[16], "Dschubba", 81], [NAKSHATRA_NAMES[17], "Antares", 15],
+	[NAKSHATRA_NAMES[18], "Shaula", 26], [NAKSHATRA_NAMES[19], "Kaus Media", 117],
+	[NAKSHATRA_NAMES[20], "Nunki", 57], [NAKSHATRA_NAMES[21], "Altair", 11],
+	[NAKSHATRA_NAMES[22], "Rotanev", 344], [NAKSHATRA_NAMES[23], "λ Aqr", 386],
+	[NAKSHATRA_NAMES[23], "ζ¹ Aqr", 569],
+	[NAKSHATRA_NAMES[24], "Markab", 94], [NAKSHATRA_NAMES[25], "Alpheratz", 54],
+	[NAKSHATRA_NAMES[26], "ζ Psc", null]]
 
 // These faint yogatārās now use the shared records in astro.js.
 NAKSHATRA_DATA[1][2] = FAINT_NAKSHATRA_STAR_INDEX.get("35 Ari")
@@ -394,7 +393,7 @@ function graphConditions() {
 	const conditions = {latitude: graphNumber(UI.latitudeInput), longitude: graphNumber(UI.longitudeInput),
 		horizon: graphNumber(UI.horizonAltitudeInput),
 		rising: graphNumber(UI.risingAzimuthInput), uncertainty: graphNumber(UI.uncertaintyInput),
-		refraction: UI.atmosphericRefractionCheckbox.checked,
+		refraction: UI.refractionCheckbox.checked,
 		temperature: graphNumber(UI.temperatureInput), pressure: graphNumber(UI.pressureInput)}
 	if(Object.values(conditions).some(value => typeof value === "number" && !Number.isFinite(value)) ||
 		Math.abs(conditions.latitude) > 90 || Math.abs(conditions.longitude) > 180 ||

@@ -189,15 +189,9 @@ function lunarSearch(t0, latitude, longitude, elevation = 0) {
 			target += step}
 		return null}
 	let formatEvent = (prefix, jd) => jd ? prefix + " " + eventTime(jd) : ""
-	let nakshatras = ["Aśvinī (1)", "Bharaṇī (2)", "Kṛttikā (3)", "Rohiṇī (4)",
-		"Mṛgaśīrṣa (5)", "Ārdrā (6)", "Punarvasu (7)", "Puṣya (8)", "Āśleṣā (9)",
-		"Maghā (10)", "P. Phalgunī (11)", "U. Phalgunī (12)", "Hasta (13)", "Citrā (14)",
-		"Svātī (15)", "Viśākha (16)", "Anurādhā (17)", "Jyeṣṭha (18)", "Mūla (19)",
-		"P. Aṣāḍhā (20)", "U. Aṣāḍhā (21)", "Śravaṇa (22)", "Dhaniṣṭha (23)",
-		"Śatabhiṣak (24)", "P. Bhādrapadā (25)", "U. Bhādrapadā (26)", "Revatī (27)"]
-	let months = ["Vaiśākha (1/๖)", "Jyaiṣṭha (2/๗)", "Āṣāḍha (3/๘)", "Śrāvaṇa (4/๙)",
-		"Bhādrapada (5/๑๐)", "Āśvina (6/๑๑)", "Kārttika (7/๑๒)", "Mārgaśīrṣa (8/๑)",
-		"Pauṣa (9/๒)", "Māgha (10/๓)", "Phālguna (11/๔)", "Caitra (12/๕)"]
+	let nakshatras = NAKSHATRA_NAMES.map((name, i) => name + " (" + (i + 1) + ")")
+	let thaiMonths = ["๖", "๗", "๘", "๙", "๑๐", "๑๑", "๑๒", "๑", "๒", "๓", "๔", "๕"]
+	let months = LUNAR_MONTH_NAMES.map((name, i) => name + " (" + (i + 1) + "/" + thaiMonths[i] + ")")
 	let now = stateAt(t0)
 	let phsIndex = mod(now[1] / 12, 30)
 	let phsNumber = Math.floor(mod(phsIndex, 15)) + 1

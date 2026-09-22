@@ -52,7 +52,7 @@ UI.orientationDropdown.onchange = () => {
 		view.roll = a1 * k
 		update.view = true
 		update.sky = true
-		render()
+		requestSkyRender()
 		if(a0 < 1) {requestAnimationFrame(animate); return}
 		let [t, p] = toTP(fromScreen([1, 0, 0], oldMode, newMode))
 		view.yaw = mod(-t, 360)
@@ -62,7 +62,7 @@ UI.orientationDropdown.onchange = () => {
 		mode.orientation = newMode
 		update.view = true
 		update.sky = true
-		render()}
+		requestSkyRender()}
 
 	animate()}
 
@@ -75,7 +75,7 @@ UI.viewModeDropdown.onchange = () => {
 	input.pinchStartDist = null
 	clampViewZoom()
 	update.sky = true
-	render()}
+	requestSkyRender()}
 
 UI.darkThemeCheckbox.onchange = () => {
 	mode.darkTheme = UI.darkThemeCheckbox.checked
@@ -94,7 +94,7 @@ UI.darkThemeCheckbox.onchange = () => {
 		e.style.color = ["black", "white"][i]}
 	UI.modalBackground.style.background = ["rgba(255, 255, 255, 0.5)", "rgba(0, 0, 0, 0.5)"][i]
 	update.sky = true
-	render()}
+	requestSkyRender()}
 
 UI.drawCheckbox.onchange = () => {
 	mode.draw = UI.drawCheckbox.checked
@@ -103,7 +103,7 @@ UI.drawCheckbox.onchange = () => {
 		input.drawing = false
 		input.drawPath = []
 		update.sky = true
-		render()}}
+		requestSkyRender()}}
 
 for (let s in show) {
 	let e = UI[s + "Checkbox"]
@@ -111,7 +111,7 @@ for (let s in show) {
 	e.onchange = () => {
 		show[s] = e.checked
 		update.sky = true
-		render()}}
+		requestSkyRender()}}
 
 UI.eclipticLegend.style.background = color.ecliptic
 UI.equatorialLegend.style.background = color.equatorial
@@ -188,16 +188,16 @@ UI.latitudeSlider.oninput = () => {
 	updateLatitude()
 	updateHorizontal()
 	update.sky = true
-	render()}
+	requestSkyRender()}
 
 UI.longitudeSlider.oninput = () => {
 	param.longitude = parseFloat(UI.longitudeSlider.value)
 	updateLongitude()
-	render()}
+	requestSkyRender()}
 
 UI.elevationSlider.oninput = () => {
 	updateElevation(parseFloat(UI.elevationSlider.value))
-	render()}
+	requestSkyRender()}
 
 UI.hereButton.onclick = () => navigator.geolocation.getCurrentPosition(p => {
 	param.latitude = Math.round(mod(p.coords.latitude, 180, -90) * 100) / 100
@@ -209,7 +209,7 @@ UI.hereButton.onclick = () => navigator.geolocation.getCurrentPosition(p => {
 			Number(UI.elevationSlider.max))
 		UI.elevationSlider.value = param.elevation
 		updateElevation()}
-	render()}, error => alert("Location access failed."))
+	requestSkyRender()}, error => alert("Location access failed."))
 
 UI.yearSlider.oninput = () => {
 	param.year = parseInt(UI.yearSlider.value)
@@ -217,7 +217,7 @@ UI.yearSlider.oninput = () => {
 		param.month = 2
 		param.day = 28}
 	updateYear()
-	render()}
+	requestSkyRender()}
 
 UI.dayOfYearSlider.oninput = () => {
 	param.dayOfYear = parseInt(UI.dayOfYearSlider.value)
@@ -226,17 +226,17 @@ UI.dayOfYearSlider.oninput = () => {
 	param.month = 1
 	while(param.day > days[param.month - 1]) {param.day -= days[param.month - 1]; param.month++}
 	updateMonthDay()
-	render()}
+	requestSkyRender()}
 
 UI.timeSlider.oninput = () => {
 	param.time = parseFloat(UI.timeSlider.value)
 	updateTime()
-	render()}
+	requestSkyRender()}
 
 UI.nowButton.onclick = () => {
 	setDateTime()
 	centerViewOnSun()
-	render()}
+	requestSkyRender()}
 
 UI.sky.onpointerdown = e => {
 	if(mode.draw) {
@@ -256,7 +256,7 @@ window.onpointermove = e => {
 		let path = input.drawPath[input.drawPath.length - 1]
 		path.push([e.clientX, e.clientY])
 		update.sky = true
-		render()
+		requestSkyRender()
 		return}
 	if(input.activePointers.has(e.pointerId)) input.activePointers.set(e.pointerId, e)
 	if(mode.draw && input.activePointers.size) {
@@ -284,7 +284,7 @@ window.onpointermove = e => {
 	view.pitch = clip(view.pitch + dy * sensitivity, -90, 90)
 	update.view = true
 	update.sky = true
-	render()}
+	requestSkyRender()}
 
 window.onpointerup = e => {
 	if(view.orienting) return
@@ -305,7 +305,7 @@ window.onresize = () => {
 	resize()
 	updatePanelScrollButtons()
 	update.sky = true
-	render()}
+	requestSkyRender()}
 
 function populateModalFromParameters() {
 	let [h, m] = toDMS(param.time / 15, 24)
@@ -345,7 +345,7 @@ UI.modalSetButton.onclick = () => {
 	param.day = modal.temp.day
 	param.time = 15 * (modal.temp.hour + modal.temp.minute / 60)
 	updateYear()
-	render()
+	requestSkyRender()
 	UI.modalBackground.style.display = "none"}
 UI.modalCancelButton.onclick = () => {
 	UI.modalBackground.style.display = "none"}
@@ -366,7 +366,7 @@ centerViewOnSun()
 resize()
 updatePanelScrollButtons()
 window.addEventListener("load", updatePanelScrollButtons)
-render()
+requestSkyRender()
 
 function setJulianDayModal() {
 	modal.temp.julianDay = getJulianDay(modal.temp.year, modal.temp.month, modal.temp.day,

@@ -56,7 +56,7 @@ function refractHorizontal(point) {
 	return translate(point, refraction)}
 
 function refractionEnabled() {
-	return show.atmosphericRefraction}
+	return show.refraction}
 
 function formatTimeZone(timeZone) {
 	return timeZone === 0 ? "UTC" : "UTC" + (timeZone >= 0 ? "+" : "−") + Math.abs(timeZone)}
@@ -279,8 +279,8 @@ function applyURLParams() {
 	if(refraction !== null) {
 		refraction = refraction.toLowerCase()
 		if(refraction === "true" || refraction === "false") {
-			show.atmosphericRefraction = refraction === "true"
-			UI.atmosphericRefractionCheckbox.checked = show.atmosphericRefraction}}
+			show.refraction = refraction === "true"
+			UI.refractionCheckbox.checked = show.refraction}}
 	let modalValue = getQueryValue(query, ["modal"])
 	if(modalValue !== null) {
 		modalValue = modalValue.toLowerCase()

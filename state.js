@@ -20,14 +20,13 @@ const modal = {temp: {fallback: null, year: null, month: null, day: null,
 	horary: {frame: [], slots: [], stars: [], constellations: [], zodiac: []},
 	world: {map: new Image(), graticule: [], equator: []}}
 const show = {surface: true, stars: true, starNames: false, milkyWay: true, constellations: true, zodiac: true,
-	constellationNames: true, seasonalTriangles: false, properMotion: true,
+	constellationNames: false, seasonalTriangles: false, properMotion: true,
 	ecliptic: true, eclipticAxes: true, eclipticMeridian: false, eclipticGraticule: false, precessionCircles: false,
 	nakshatras: false, nakshatraNames: false,
 	equator: true, equatorialAxes: true, equatorialMeridian: false, equatorialGraticule: false, circumpolarCircles: false,
 	horizon: true, horizontalAxes: true, horizontalMeridian: false, horizontalGraticule: true, observerMeridian: false,
 	sun: true, moon: true, planets: false, analemma: false, moonsOrbit: false, eclipses: false,
-	atmosphericRefraction: true, halo: false, rainbow: false}
-const update = {view: true, sky: true}
-const renderState = {pending: false, planetarium: false, scale: 1, direction: 1, horizon: null}
+	refraction: true, halo: false, rainbow: false}
+const update = {view: true, sky: true, frame: false}
 const view = {w: 200, h: 100, f: 10, /* w / 2 */x0: 100, /* h / 2 */y0: 50, /* 1 / f */z0: 0.1,
-	/* 0.45 * min(w, h) */r0: 45, diagonalCos: 0, yaw: 0, pitch: 0, roll: 0, orienting: false}
+	/* 0.45 * min(w, h) */r0: 45, diagCos: 0, yaw: 0, pitch: 0, roll: 0, orienting: false}
