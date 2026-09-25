@@ -189,7 +189,7 @@ function lunarSearch(t0, latitude, longitude, elevation = 0) {
 			target += step}
 		return null}
 	let formatEvent = (prefix, jd) => jd ? prefix + " " + eventTime(jd) : ""
-	let nakshatras = NAKSHATRA_NAMES.map((name, i) => name + " (" + (i + 1) + ")")
+	let naksatras = NAKSATRA_NAMES.map((name, i) => name + " (" + (i + 1) + ")")
 	let thaiMonths = ["๖", "๗", "๘", "๙", "๑๐", "๑๑", "๑๒", "๑", "๒", "๓", "๔", "๕"]
 	let months = LUNAR_MONTH_NAMES.map((name, i) => name + " (" + (i + 1) + "/" + thaiMonths[i] + ")")
 	let now = stateAt(t0)
@@ -213,7 +213,7 @@ function lunarSearch(t0, latitude, longitude, elevation = 0) {
 		if(!jd) continue
 		moonEvents.push({jd,
 			label: mod(target, 360) === 0 ? "Next New Moon:" : "Next Full Moon:",
-			value: nakshatras[mod(Math.floor(stateAt(jd)[0]), 27)],
+			value: naksatras[mod(Math.floor(stateAt(jd)[0]), 27)],
 			time: formatEvent("at", jd)})}
 	moonEvents.sort((a, b) => a.jd - b.jd)
 	return {
@@ -221,7 +221,7 @@ function lunarSearch(t0, latitude, longitude, elevation = 0) {
 			until: formatEvent("until", phsUntil)},
 		month: {value: months[synMonth],
 			until: formatEvent("until", nextNewMoon)},
-		nakshatra: {value: nakshatras[nksIndex],
+		naksatra: {value: naksatras[nksIndex],
 			until: formatEvent("until", nksUntil)},
 		moonEvents: moonEvents.slice(0, 2)}}
 
@@ -465,9 +465,9 @@ function updateModal() {
 				position: [w, 16], size: 11.5, align: "right", baseline: "top", color: col},
 			{text: "Nakṣatra:",
 				position: [150, 32], size: 11.5, align: "right", baseline: "top", color: col},
-			{text: lunar.nakshatra.value,
+			{text: lunar.naksatra.value,
 				position: [155, 32], size: 11.5, align: "left", baseline: "top", color: col},
-			{text: lunar.nakshatra.until,
+			{text: lunar.naksatra.until,
 				position: [w, 32], size: 11.5, align: "right", baseline: "top", color: col},
 			{text: lunar.moonEvents[0] ? lunar.moonEvents[0].label : "",
 				position: [150, 48], size: 11.5, align: "right", baseline: "top", color: col},

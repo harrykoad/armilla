@@ -155,25 +155,25 @@ function drawStars(stars) {
 			CTX.arc(x, y, size * 0.5, 0, TWO_PI)
 			CTX.fill()}}}
 
-function pushNakshatras() {
-	for(let n = 0; n < NAKSHATRAS.length; n++) {
-		let nakshatra = NAKSHATRAS[n]
-		let positions = nakshatra.stars.map(star => getNakshatraStarPosition(star))
-		if(show.nakshatras) {
+function pushNaksatras() {
+	for(let n = 0; n < NAKSATRAS.length; n++) {
+		let naksatra = NAKSATRAS[n]
+		let positions = naksatra.stars.map(star => getNaksatraStarPosition(star))
+		if(show.naksatras) {
 			let rendered = positions.map(p => celestialRenderPosition(fromNirayana(p)))
-			let figure = NAKSHATRA_FIGURES[n]
+			let figure = NAKSATRA_FIGURES[n]
 			for(let i = 0; i < figure.length; i += 2)
 				pushLines({points: [rendered[figure[i]].position, rendered[figure[i + 1]].position],
 					color: "rgba(192, 192, 0, 0.6)", width: 4,
 					fromMode: rendered[0].fromMode, layer: "figures"})
 			for(let i = 0; i < rendered.length; i++) {
 				let [c3D, s2D] = project(rendered[i].position, rendered[i].fromMode)
-				let marker = {position: s2D, yogatara: nakshatra.stars[i][4] === true}
-				if(isVisiblePoint(c3D)) buffer.frontNakshatras.push(marker)
-				else if(canDrawBackSide()) buffer.backNakshatras.push(marker)}}
-		if(show.nakshatraNames) {
+				let marker = {position: s2D, yogatara: naksatra.stars[i][4] === true}
+				if(isVisiblePoint(c3D)) buffer.frontNaksatras.push(marker)
+				else if(canDrawBackSide()) buffer.backNaksatras.push(marker)}}
+		if(show.naksatraNames) {
 			pushLabels([{
-				name: NAKSHATRA_NAMES[n],
+				name: NAKSATRA_NAMES[n],
 				position: fromNirayana(toXYZ((n + 0.5) * 360 / 27, 0)),
 				fromMode: "equatorial",
 				color: color.galactic,
@@ -181,7 +181,7 @@ function pushNakshatras() {
 				border: 2, size: 11}])}}
 }
 
-function drawNakshatras(markers) {
+function drawNaksatras(markers) {
 	CTX.strokeStyle = color.galactic
 	CTX.lineWidth = 2.5
 	CTX.lineJoin = "round"
@@ -198,7 +198,7 @@ function drawNakshatras(markers) {
 		else CTX.arc(x, y, 2.5, 0, TWO_PI)
 		CTX.stroke()}}
 
-function pushNakshatraBoundaryTicks() {
+function pushNaksatraBoundaryTicks() {
 	for(let i = 0; i < 27; i++) {
 		let longitude = i * 360 / 27
 		pushLines({
@@ -438,7 +438,7 @@ function renderSky() {
 		pushLines({points: parallel(param.latitude - 90), color: color.equatorial, width: 2, dash: [5, 5]})}
 
 	if(show.ecliptic) pushLines({points: parallel(0).map(fromNirayana), color: color.ecliptic, width: 3})
-	if(show.nakshatraNames) pushNakshatraBoundaryTicks()
+	if(show.naksatraNames) pushNaksatraBoundaryTicks()
 	if(show.eclipticMeridian) pushLines({points: meridian(0).map(fromNirayana), color: color.ecliptic, width: 3})
 	if(show.equator) pushLines({points: parallel(0), color: color.equatorial, width: 3})
 	if(show.equatorialMeridian) pushLines({points: meridian(0), color: color.equatorial, width: 3})
@@ -451,7 +451,7 @@ function renderSky() {
 	if(show.observerMeridian) pushLines({points: meridian(param.sidereal), color: color.horizontal, width: 3})
 	if(show.seasonalTriangles) pushSeasonalTriangles()
 	if(show.analemma) pushAnalemma()
-	if(show.nakshatras || show.nakshatraNames) pushNakshatras()
+	if(show.naksatras || show.naksatraNames) pushNaksatras()
 
 	if(show.constellationNames)
 		pushLabels(CONSTELLATION_NAMES.map(label => ({
@@ -519,14 +519,14 @@ function renderSky() {
 	CTX.fillRect(0, 0, view.w, view.h)
 	if(mode.viewMode === "armillarium" && !show.surface) {
 		drawLines(CTX, buffer.backLines)
-		drawNakshatras(buffer.backNakshatras)
+		drawNaksatras(buffer.backNaksatras)
 		drawLines(CTX, buffer.backFigures)
 		drawStars(buffer.backStars)
 		drawPoints(CTX, buffer.backPoints)
 		drawTexts(CTX, buffer.backTexts)}
 	if(mode.viewMode === "armillarium" && show.surface) drawSphere()
 	drawLines(CTX, buffer.frontLines)
-	drawNakshatras(buffer.frontNakshatras)
+	drawNaksatras(buffer.frontNaksatras)
 	drawLines(CTX, buffer.frontFigures)
 	drawStars(buffer.frontStars)
 	drawPoints(CTX, buffer.frontPoints)

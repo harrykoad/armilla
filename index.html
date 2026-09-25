@@ -67,6 +67,7 @@ canvas:active{cursor: grabbing}
 #leftPanelScrollDown, #rightPanelScrollDown{bottom: 10px}
 .box{background: black; border-radius: 10px; border: 1px solid gray; margin-bottom: 10px; padding: 8px}
 .columns{column-gap: 0px; display: grid; grid-template-columns: 50% 50%; margin-top: 2px}
+#leftPanel .columns{grid-template-columns: 47.5% 52.5% !important}
 .columns > span{align-items: center; display: flex; margin-top: 2px}
 .row{align-items: center; display: flex; justify-content: flex-start; margin-top: 2px}
 .dropdownRow{column-gap: 8px; display: grid; grid-template-columns: auto 1fr}
@@ -107,7 +108,7 @@ input[type="radio"] {accent-color: white}
 		<div class="row"><input type="checkbox" id="milkyWayCheckbox" checked>&nbsp;Milky Way</div>
 		<div class="row"><input type="checkbox" id="zodiacCheckbox" checked>&nbsp;Zodiac</div>
 		<div class="row"><input type="checkbox" id="starsCheckbox" checked>&nbsp;Stars</div>
-		<div class="row" style="font-size: 11px"><input type="checkbox" id="constellationsCheckbox" checked>&nbsp;Constellations</div>
+		<div class="row" style="font-size: 11.5px"><input type="checkbox" id="constellationsCheckbox" checked>&nbsp;Constellations</div>
 		<div class="row"><input type="checkbox" id="starNamesCheckbox">&nbsp;S. Names</div>
 		<div class="row"><input type="checkbox" id="constellationNamesCheckbox">&nbsp;C. Names</div>
 	</div>
@@ -163,8 +164,8 @@ input[type="radio"] {accent-color: white}
 		<div class="row"><input type="checkbox" id="eclipticGraticuleCheckbox">&nbsp;Graticule</div>
 	</div>
 	<div class="columns">
-		<div class="row"><input type="checkbox" id="nakshatrasCheckbox">&nbsp;Nakṣatras</div>
-		<div class="row"><input type="checkbox" id="nakshatraNamesCheckbox">&nbsp;N. Names</div>
+		<div class="row"><input type="checkbox" id="naksatrasCheckbox">&nbsp;Nakṣatras</div>
+		<div class="row"><input type="checkbox" id="naksatraNamesCheckbox">&nbsp;N. Names</div>
 	</div>
 	<div class="row"><input type="checkbox" id="precessionCirclesCheckbox">&nbsp;Precession Circles</div>
 </div>

@@ -1,6 +1,6 @@
 // Workbook stars fainter than, or otherwise absent from, the built-in catalog.
 // Values are J2000 RA (degrees), declination, μα cos δ, and μδ (mas/year).
-const FAINT_NAKSHATRA_STARS = [
+const FAINT_NAKSATRA_STARS = [
 	["35 Ari", 40.862970, 27.707146, 3.51, -9.97],
 	["39 Ari", 41.977200, 29.247118, 148.42, -125.76],
 	["23 Tau", 56.581560, 23.948358, 21.17, -42.67],
@@ -13,8 +13,8 @@ const FAINT_NAKSHATRA_STARS = [
 	["ζ Psc", 18.432855, 7.575354, 141.66, -55.62]
 ]
 const STARS = initStars()
-const FAINT_NAKSHATRA_STAR_INDEX = new Map(FAINT_NAKSHATRA_STARS.map(
-	(star, i) => [star[0], STARS.length - FAINT_NAKSHATRA_STARS.length + i]))
+const FAINT_NAKSATRA_STAR_INDEX = new Map(FAINT_NAKSATRA_STARS.map(
+	(star, i) => [star[0], STARS.length - FAINT_NAKSATRA_STARS.length + i]))
 const STAR_PROPER_MOTION = initStarProperMotion()
 const STAR_PAIR_MOTION = initStarPairMotion()
 const STAR_LABELS = initStarNames()
@@ -27,7 +27,7 @@ const CONSTELLATION_NAMES = initConstellationNames()
 const ZODIAC = [6, 76, 37, 21, 45, 84, 47, 69, 75, 11, 4, 64]
 const ZODIAC_NAMES = new Set(["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
 	"Libra", "Scorpius", "Sagittarius", "Capricornus", "Aquarius", "Pisces"])
-const NAKSHATRA_NAMES = [
+const NAKSATRA_NAMES = [
 	"Aśvinī", "Bharaṇī", "Kṛttikā", "Rohiṇī", "Mṛgaśīrṣa", "Ārdrā", "Punarvasu",
 	"Puṣya", "Āśleṣā", "Maghā", "P. Phālgunī", "U. Phālgunī", "Hasta", "Citrā", "Svāti",
 	"Viśākhā", "Anurādhā", "Jyeṣṭhā", "Mūla", "P. Āṣāḍhā", "U. Āṣāḍhā", "Śravaṇa",
@@ -37,7 +37,7 @@ const LUNAR_MONTH_NAMES = [
 	"Kārttika", "Mārgaśīrṣa", "Pauṣa", "Māgha", "Phālguna", "Caitra"]
 // J2000 right ascension, declination, and proper motion from the workbook's star list.
 // A final true value marks the principal star (yogatārā).
-const NAKSHATRAS = [
+const NAKSATRAS = [
 	{name: "Aśvinī", stars: [[31.793325,23.462423,190.73,-145.77],[28.660020,20.808035,96.32,-108.80,true],[28.382316,19.294537,79.42,-99.10]]},
 	{name: "Bharaṇī", stars: [[40.862970,27.707146,3.51,-9.97,true],[41.977200,29.247118,148.42,-125.76],[42.495945,27.260507,65.47,-116.59]]},
 	{name: "Kṛttikā", stars: [[57.290595,24.053415,17.77,-44.70],[56.871150,24.105137,19.35,-43.11,true],[56.581560,23.948358,21.17,-42.67],[56.218905,24.113339,21.55,-44.92],[56.302050,24.467278,19.35,-41.63],[56.456685,24.367748,21.09,-45.03]]},
@@ -66,7 +66,7 @@ const NAKSHATRAS = [
 	{name: "U. Bhādrapadā", stars: [[2.096865,29.090432,135.68,-162.95,true],[3.308970,15.183596,4.70,-8.24]]},
 	{name: "Revatī", stars: [[18.432855,7.575354,141.66,-55.62,true]]}
 ]
-const NAKSHATRA_FIGURES = [
+const NAKSATRA_FIGURES = [
 	[0,1, 1,2],                                      // Aśvinī
 	[0,1, 1,2, 2,0],                                 // Bharaṇī
 	[0,1, 1,2, 2,3, 3,4, 4,5, 5,1],                 // Kṛttikā
@@ -475,7 +475,7 @@ function initStars() {
 	let stars = Array.from({length: s.length / 3}, (_, i) => {
 		let [x, y, z] = s.slice(3 * i, 3 * i + 3)
 		return x === 0 && y === 0 && z === 0 ? [0, 0, 0] : fromEquatorialJ2000(scale([x, y, z], 1 / 32767))})
-	stars.push(...FAINT_NAKSHATRA_STARS.map(([, ra, dec]) =>
+	stars.push(...FAINT_NAKSATRA_STARS.map(([, ra, dec]) =>
 		fromEquatorialJ2000(toXYZ(ra, dec))))
 	return stars}
 
@@ -630,7 +630,7 @@ function initStarProperMotion() {
 		121.5, -279.7,   13.65, 60.2,   -40.2, 0.6,   58.8, 193.1,   3.45, -2.5,   -40.2, -22.2,
 		-62.4, -47.2,   -144.45, -63.9,   -48.9, -12.8,   56.55, 5.2,   183, 1.1,   528, 219.2
 	]
-	for(let [, , dec, pmRa, pmDec] of FAINT_NAKSHATRA_STARS)
+	for(let [, , dec, pmRa, pmDec] of FAINT_NAKSATRA_STARS)
 		m.push(pmRa / Math.cos(dec * DEGREE), pmDec)
 	let toJ2000 = transpose(matrix.fromEquatorialJ2000)
 	return STARS.map((p, i) => {
@@ -669,7 +669,7 @@ function getStarPosition(index, jd = param.julianDay) {
 			scale(pair.axis, vdot(pair.axis, position) * (1 - c))))}
 	return normalize(translate(position, scale(STAR_PROPER_MOTION[index], years)))}
 
-function getNakshatraStarPosition(star, jd = param.julianDay) {
+function getNaksatraStarPosition(star, jd = param.julianDay) {
 	let [raDegrees, declination, pmRa, pmDec] = star
 	let ra = raDegrees * DEGREE, dec = declination * DEGREE
 	let position = fromEquatorialJ2000([
