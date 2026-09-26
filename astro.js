@@ -17,7 +17,8 @@ const FAINT_NAKSATRA_STAR_INDEX = new Map(FAINT_NAKSATRA_STARS.map(
 	(star, i) => [star[0], STARS.length - FAINT_NAKSATRA_STARS.length + i]))
 const STAR_PROPER_MOTION = initStarProperMotion()
 const STAR_PAIR_MOTION = initStarPairMotion()
-const STAR_LABELS = initStarNames()
+const BRIGHT_STARS = initBrightStars()
+const STAR_LABELS = [...BRIGHT_STARS, {index: 50, name: "Polaris", magnitude: 1.98}]
 const STAR_LABEL_BY_NAME = new Map(STAR_LABELS.map(star => [star.name, star]))
 const SEASONAL_TRIANGLES = [
 	{name: "Summer\nTriangle", color: "magenta", stars: ["Vega", "Altair", "Deneb"]},
@@ -689,19 +690,20 @@ function getNaksatraStarPosition(star, jd = param.julianDay) {
 		 Math.cos(dec) * pmDec], DEGREE / 3600000))
 	return normalize(translate(position, scale(velocity, (jd - 2451545) / 365.25)))}
 
-function initStarNames() {
+function initBrightStars() {
 	let data = [
-		[0, "Sirius"], [1, "Canopus"], [2, "Rigil Kent."],
-		[5, "Arcturus"], [3, "Vega"], [4, "Capella"],
-		[6, "Rigel"], [7, "Procyon"], [8, "Achernar"],
-		[9, "Betelgeuse"], [10, "Hadar"], [11, "Altair"],
-		[25, "Acrux"], [12, "Aldebaran"], [15, "Antares"],
-		[14, "Spica"], [16, "Pollux"], [17, "Fomalhaut"],
-		[20, "Deneb"], [19, "Mimosa"], [22, "Regulus"],
-		[23, "Adhara"], [24, "Castor"], [26, "Shaula"],
-		[27, "Gacrux"], [50, "Polaris"]
+		[0, "Sirius", -1.46], [1, "Canopus", -0.74], [2, "Rigil Kent.", -0.27],
+		[5, "Arcturus", -0.05], [3, "Vega", 0.03], [4, "Capella", 0.08],
+		[6, "Rigel", 0.13], [7, "Procyon", 0.34], [8, "Achernar", 0.46],
+		[9, "Betelgeuse", 0.50], [10, "Hadar", 0.61], [11, "Altair", 0.76],
+		[25, "Acrux", 0.76], [12, "Aldebaran", 0.85], [14, "Spica", 0.97],
+		[15, "Antares", 1.06], [16, "Pollux", 1.14], [17, "Fomalhaut", 1.16],
+		[20, "Deneb", 1.25], [19, "Mimosa", 1.25], [22, "Regulus", 1.35],
+		[23, "Adhara", 1.50], [24, "Castor", 1.58], [26, "Shaula", 1.63],
+		[27, "Gacrux", 1.63], [28, "Bellatrix", 1.64], [34, "Alnair", 1.74],
+		[33, "Alioth", 1.76], [38, "Dubhe", 1.79], [36, "Mirfak", 1.79]
 	]
-	return data.map(([index, name]) => ({index, name}))}
+	return data.map(([index, name, magnitude]) => ({index, name, magnitude}))}
 
 function initConstellations() {return [
 	/* And */[ 54,228,  58, 64,  58,228,  58,452,  58,658, 228,658, 228,659, 322,621, 345,646, 452,738, 458,592, 564,659, 564,677, 592,646, 621,738, 646,658],

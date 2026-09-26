@@ -308,9 +308,9 @@ input:focus-visible {outline: 2px solid #80bfff; outline-offset: 2px}
 		</canvas>
 	</section>
 	<footer class="footnotes" aria-label="Chart notes">
-		<p><span class="footnoteMarker">*</span><span>Acronychal rising and cosmical setting occur when the star and Sun cross their specified altitudes on opposite horizons: respectively, the star rises as the Sun sets and the star sets as the Sun rises. Their dates are given in the Gregorian calendar for the central year only. Clicking each date links to the Armilla page, which displays the celestial sphere for the specified observational parameters.</span></p>
+		<p><span class="footnoteMarker">*</span><span>Cosmical rising or setting of a star occurs at sunrise, whereas acronychal rising or setting occurs at sunset. Heliacal rising is a star’s first visible rising before sunrise, usually several days after cosmical rising; heliacal setting is its last visible setting after sunset, usually several days before acronychal setting. Acronychal or cosmical rising or setting dates are given in the Gregorian calendar for the central year only. Clicking each date links to the Armilla page, which displays the celestial sphere for the specified observational parameters.</span></p>
 		<p><span class="footnoteMarker">**</span><span>The Indian lunar mansions (nakṣatras) and their principal stars (yogatārās) are adapted from the <i>Sūryasiddhānta</i>. Nakṣatras marked with a double asterisk (**) are alternative asterisms used in various Indian-influenced cultural traditions and are listed separately from their main forms. Several bright stars not associated with nakṣatras are also included for reference.</span></p>
-		<p><span class="footnoteMarker">***</span><span>Acronychal rising and cosmical setting dates shown for selected years are approximate and may differ by up to one day for a given year.</span></p>
+		<p><span class="footnoteMarker">***</span><span>Acronychal and cosmical rising and setting dates are approximate; the reported civil date may differ by about one day.</span></p>
 		<p class="footnoteCredit">© <span id="copyrightYear"></span> Peeravit Koad, Walailak University, Thailand. Astrolabe is an interactive astronomical module within the Armilla project. Visit this project on GitHub: <a href="https://github.com/harrykoad/armilla" target="_blank" rel="noopener">github.com/harrykoad/armilla</a>.</p>
 	</footer>
 </main>
@@ -486,11 +486,12 @@ const GRAPH_STAR_COLORS = {
 	Altair: "#c6cf45", Betelgeuse: "#ff7159", Bellatrix: "#a6baf2", Procyon: "#d591cf",
 	Rigel: "#ffc137", Spica: "#e889b2", Sirius: "#6dda91", Antares: "#f2bd57",
 	Fomalhaut: "#ff8a65", Adhara: "#95b7ed", Shaula: "#b0d444", Canopus: "#ffb34f",
-	Achernar: "#83d0ee", Gacrux: "#bfa9e0"}
+	Achernar: "#83d0ee", Gacrux: "#bfa9e0", "Rigil Kent.": "#79c8a9",
+	Hadar: "#d5a6bd", Acrux: "#78b9e6", Mimosa: "#e6ca73", Alnair: "#7ccfc7",
+	Alioth: "#d2b3ef", Dubhe: "#e49a73", Mirfak: "#9fc56e"}
 const RISING_AXIS_COLOR = "#ff6f6f"
 const SETTING_AXIS_COLOR = "#70b7ff"
-const GRAPH_STARS = [...STAR_LABELS, {name: "Bellatrix", index: 28}]
-	.filter(star => GRAPH_STAR_COLORS[star.name]).map(star => ({
+const GRAPH_STARS = BRIGHT_STARS.map(star => ({
 	...star, color: GRAPH_STAR_COLORS[star.name]}))
 
 // The spreadsheet's principal (yogatārā) star represents each mansion. Its
@@ -945,6 +946,15 @@ function detailAzimuthLabel(azimuth) {
 	const rounded = Math.round(azimuth * 100) / 100
 	return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2).replace(/0$/, "")}
 
+function solarAzimuthGuides(conditions) {
+	const solarAltitude = geometricHorizon(conditions, conditions.sunAltitude)
+	const obliquity = getObliquity(0)
+	return {
+		solstices: [-obliquity, obliquity].map(declination =>
+			getRisingAzimuth(declination, conditions.latitude, solarAltitude))
+			.filter(Number.isFinite),
+		equinox: 90}}
+
 function prepareGraphCanvas(canvas) {
 	const width = canvas.clientWidth, height = canvas.clientHeight
 	if(!width || !height) return null
@@ -967,11 +977,23 @@ function drawVerticalLabel(ctx, text, x, y, color) {
 	ctx.fillText(text, 0, 0)
 	ctx.restore()}
 
+function drawGraphTitle(ctx, canvas, x) {
+	const title = canvas.closest(".graphPanel")?.querySelector(".graphCollapsedLabel")?.textContent
+	if(!title) return
+	ctx.save()
+	ctx.fillStyle = "white"
+	ctx.font = "14pt sans-serif"
+	ctx.textAlign = "center"
+	ctx.textBaseline = "middle"
+	ctx.fillText(title, x, 17)
+	ctx.restore()}
+
 function drawRisingSettingGraph(selectedIntersection, conditions) {
 	const canvas = UI.risingSettingGraph
 	const prepared = prepareGraphCanvas(canvas)
 	if(!prepared) return
 	const {ctx, width, height} = prepared
+	drawGraphTitle(ctx, canvas, width / 2)
 	if(!selectedIntersection || !conditions || !Number.isFinite(selectedIntersection.centralYear)) {
 		canvas.setAttribute("aria-label", "No selected star for the acronychal and cosmical detail graph")
 		return}
@@ -1045,17 +1067,27 @@ function drawRisingSettingGraph(selectedIntersection, conditions) {
 	const azimuthMax = Math.min(180,
 		(Math.ceil(dataAzimuthMax / azimuthStep) + 1) * azimuthStep)
 	const azimuthBlocks = Math.round((azimuthMax - azimuthMin) / azimuthStep)
-	const left = 102, right = width - 102, top = 62, bottom = height - 64
+	const left = 102, right = width - 102, top = 86, bottom = height - 88
 	if(right <= left || bottom <= top || yearMax <= yearMin || azimuthMax <= azimuthMin) return
 	const x = azimuth => left + (azimuth - azimuthMin) / (azimuthMax - azimuthMin) * (right - left)
 	const y = year => bottom - (year - yearMin) / (yearMax - yearMin) * (bottom - top)
 	ctx.font = "10pt sans-serif"
 	ctx.textBaseline = "middle"
 	ctx.textAlign = "center"
+	const altitudeType = conditions.refraction ? "Apparent" : "Geometric"
 	ctx.fillStyle = SETTING_AXIS_COLOR
-	ctx.fillText("Setting Azimuth (°)", (left + right) / 2, 18)
+	ctx.fillText(altitudeType + " Setting Azimuth (°)", (left + right) / 2, 41)
 	ctx.fillStyle = RISING_AXIS_COLOR
-	ctx.fillText("Rising Azimuth (°)", (left + right) / 2, height - 17)
+	ctx.fillText(altitudeType + " Rising Azimuth (°)", (left + right) / 2, height - 41)
+	const altitude = (conditions.horizon < 0 ? "−" : "+") +
+		Math.abs(conditions.horizon).toFixed(2) + "°"
+	const sunAltitudeText = (conditions.sunAltitude < 0 ? "−" : "+") +
+		Math.abs(conditions.sunAltitude).toFixed(2) + "°"
+	ctx.fillStyle = "#aaa"
+	ctx.fillText("(The " + altitudeType.toLowerCase() + " rising and setting azimuths of the " +
+		"selected star are computed at its " + altitude + " altitude crossings, while sunrise " +
+		"and sunset use a Sun altitude of " + sunAltitudeText + ".)",
+		(left + right) / 2, height - 17)
 	drawVerticalLabel(ctx, risingEventName + " Rising Date***",
 		25, (top + bottom) / 2, RISING_AXIS_COLOR)
 	drawVerticalLabel(ctx, settingEventName + " Setting Date***", width - 25,
@@ -1234,13 +1266,17 @@ function drawAzimuthGraph(canvas, tracks, selectedIntersection, conditions, naks
 	const {ctx, width, height} = prepared
 	let lowest = conditions.rising - conditions.uncertainty
 	let highest = conditions.rising + conditions.uncertainty
+	const solarGuides = solarAzimuthGuides(conditions)
+	for(const azimuth of [...solarGuides.solstices, solarGuides.equinox]) {
+		lowest = Math.min(lowest, azimuth)
+		highest = Math.max(highest, azimuth)}
 	for(const track of tracks) for(const point of track.points) if(point) {
 		lowest = Math.min(lowest, point.azimuth)
 		highest = Math.max(highest, point.azimuth)}
 	const extent = Math.min(90, Math.max(5,
 		Math.ceil((Math.max(90 - lowest, highest - 90) + 1) / 5) * 5))
 	const min = 90 - extent, max = 90 + extent
-	const left = 82, right = width - 82, top = 62, bottom = height - 64
+	const left = 82, right = width - 82, top = 86, bottom = height - 88
 	const labelSpace = 72
 	const trackBottom = bottom - labelSpace
 	const x = azimuth => left + (azimuth - min) / (max - min) * (right - left)
@@ -1249,13 +1285,39 @@ function drawAzimuthGraph(canvas, tracks, selectedIntersection, conditions, naks
 	ctx.font = "10pt sans-serif"
 	ctx.textAlign = "center"
 	ctx.textBaseline = "middle"
+	drawGraphTitle(ctx, canvas, (left + right) / 2)
+	const altitudeType = conditions.refraction ? "Apparent" : "Geometric"
 	ctx.fillStyle = SETTING_AXIS_COLOR
-	ctx.fillText("Setting Azimuth (°)", (left + right) / 2, 18)
+	ctx.fillText(altitudeType + " Setting Azimuth (°)", (left + right) / 2, 41)
 	ctx.fillStyle = RISING_AXIS_COLOR
-	ctx.fillText("Rising Azimuth (°)", (left + right) / 2, height - 17)
+	ctx.fillText(altitudeType + " Rising Azimuth (°)", (left + right) / 2, height - 41)
+	const altitude = (conditions.horizon < 0 ? "−" : "+") +
+		Math.abs(conditions.horizon).toFixed(2) + "°"
+	const sunAltitude = (conditions.sunAltitude < 0 ? "−" : "+") +
+		Math.abs(conditions.sunAltitude).toFixed(2) + "°"
+	const altitudeDescription = altitudeType.toLowerCase()
+	ctx.fillStyle = "#aaa"
+	if(naksatrasOnly)
+		ctx.fillText("(The " + altitudeDescription + " rising and setting azimuths of each Indian " +
+			"nakṣatra are computed at its yogatārā's " + altitude + " altitude crossings, while the " +
+			"red solar guides use a Sun altitude of " + sunAltitude + ".)",
+			(left + right) / 2, height - 17)
+	else
+		ctx.fillText("(The " + altitudeDescription + " rising and setting azimuths of each bright " +
+			"star are computed at its " + altitude + " altitude crossings, while the red solar guides " +
+			"use a Sun altitude of " + sunAltitude + ".)",
+			(left + right) / 2, height - 17)
 	ctx.fillStyle = "#ededed"
 	drawVerticalLabel(ctx, "Year (AD)", 25, (top + bottom) / 2)
 	drawVerticalLabel(ctx, "Year (AD)", width - 25, (top + bottom) / 2)
+	if(solarGuides.solstices.length === 2) {
+		const solarMinimum = Math.min(...solarGuides.solstices)
+		const solarMaximum = Math.max(...solarGuides.solstices)
+		ctx.save()
+		ctx.beginPath(); ctx.rect(left, top, right - left, bottom - top); ctx.clip()
+		ctx.fillStyle = "rgba(255, 0, 0, 0.15)"
+		ctx.fillRect(x(solarMinimum), top, x(solarMaximum) - x(solarMinimum), bottom - top)
+		ctx.restore()}
 
 	// The selected alignment and tolerance are independent of the star-track cache.
 	ctx.save()
@@ -1300,6 +1362,14 @@ function drawAzimuthGraph(canvas, tracks, selectedIntersection, conditions, naks
 		ctx.fillStyle = "#ddd"
 		ctx.textAlign = "right"; ctx.fillText(yearLabel, left - 10, py)
 		ctx.textAlign = "left"; ctx.fillText(yearLabel, right + 10, py)}
+	ctx.save()
+	ctx.beginPath(); ctx.rect(left, top, right - left, bottom - top); ctx.clip()
+	for(const azimuth of [...solarGuides.solstices, solarGuides.equinox]) {
+		const px = x(azimuth)
+		ctx.beginPath(); ctx.moveTo(px, top); ctx.lineTo(px, bottom)
+		ctx.strokeStyle = "black"; ctx.lineWidth = 3; ctx.stroke()
+		ctx.strokeStyle = "red"; ctx.lineWidth = 1; ctx.stroke()}
+	ctx.restore()
 	ctx.strokeStyle = "#aaa"
 	ctx.lineWidth = 2
 	ctx.lineCap = "round"
@@ -1479,10 +1549,7 @@ function drawSkyPath(selectedIntersection, conditions) {
 		ctx.strokeStyle = starColor
 		ctx.lineWidth = 2.5
 		ctx.beginPath(); ctx.arc(cx, cy, altitudeRadius, 0, 2 * Math.PI); ctx.stroke()}
-	const obliquity = getObliquity(0)
-	const solarAltitude = geometricHorizon(conditions, conditions.sunAltitude)
-	const solsticeAzimuths = [-obliquity, obliquity].map(declination =>
-		getRisingAzimuth(declination, conditions.latitude, solarAltitude)).filter(Number.isFinite)
+	const solsticeAzimuths = solarAzimuthGuides(conditions).solstices
 	if(solsticeAzimuths.length === 2) {
 		const risingMinimum = Math.min(...solsticeAzimuths)
 		const risingMaximum = Math.max(...solsticeAzimuths)
