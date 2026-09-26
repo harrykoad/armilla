@@ -690,9 +690,11 @@ function uncertaintyIntersections(tracks, conditions) {
 			(Number.isFinite(a.centralYear) ? a.centralYear : (a.start + a.end) / 2) ||
 			a.track.name.localeCompare(b.track.name)})}
 
+function formatCalendarYear(year) {
+	return year <= 0 ? 1 - year + " BC" : "AD " + year}
+
 function formatIntersectionYear(year) {
-	const rounded = Math.round(year)
-	return rounded < 0 ? Math.abs(rounded) + " BC" : "AD " + rounded}
+	return formatCalendarYear(Math.round(year))}
 
 function horizonOppositionError(
 	star, julianDay, conditions, starAltitude, sunAltitude,
@@ -816,8 +818,7 @@ function starOppositionEvent(
 			result = {label: monthName + " " + day, julianDay: crossingDay,
 				date: eventYear + "-" + String(month).padStart(2, "0") + "-" +
 					String(day).padStart(2, "0"), time: timeText,
-				tooltip: (eventYear < 0 ? "-" + String(Math.abs(eventYear)).padStart(4, "0") :
-					String(eventYear).padStart(4, "0")) + " " + monthName + " " + day +
+				tooltip: formatCalendarYear(eventYear) + " " + monthName + " " + day +
 					" @ " + timeText}}}
 	graph.oppositionDates.set(key, result)
 	return result}
@@ -1308,8 +1309,8 @@ function drawAzimuthGraph(canvas, tracks, selectedIntersection, conditions, naks
 			"use a Sun altitude of " + sunAltitude + ".)",
 			(left + right) / 2, height - 17)
 	ctx.fillStyle = "#ededed"
-	drawVerticalLabel(ctx, "Year (AD)", 25, (top + bottom) / 2)
-	drawVerticalLabel(ctx, "Year (AD)", width - 25, (top + bottom) / 2)
+	drawVerticalLabel(ctx, "Year", 25, (top + bottom) / 2)
+	drawVerticalLabel(ctx, "Year", width - 25, (top + bottom) / 2)
 	if(solarGuides.solstices.length === 2) {
 		const solarMinimum = Math.min(...solarGuides.solstices)
 		const solarMaximum = Math.max(...solarGuides.solstices)
@@ -1355,7 +1356,7 @@ function drawAzimuthGraph(canvas, tracks, selectedIntersection, conditions, naks
 	ctx.setLineDash([])
 	for(let year = Math.ceil(graph.yearMin / 500) * 500; year < graph.yearMax; year += 500) {
 		const py = y(year)
-		const yearLabel = String(year).replace("-", "−")
+		const yearLabel = formatCalendarYear(year)
 		ctx.strokeStyle = "#a1a1a1"
 		ctx.lineWidth = 0.5
 		ctx.beginPath(); ctx.moveTo(left, py); ctx.lineTo(right, py); ctx.stroke()
@@ -1451,7 +1452,8 @@ function drawAzimuthGraph(canvas, tracks, selectedIntersection, conditions, naks
 			ctx.restore()}}
 	canvas.setAttribute("aria-label", "Rising and setting azimuths of " + tracks.length +
 		(naksatrasOnly ? " naksatra principal stars" : " stars") +
-		" from AD " + graph.yearMin + " to " + graph.yearMax +
+		" from " + formatCalendarYear(graph.yearMin) + " to " +
+		formatCalendarYear(graph.yearMax) +
 		", rising azimuth " + min + " to " + max + " degrees" +
 		", at latitude " + conditions.latitude + " degrees. " +
 		(conditions.refraction ? "Atmospheric refraction included." : "Atmospheric refraction excluded."))}
