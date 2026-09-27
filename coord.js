@@ -6,6 +6,9 @@ const toHorizontal = p => mdot(matrix.toHorizontal, p)
 // From * to Nitayana
 const fromEquatorialJ2000 = p => mdot(matrix.fromEquatorialJ2000, p)
 const fromGalactic = p => mdot(matrix.fromGalactic, p)
+const EARTH_A = 6378.137
+const EARTH_E2 = 0.00669438
+const KM_PER_AU = 149597870.7
 
 function apparentAltitude(alt, temp = 26.5, pres = 1013.25) {
 	return alt + (pres / 1010) * (283 / (temp + 273)) *
@@ -58,6 +61,20 @@ function refractHorizontal(point) {
 function refractionEnabled() {
 	return show.refraction}
 
+function getHorizonDip(latitude = param.latitude, elevation = param.elevation, azimuth = null) {
+	if(elevation <= 0) return 0
+	let p = latitude * DEGREE
+	let sp = Math.sin(p)
+	let w = Math.sqrt(1 - EARTH_E2 * sp * sp)
+	let meridional = EARTH_A * (1 - EARTH_E2) / Math.pow(w, 3)
+	let primeVertical = EARTH_A / w
+	let radius = Math.sqrt(meridional * primeVertical)
+	if(azimuth !== null) {
+		let a = azimuth * DEGREE
+		radius = 1 / (Math.pow(Math.sin(a), 2) / meridional +
+			Math.pow(Math.cos(a), 2) / primeVertical)}
+	return Math.acos(clip(radius / (radius + elevation / 1000), -1, 1)) / DEGREE}
+
 function formatTimeZone(timeZone) {
 	return timeZone === 0 ? "UTC" : "UTC" + (timeZone >= 0 ? "+" : "−") + Math.abs(timeZone)}
 
@@ -102,6 +119,20 @@ function getObliquity(jc = param.julianCentury) {
 function getEquatorialRotation(jc = param.julianCentury) {
 	return mul(rotateX(getObliquity(jc)), rotateZ(-getAyanamsa(jc)))}
 
+function getGeoObserver(
+	sidereal = param.sidereal, latitude = param.latitude,
+	ayanamsa = param.ayanamsa, obliquity = param.obliquity,
+	elevation = 0) {
+	let p = latitude * DEGREE
+	let t = sidereal * DEGREE
+	let cp = Math.cos(p), sp = Math.sin(p)
+	let n = EARTH_A / Math.sqrt(1 - EARTH_E2 * sp * sp)
+	let h = elevation / 1000
+	return mdot(transpose(mul(rotateX(obliquity), rotateZ(-ayanamsa))),
+		[(n + h) * cp * Math.cos(t) / KM_PER_AU,
+		 (n + h) * cp * Math.sin(t) / KM_PER_AU,
+		 (n * (1 - EARTH_E2) + h) * sp / KM_PER_AU])}
+
 function updateNirayana() {
 	matrix.fromNirayana = getEquatorialRotation()
 	matrix.toNirayana = transpose(matrix.fromNirayana)}
@@ -130,6 +161,27 @@ function getRisingAzimuth(declination, latitude, altitude) {
 	if(Math.abs(denominator) < 1e-12) return null
 	const cosine = (Math.sin(declination * DEGREE) - Math.sin(phi) * Math.sin(h)) / denominator
 	return cosine <= -1 || cosine >= 1 ? null : Math.acos(cosine) / DEGREE}
+
+function getTopoLagna(
+	sidereal = param.sidereal, latitude = param.latitude,
+	ayanamsa = param.ayanamsa, obliquity = param.obliquity, elevation = 0) {
+	let m = mul(mul(rotateX(-(90 - latitude)), rotateZ(-(90 + sidereal))),
+		mul(rotateX(obliquity), rotateZ(-ayanamsa)))
+	let altitudeFromHorizon = longitude => {
+		let horizontal = mdot(m, toXYZ(longitude, 0))
+		let [azimuth, altitude] = toTP(horizontal)
+		return altitude + getHorizonDip(latitude, elevation, azimuth)}
+	let roots = []
+	let longitude0 = 0, value0 = altitudeFromHorizon(longitude0)
+	for(let longitude1 = 2; longitude1 <= 360; longitude1 += 2) {
+		let value1 = altitudeFromHorizon(longitude1)
+		if(value0 === 0 || value0 * value1 < 0)
+			roots.push(bisectRoot(altitudeFromHorizon, longitude0, longitude1, 45, value0))
+		longitude0 = longitude1
+		value0 = value1}
+	if(roots.length === 0) return toXYZ(0, 0)
+	return roots.map(longitude => toXYZ(mod(longitude, 360), 0)).reduce((east, candidate) =>
+		mdot(m, candidate)[0] > mdot(m, east)[0] ? candidate : east)}
 
 function getEquatorialAltitude(rightAscension, declination, julianDay = param.julianDay,
 	latitude = param.latitude, longitude = param.longitude) {
@@ -198,94 +250,6 @@ function setDateTime() {
 	param.day = dt.getDate()
 	param.time = Math.floor(15 * (dt.getHours() + dt.getMinutes() / 60) * 4) / 4
 	updateYear()}
-
-function getQueryValue(query, names) {
-	for(let name of names) {
-		let value = query.get(name)
-		if(value !== null && value.trim() !== "") return value.trim()}
-	return null}
-
-function getURLQuery() {
-	let parts = []
-	if(window.location.search) parts.push(window.location.search.replace(/^\?/, ""))
-	if(window.location.hash.match(/^#[?&]/)) parts.push(window.location.hash.slice(2))
-	if(!window.location.search) {
-		let pathQuery = window.location.pathname.match(/&([^/?#]*)$/)
-		if(pathQuery) parts.push(pathQuery[1])}
-	return new URLSearchParams(parts.join("&"))}
-
-function parseURLDate(value) {
-	let match = value.match(/^([+-]?\d{1,4})-(\d{1,2})-(\d{1,2})$/)
-	if(!match) return null
-	let year = Number(match[1])
-	let month = Number(match[2])
-	let day = Number(match[3])
-	if(!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) return null
-	if(year < Number(UI.yearSlider.min) || year > Number(UI.yearSlider.max)) return null
-	if(month < 1 || month > 12) return null
-	let yearDays = getYearDays(year)
-	if(day < 1 || day > getMonthDays(yearDays)[month - 1]) return null
-	return {year, month, day}}
-
-function parseURLTime(value) {
-	let match = value.match(/^(\d{1,2}):(\d{1,2})$/)
-	if(match) {
-		let hour = Number(match[1])
-		let minute = Number(match[2])
-		if(hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) return 15 * (hour + minute / 60)}
-	return null}
-
-function applyURLParams() {
-	let query = getURLQuery()
-	let latitudeValue = getQueryValue(query, ["lat"])
-	if(latitudeValue !== null) {
-		let latitude = Number(latitudeValue)
-		if(Number.isFinite(latitude)) {
-			param.latitude = clip(latitude, -90, 90)
-			UI.latitudeSlider.value = param.latitude
-			updateLatitude()
-			updateHorizontal()}}
-	let longitudeValue = getQueryValue(query, ["lon"])
-	if(longitudeValue !== null) {
-		let longitude = Number(longitudeValue)
-		if(Number.isFinite(longitude)) {
-			param.longitude = clip(longitude, -180, 180)
-			UI.longitudeSlider.value = param.longitude
-			updateLongitude()
-			UI.longitudeSlider.value = param.longitude}}
-	let elevationValue = getQueryValue(query, ["elev", "elevation"])
-	if(elevationValue !== null) {
-		let elevation = Number(elevationValue)
-		if(Number.isFinite(elevation)) {
-			param.elevation = clip(Math.round(elevation), Number(UI.elevationSlider.min),
-				Number(UI.elevationSlider.max))
-			UI.elevationSlider.value = param.elevation
-			updateElevation()}}
-	let date = getQueryValue(query, ["date"])
-	if(date !== null) {
-		let parsed = parseURLDate(date)
-		if(parsed !== null) {
-			param.year = parsed.year
-			param.month = parsed.month
-			param.day = parsed.day
-			updateYear()}}
-	let time = getQueryValue(query, ["time"])
-	if(time !== null) {
-		let parsed = parseURLTime(time)
-		if(parsed !== null) {
-			param.time = parsed
-			updateTime()}}
-	let refraction = getQueryValue(query, ["refraction"])
-	if(refraction !== null) {
-		refraction = refraction.toLowerCase()
-		if(refraction === "true" || refraction === "false") {
-			show.refraction = refraction === "true"
-			UI.refractionCheckbox.checked = show.refraction}}
-	let modalValue = getQueryValue(query, ["modal"])
-	if(modalValue !== null) {
-		modalValue = modalValue.toLowerCase()
-		if(modalValue === "true") setModalVisible(true)
-		else if(modalValue === "false") setModalVisible(false)}}
 
 function updateLatitude(latitude = param.latitude) {
 	let l = Math.abs(latitude)

@@ -1,4 +1,3 @@
-<!-- Example URL: https://harrykoad.github.io/armilla/?lat=8.64&lon=99.90&date=1996-03-29&time=15:30&modal=true -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -47,7 +46,12 @@
 }
 </script>
 <style>
-body{color-scheme: dark light; font-family: sans-serif; margin: 0px; overflow: hidden; touch-action: none}
+body{--field-background: #3b3b3b; --field-color: white; --form-accent: white;
+	--form-accent-contrast: black; --range-track: #555; color-scheme: dark;
+	font-family: sans-serif; margin: 0px; overflow: hidden; touch-action: none}
+body[data-theme="light"]{--field-background: #efefef; --field-color: black;
+	--form-accent: black; --form-accent-contrast: white; --range-track: #d8d8d8;
+	color-scheme: light}
 canvas{cursor: grab; display: block; touch-action: none}
 canvas:active{cursor: grabbing}
 #leftPanel, #rightPanel{color: white; cursor: grab; font-size: 12px; max-height: calc(100vh - 20px);
@@ -72,28 +76,41 @@ canvas:active{cursor: grabbing}
 .row{align-items: center; display: flex; justify-content: flex-start; margin-top: 2px}
 .dropdownRow{column-gap: 8px; display: grid; grid-template-columns: auto 1fr}
 .dropdownRow select{box-sizing: border-box; text-align: center; text-align-last: center; width: 100%}
-#orientationDropdown, #viewModeDropdown{background: black; border-radius: 5px; border: 1px solid gray;
-	color: white; font-size: 12px; padding: 2px 4px}
+#orientationDropdown, #viewModeDropdown{background: var(--field-background); border-radius: 5px;
+	border: 1px solid gray; color: var(--field-color); font-size: 12px; padding: 2px 4px}
 .colorLegend{border-radius: 50%; border: 1.5px solid white; display: inline-block; height: 12.5px;
 	margin-bottom: 5px; margin-right: 5px; vertical-align: middle; width: 12.5px}
 .horizontalLine{border-top: 1px solid gray; display: block; height: 0px; margin: 7px 0; width: 100%}
 .modal .horizontalLine{margin-bottom: 10px; margin-top: 10px}
-input[type="checkbox"]{accent-color: currentColor}
-input[type="range"]{accent-color: currentColor; cursor: pointer; height: 15px; width: 100%}
-input[type="radio"] {accent-color: white}
+input[type="checkbox"], input[type="radio"]{accent-color: var(--form-accent)}
+input[type="range"]{-webkit-appearance: none; appearance: none;
+	background: linear-gradient(to right, var(--form-accent) 0%, var(--form-accent) var(--range-progress),
+		var(--range-track) var(--range-progress), var(--range-track) 100%) center / 100% 6px no-repeat;
+	color: var(--form-accent); cursor: pointer; height: 15px; width: 100%}
+input[type="range"]::-webkit-slider-runnable-track{background: transparent; border: 1px solid gray;
+	border-radius: 5px; height: 6px}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance: none; appearance: none;
+	background: var(--form-accent); border: 1px solid var(--form-accent); border-radius: 50%;
+	height: 18px; margin-top: -7px; width: 18px}
+input[type="range"]::-moz-range-track{background: transparent; border: 1px solid gray;
+	border-radius: 5px; height: 4px}
+input[type="range"]::-moz-range-progress{background: transparent; height: 4px}
+input[type="range"]::-moz-range-thumb{background: var(--form-accent); border: 1px solid var(--form-accent);
+	border-radius: 50%; height: 16px; width: 16px}
 .sliderContainer{display: flex; flex-direction: column}
 .sliderMarks{color: gray; display: flex; font-size: 10px; height: 10px; justify-content: space-between}
-.shortButton, .setButton{background: #3b3b3b; border-radius: 6px; border: 1px solid gray; color: white;
-	cursor: pointer; font-size: 11px; height: 20px; padding: 0px; text-align: center; width: 70px}
-.longButton{background: #3b3b3b; border-radius: 6px; border: 1px solid gray; color: white;
-	cursor: pointer; font-size: 11px; height: 20px; padding: 0px; text-align: center; width: 70px}
+.shortButton, .setButton{background: #efefef; border-radius: 6px; border: 1px solid gray; color: black;
+	cursor: pointer; font-size: 10pt; font-weight: bold; height: 24px; padding: 0px; text-align: center; width: 70px}
+.longButton{background: #efefef; border-radius: 6px; border: 1px solid gray; color: black;
+	cursor: pointer; font-size: 11px; font-weight: bold; height: 20px; padding: 0px; text-align: center; width: 70px}
 .modalBackground{align-items: center; background: rgba(255, 255, 255, 0.5); color: white; display: none;
 	height: 100%; justify-content: center; left: 0px; position: fixed; top: 0px; width: 100%; z-index: 10000}
 .modal{background: black; border-radius: 10px; border: 1px solid gray; color: white;
 	font-size: 12px; padding: 10px; text-align: center; user-select: none;
 	-webkit-user-select: none; -moz-user-select: none; -ms-user-select: none}
 .modalRight{border-left: 1px solid gray; padding-left: 10px; width: 360px}
-.textInput {border: 1px solid gray; border-radius: 5px; font-size: 12px; padding: 2px 4px; text-align: center}
+.textInput {background: var(--field-background); border: 1px solid gray; border-radius: 5px;
+	color: var(--field-color); font-size: 12px; padding: 2px 4px; text-align: center}
 .panelFooter, .panelFooter a{color: gray}
 .panelFooter{font-size: 12px; margin: 5px 0px; text-align: center}
 </style>
@@ -327,6 +344,8 @@ input[type="radio"] {accent-color: white}
 <script src="state.js"></script>
 <script src="math.js"></script>
 <script src="coord.js"></script>
+<script src="url.js"></script>
+<script src="data.js"></script>
 <script src="astro.js"></script>
 <script src="draw.js"></script>
 <script src="sphere.js"></script>

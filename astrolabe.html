@@ -71,7 +71,8 @@ body {background: black; color: white; color-scheme: dark; font-family: sans-ser
 	min-height: 0; min-width: 0; overflow: hidden; width: 426px}
 .azimuthGroup::before {align-self: stretch; background: gray; content: ""; grid-column: 1;
 	grid-row: 1; justify-self: end; width: 1px}
-.azimuthControls {align-content: start; display: grid; gap: 8px; grid-column: 1; grid-row: 1}
+.azimuthControls {align-content: start; display: grid; gap: 8px; grid-column: 1; grid-row: 1;
+	min-width: 0; width: 100%}
 .intersectionGroup {align-self: start; display: grid; grid-column: 3; grid-row: 1;
 	grid-template-rows: 44px minmax(0, 1fr) auto;
 	min-height: 0; min-width: 0; overflow: hidden}
@@ -81,7 +82,9 @@ body {background: black; color: white; color-scheme: dark; font-family: sans-ser
 .intersectionTimeNote {color: gray; font-size: 11px; line-height: 16px; padding-top: 4px;
 	text-align: center; white-space: nowrap}
 .intersectionHeaderTable, .intersectionTable {border-collapse: separate; border-spacing: 0;
-	font-size: 9pt; margin-left: auto; margin-right: auto; table-layout: fixed; width: 480px}
+	margin-left: auto; margin-right: auto; table-layout: fixed; width: 480px}
+.intersectionHeaderTable {font-size: 10pt}
+.intersectionTable {font-size: 9pt}
 .intersectionHeaderTable col:nth-child(1), .intersectionTable col:nth-child(1) {width: 90px}
 .intersectionHeaderTable col:nth-child(2), .intersectionTable col:nth-child(2) {width: 90px}
 .intersectionHeaderTable col:nth-child(3), .intersectionTable col:nth-child(3) {width: 80px}
@@ -140,7 +143,7 @@ body {background: black; color: white; color-scheme: dark; font-family: sans-ser
 .skyPathCanvas {align-self: stretch; aspect-ratio: 1; contain: size; display: block; height: 100%; justify-self: start;
 	grid-column: 2; grid-row: 1; max-height: 100%; max-width: 100%; min-height: 0;
 	min-width: 0; width: auto}
-.footnotes {font-size: 12px; grid-column: 1 / -1; margin: 0 8px 12px;
+.footnotes {font-size: 12px; grid-column: 1 / -1; margin: 0 8px;
 	text-align: left}
 .footnotes a {color: inherit}
 .footnotes p {display: grid; grid-template-columns: 3em minmax(0, 1fr); margin: 10px 0}
@@ -165,9 +168,10 @@ body {background: black; color: white; color-scheme: dark; font-family: sans-ser
 	width: calc(100% - 8px)}
 .azimuthInputs {align-items: center; display: grid; gap: 4px;
 	grid-template-columns: 60px auto 60px max-content}
-.hemisphereButton {background: #3b3b3b; border: 1px solid gray; border-radius: 6px; color: white;
-	cursor: pointer; font: inherit; grid-column: 1; grid-row: 5; justify-self: center;
-	height: 24px; margin-top: 5px; padding: 3px 4px; white-space: nowrap; width: 120px}
+.hemisphereButton {background: #f2f2f2; border: 1px solid gray; border-radius: 6px; color: black;
+	cursor: pointer; font: inherit; font-weight: bold; grid-column: 1; grid-row: 5; justify-self: center;
+	height: 24px; margin: 5px 8px 0 0; padding: 3px 4px; text-align: center;
+	white-space: nowrap; width: 130px}
 .field:not(.checkboxField) > label {text-align: right}
 .checkboxField {display: flex; gap: 4px; justify-content: center}
 input[type="text"] {border: 1px solid gray; border-radius: 5px; font: inherit;
@@ -318,6 +322,7 @@ input:focus-visible {outline: 2px solid #80bfff; outline-offset: 2px}
 <script src="state.js"></script>
 <script src="math.js"></script>
 <script src="coord.js"></script>
+<script src="data.js"></script>
 <script src="astro.js"></script>
 <script>
 
@@ -497,24 +502,24 @@ const GRAPH_STARS = BRIGHT_STARS.map(star => ({
 // The spreadsheet's principal (yogatārā) star represents each mansion. Its
 // three alternative asterisms are separate Astrolabe-only rows marked with **.
 const NAKSATRA_DATA = [
-	[NAKSATRA_NAMES[0], "Sheratan", 108], [NAKSATRA_NAMES[1], "35 Ari", null],
-	[NAKSATRA_NAMES[2], "Alcyone", 147], [NAKSATRA_NAMES[3], "Aldebaran", 12],
-	[NAKSATRA_NAMES[4], "Meissa", 255], [NAKSATRA_NAMES[4] + "**", "Alnilam", 31],
-	[NAKSATRA_NAMES[5], "Betelgeuse", 9], [NAKSATRA_NAMES[5] + "**", "Alhena", 52],
-	[NAKSATRA_NAMES[6], "Pollux", 16], [NAKSATRA_NAMES[7], "Asellus Aus.", 484],
-	[NAKSATRA_NAMES[8], "ε Hya", 256], [NAKSATRA_NAMES[9], "Regulus", 22],
-	[NAKSATRA_NAMES[10], "Zosma", 98], [NAKSATRA_NAMES[11], "Denebola", 63],
-	[NAKSATRA_NAMES[12], "Algorab", 166], [NAKSATRA_NAMES[13], "Spica", 14],
-	[NAKSATRA_NAMES[14], "Arcturus", 5], [NAKSATRA_NAMES[15], "Zubenelgenubi", 124],
-	[NAKSATRA_NAMES[16], "Dschubba", 81], [NAKSATRA_NAMES[17], "Antares", 15],
-	[NAKSATRA_NAMES[18], "Shaula", 26], [NAKSATRA_NAMES[19], "Kaus Media", 117],
-	[NAKSATRA_NAMES[20], "Nunki", 57], [NAKSATRA_NAMES[21], "Altair", 11],
-	[NAKSATRA_NAMES[22], "Rotanev", 344], [NAKSATRA_NAMES[23], "λ Aqr", 386],
-	[NAKSATRA_NAMES[23] + "**", "ζ¹ Aqr", 569],
-	[NAKSATRA_NAMES[24], "Markab", 94], [NAKSATRA_NAMES[25], "Alpheratz", 54],
-	[NAKSATRA_NAMES[26], "ζ Psc", null]]
+	[NAKSATRAS[0][0], "Sheratan", 108], [NAKSATRAS[1][0], "35 Ari", null],
+	[NAKSATRAS[2][0], "Alcyone", 147], [NAKSATRAS[3][0], "Aldebaran", 12],
+	[NAKSATRAS[4][0], "Meissa", 255], [NAKSATRAS[4][0] + "**", "Alnilam", 31],
+	[NAKSATRAS[5][0], "Betelgeuse", 9], [NAKSATRAS[5][0] + "**", "Alhena", 52],
+	[NAKSATRAS[6][0], "Pollux", 16], [NAKSATRAS[7][0], "Asellus Aus.", 484],
+	[NAKSATRAS[8][0], "ε Hya", 256], [NAKSATRAS[9][0], "Regulus", 22],
+	[NAKSATRAS[10][0], "Zosma", 98], [NAKSATRAS[11][0], "Denebola", 63],
+	[NAKSATRAS[12][0], "Algorab", 166], [NAKSATRAS[13][0], "Spica", 14],
+	[NAKSATRAS[14][0], "Arcturus", 5], [NAKSATRAS[15][0], "Zubenelgenubi", 124],
+	[NAKSATRAS[16][0], "Dschubba", 81], [NAKSATRAS[17][0], "Antares", 15],
+	[NAKSATRAS[18][0], "Shaula", 26], [NAKSATRAS[19][0], "Kaus Media", 117],
+	[NAKSATRAS[20][0], "Nunki", 57], [NAKSATRAS[21][0], "Altair", 11],
+	[NAKSATRAS[22][0], "Rotanev", 344], [NAKSATRAS[23][0], "λ Aqr", 386],
+	[NAKSATRAS[23][0] + "**", "ζ¹ Aqr", 569],
+	[NAKSATRAS[24][0], "Markab", 94], [NAKSATRAS[25][0], "Alpheratz", 54],
+	[NAKSATRAS[26][0], "ζ Psc", null]]
 
-// These faint yogatārās now use the shared records in astro.js.
+// These faint yogatārās use the shared records in data.js.
 NAKSATRA_DATA[1][2] = FAINT_NAKSATRA_STAR_INDEX.get("35 Ari")
 NAKSATRA_DATA[29][2] = FAINT_NAKSATRA_STAR_INDEX.get("ζ Psc")
 const NAKSATRA_COLORS = ["#8bd3f7", "#f6c66c", "#a9d77b", "#e89dc1", "#c0acf0", "#f29c72"]
@@ -965,9 +970,10 @@ function prepareGraphCanvas(canvas) {
 		canvas.width = pixelWidth
 		canvas.height = pixelHeight}
 	const ctx = canvas.getContext("2d")
-	ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+	ctx.setTransform(1, 0, 0, 1, 0, 0)
 	ctx.fillStyle = "black"
-	ctx.fillRect(0, 0, width, height)
+	ctx.fillRect(0, 0, pixelWidth, pixelHeight)
+	ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
 	return {ctx, width, height}}
 
 function drawVerticalLabel(ctx, text, x, y, color) {
@@ -1068,7 +1074,7 @@ function drawRisingSettingGraph(selectedIntersection, conditions) {
 	const azimuthMax = Math.min(180,
 		(Math.ceil(dataAzimuthMax / azimuthStep) + 1) * azimuthStep)
 	const azimuthBlocks = Math.round((azimuthMax - azimuthMin) / azimuthStep)
-	const left = 102, right = width - 102, top = 86, bottom = height - 88
+	const left = 102, right = width - 102, top = 94, bottom = height - 96
 	if(right <= left || bottom <= top || yearMax <= yearMin || azimuthMax <= azimuthMin) return
 	const x = azimuth => left + (azimuth - azimuthMin) / (azimuthMax - azimuthMin) * (right - left)
 	const y = year => bottom - (year - yearMin) / (yearMax - yearMin) * (bottom - top)
@@ -1077,9 +1083,9 @@ function drawRisingSettingGraph(selectedIntersection, conditions) {
 	ctx.textAlign = "center"
 	const altitudeType = conditions.refraction ? "Apparent" : "Geometric"
 	ctx.fillStyle = SETTING_AXIS_COLOR
-	ctx.fillText(altitudeType + " Setting Azimuth (°)", (left + right) / 2, 41)
+	ctx.fillText(altitudeType + " Setting Azimuth (°)", (left + right) / 2, 49)
 	ctx.fillStyle = RISING_AXIS_COLOR
-	ctx.fillText(altitudeType + " Rising Azimuth (°)", (left + right) / 2, height - 41)
+	ctx.fillText(altitudeType + " Rising Azimuth (°)", (left + right) / 2, height - 49)
 	const altitude = (conditions.horizon < 0 ? "−" : "+") +
 		Math.abs(conditions.horizon).toFixed(2) + "°"
 	const sunAltitudeText = (conditions.sunAltitude < 0 ? "−" : "+") +
@@ -1166,15 +1172,27 @@ function drawRisingSettingGraph(selectedIntersection, conditions) {
 		return solarPath}
 	const risingSunPath = sunPath(risingSunPoints)
 	const settingSunPath = sunPath(settingSunPoints)
+	const risingCentralEvent = starOppositionEvent(
+		star, centralYear, conditions, ...risingEvent)
+	const settingCentralEvent = starOppositionEvent(
+		star, centralYear, conditions, ...settingEvent)
+	const sameEventDate = risingCentralEvent.date &&
+		risingCentralEvent.date === settingCentralEvent.date
 	ctx.strokeStyle = "black"
 	ctx.lineWidth = 4.5
 	ctx.setLineDash([])
 	ctx.stroke(risingSunPath)
-	ctx.stroke(settingSunPath)
 	ctx.strokeStyle = RISING_AXIS_COLOR
 	ctx.lineWidth = 2
 	ctx.stroke(risingSunPath)
+	ctx.setLineDash(sameEventDate ? [4, 8] : [])
+	ctx.strokeStyle = "black"
+	ctx.lineWidth = 4.5
+	ctx.lineCap = sameEventDate ? "round" : "butt"
+	ctx.stroke(settingSunPath)
 	ctx.strokeStyle = SETTING_AXIS_COLOR
+	ctx.lineWidth = 2
+	ctx.lineCap = "butt"
 	ctx.stroke(settingSunPath)
 	ctx.setLineDash([])
 	const path = new Path2D()
@@ -1238,10 +1256,12 @@ function drawRisingSettingGraph(selectedIntersection, conditions) {
 	const lowerBoundY = y(Math.max(yearMin, selectedIntersection.start))
 	const upperBoundText = formatIntersectionYear(selectedIntersection.end)
 	const lowerBoundText = formatIntersectionYear(selectedIntersection.start)
-	if(Math.abs(selectedIntersection.end - graph.yearMax) >= 1e-6) {
+	if(conditions.uncertainty > 1e-9 &&
+		Math.abs(selectedIntersection.end - graph.yearMax) >= 1e-6) {
 		ctx.strokeText(upperBoundText, annotationX, upperBoundY)
 		ctx.fillText(upperBoundText, annotationX, upperBoundY)}
-	if(Math.abs(selectedIntersection.start - graph.yearMin) >= 1e-6) {
+	if(conditions.uncertainty > 1e-9 &&
+		Math.abs(selectedIntersection.start - graph.yearMin) >= 1e-6) {
 		ctx.strokeText(lowerBoundText, annotationX, lowerBoundY)
 		ctx.fillText(lowerBoundText, annotationX, lowerBoundY)}
 	ctx.textBaseline = "middle"
@@ -1277,7 +1297,7 @@ function drawAzimuthGraph(canvas, tracks, selectedIntersection, conditions, naks
 	const extent = Math.min(90, Math.max(5,
 		Math.ceil((Math.max(90 - lowest, highest - 90) + 1) / 5) * 5))
 	const min = 90 - extent, max = 90 + extent
-	const left = 82, right = width - 82, top = 86, bottom = height - 88
+	const left = 102, right = width - 102, top = 94, bottom = height - 96
 	const labelSpace = 72
 	const trackBottom = bottom - labelSpace
 	const x = azimuth => left + (azimuth - min) / (max - min) * (right - left)
@@ -1289,9 +1309,9 @@ function drawAzimuthGraph(canvas, tracks, selectedIntersection, conditions, naks
 	drawGraphTitle(ctx, canvas, (left + right) / 2)
 	const altitudeType = conditions.refraction ? "Apparent" : "Geometric"
 	ctx.fillStyle = SETTING_AXIS_COLOR
-	ctx.fillText(altitudeType + " Setting Azimuth (°)", (left + right) / 2, 41)
+	ctx.fillText(altitudeType + " Setting Azimuth (°)", (left + right) / 2, 49)
 	ctx.fillStyle = RISING_AXIS_COLOR
-	ctx.fillText(altitudeType + " Rising Azimuth (°)", (left + right) / 2, height - 41)
+	ctx.fillText(altitudeType + " Rising Azimuth (°)", (left + right) / 2, height - 49)
 	const altitude = (conditions.horizon < 0 ? "−" : "+") +
 		Math.abs(conditions.horizon).toFixed(2) + "°"
 	const sunAltitude = (conditions.sunAltitude < 0 ? "−" : "+") +
@@ -1518,20 +1538,19 @@ function drawSkyPath(selectedIntersection, conditions) {
 	for(let azimuth = 0; azimuth < 360; azimuth += 30) {
 		const boundaryPoint = screenPoint(azimuth, minimumAltitude)
 		ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(boundaryPoint[0], boundaryPoint[1]); ctx.stroke()}
-	ctx.lineJoin = "round"
-	ctx.strokeStyle = "black"
-	ctx.lineWidth = 3
-	for(const edgePath of solarEdgePaths) ctx.stroke(edgePath)
-	ctx.strokeStyle = "rgba(255, 0, 0, 0.95)"
-	ctx.lineWidth = 1
-	for(const edgePath of solarEdgePaths) ctx.stroke(edgePath)
 	ctx.strokeStyle = "rgba(128, 128, 128, 0.65)"
 	ctx.lineWidth = 0.75
 	ctx.beginPath(); ctx.arc(cx, cy, radius, 0, 2 * Math.PI); ctx.stroke()
-	ctx.strokeStyle = color.horizontal
-	ctx.lineWidth = 2
 	const horizonDip = conditions ? getHorizonDip(conditions.latitude, conditions.elevation) : 0
-	ctx.beginPath(); ctx.arc(cx, cy, radius * (90 + horizonDip) / altitudeSpan, 0, 2 * Math.PI); ctx.stroke()
+	function drawHorizon() {
+		ctx.lineCap = "round"
+		ctx.setLineDash([1, 4])
+		ctx.beginPath(); ctx.arc(cx, cy, radius * (90 + horizonDip) / altitudeSpan, 0, 2 * Math.PI)
+		ctx.strokeStyle = "black"; ctx.lineWidth = 4.5; ctx.stroke()
+		ctx.strokeStyle = color.horizontal; ctx.lineWidth = 2; ctx.stroke()
+		ctx.setLineDash([])
+		ctx.lineCap = "butt"}
+	if(!conditions) drawHorizon()
 	ctx.fillStyle = "#aaa"
 	ctx.font = "12px sans-serif"
 	ctx.textAlign = "center"; ctx.textBaseline = "bottom"; ctx.fillText("East", cx, cy - radius - 2)
@@ -1551,6 +1570,14 @@ function drawSkyPath(selectedIntersection, conditions) {
 		ctx.strokeStyle = starColor
 		ctx.lineWidth = 2.5
 		ctx.beginPath(); ctx.arc(cx, cy, altitudeRadius, 0, 2 * Math.PI); ctx.stroke()}
+	drawHorizon()
+	ctx.lineJoin = "round"
+	ctx.strokeStyle = "black"
+	ctx.lineWidth = 3
+	for(const edgePath of solarEdgePaths) ctx.stroke(edgePath)
+	ctx.strokeStyle = "rgba(255, 0, 0, 0.95)"
+	ctx.lineWidth = 1
+	for(const edgePath of solarEdgePaths) ctx.stroke(edgePath)
 	const solsticeAzimuths = solarAzimuthGuides(conditions).solstices
 	if(solsticeAzimuths.length === 2) {
 		const risingMinimum = Math.min(...solsticeAzimuths)

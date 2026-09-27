@@ -157,23 +157,24 @@ function drawStars(stars) {
 
 function pushNaksatras() {
 	for(let n = 0; n < NAKSATRAS.length; n++) {
-		let naksatra = NAKSATRAS[n]
-		let positions = naksatra.stars.map(star => getNaksatraStarPosition(star))
+		let [name, yogataras, figure] = NAKSATRAS[n]
+		let stars = [...new Set([...figure, ...yogataras])]
+		let positions = stars.map(index => getStarPosition(index))
 		if(show.naksatras) {
 			let rendered = positions.map(p => celestialRenderPosition(fromNirayana(p)))
-			let figure = NAKSATRA_FIGURES[n]
+			let renderedByIndex = new Map(stars.map((index, i) => [index, rendered[i]]))
 			for(let i = 0; i < figure.length; i += 2)
-				pushLines({points: [rendered[figure[i]].position, rendered[figure[i + 1]].position],
+				pushLines({points: [renderedByIndex.get(figure[i]).position, renderedByIndex.get(figure[i + 1]).position],
 					color: "rgba(192, 192, 0, 0.6)", width: 4,
 					fromMode: rendered[0].fromMode, layer: "figures"})
 			for(let i = 0; i < rendered.length; i++) {
 				let [c3D, s2D] = project(rendered[i].position, rendered[i].fromMode)
-				let marker = {position: s2D, yogatara: naksatra.stars[i][4] === true}
+				let marker = {position: s2D, yogatara: yogataras.includes(stars[i])}
 				if(isVisiblePoint(c3D)) buffer.frontNaksatras.push(marker)
 				else if(canDrawBackSide()) buffer.backNaksatras.push(marker)}}
 		if(show.naksatraNames) {
 			pushLabels([{
-				name: NAKSATRA_NAMES[n],
+				name,
 				position: fromNirayana(toXYZ((n + 0.5) * 360 / 27, 0)),
 				fromMode: "equatorial",
 				color: color.galactic,
@@ -501,13 +502,13 @@ function renderSky() {
 		let stars = pushStars(show.stars)
 		let s = stars.vectors
 		if(show.constellations) {
-			for(let c of CONSTELLATIONS) {
+			for(let c of CONSTELLATION_FIGURES) {
 				for(let i = 0; i < c.length; i += 2)
 					pushLines({points: [s[c[i]], s[c[i + 1]]], color: color.constellations,
 						width: 0.75, fromMode: stars.fromMode, layer: "figures"})}}
 		if(show.zodiac) {
 			for(let z of ZODIAC) {
-				let c = CONSTELLATIONS[z]
+				let c = CONSTELLATION_FIGURES[z]
 				for(let i = 0; i < c.length; i += 2)
 					pushLines({points: [s[c[i]], s[c[i + 1]]], color: color.zodiac,
 						width: 1.5, fromMode: stars.fromMode, layer: "figures"})}}}

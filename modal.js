@@ -89,16 +89,16 @@ function updateHoraryStars(jd) {
 			let t = (15 - lon) * DEGREE
 			pos = [x0 + Math.sin(t) * rt, y0 - Math.cos(t) * rt]}
 		modal.horary.stars.push({position: pos, magnitude: mag})}
-	for(let z = 0; z < CONSTELLATIONS.length; z++) {
+	for(let z = 0; z < CONSTELLATION_FIGURES.length; z++) {
 		if(ZODIAC.includes(z)) continue
-		let c = CONSTELLATIONS[z]
+		let c = CONSTELLATION_FIGURES[z]
 		for(let i = 0; i < c.length; i += 2) {
 			let a = modal.horary.stars[c[i]]
 			let b = modal.horary.stars[c[i + 1]]
 			if(a && b && a.position && b.position)
 				modal.horary.constellations.push([a.position, b.position])}}
 	for(let z of ZODIAC) {
-		let c = CONSTELLATIONS[z]
+		let c = CONSTELLATION_FIGURES[z]
 		for(let i = 0; i < c.length; i += 2) {
 			let a = modal.horary.stars[c[i]]
 			let b = modal.horary.stars[c[i + 1]]
@@ -189,7 +189,7 @@ function lunarSearch(t0, latitude, longitude, elevation = 0) {
 			target += step}
 		return null}
 	let formatEvent = (prefix, jd) => jd ? prefix + " " + eventTime(jd) : ""
-	let naksatras = NAKSATRA_NAMES.map((name, i) => name + " (" + (i + 1) + ")")
+	let naksatras = NAKSATRAS.map(([name], i) => name + " (" + (i + 1) + ")")
 	let thaiMonths = ["๖", "๗", "๘", "๙", "๑๐", "๑๑", "๑๒", "๑", "๒", "๓", "๔", "๕"]
 	let months = LUNAR_MONTH_NAMES.map((name, i) => name + " (" + (i + 1) + "/" + thaiMonths[i] + ")")
 	let now = stateAt(t0)

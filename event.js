@@ -9,6 +9,19 @@ function updatePanelScrollButtons() {
 		down.style.display = overflowing &&
 			panel.scrollTop + panel.clientHeight < panel.scrollHeight - 1 ? "block" : "none"}}
 
+function updateRangeFill(input) {
+	const minimum = Number(input.min), maximum = Number(input.max), value = Number(input.value)
+	const progress = maximum > minimum ? 100 * (value - minimum) / (maximum - minimum) : 0
+	input.style.setProperty("--range-progress", Math.max(0, Math.min(100, progress)) + "%")}
+
+function updateAllRangeFills() {
+	for(const input of document.querySelectorAll('input[type="range"]')) updateRangeFill(input)}
+
+for(const input of document.querySelectorAll('input[type="range"]')) {
+	updateRangeFill(input)
+	input.addEventListener("input", () => updateRangeFill(input))
+	input.addEventListener("change", () => updateRangeFill(input))}
+
 for(let [panel, up, down] of panelScrollControls) {
 	up.onclick = () => panel.scrollBy({top: -0.8 * panel.clientHeight, behavior: "smooth"})
 	down.onclick = () => panel.scrollBy({top: 0.8 * panel.clientHeight, behavior: "smooth"})
@@ -80,15 +93,19 @@ UI.viewModeDropdown.onchange = () => {
 UI.darkThemeCheckbox.onchange = () => {
 	mode.darkTheme = UI.darkThemeCheckbox.checked
 	let i = mode.darkTheme ? 0 : 1
+	document.body.dataset.theme = mode.darkTheme ? "dark" : "light"
 	document.body.style.colorScheme = ["dark", "light"][i]
 	document.querySelectorAll("#leftPanel, #rightPanel, .modal, .panelScrollButton").forEach(
 		e => e.style.color = ["white", "black"][i])
 	document.querySelectorAll(".box, .modal").forEach(e => e.style.background = ["black", "white"][i])
 	document.querySelectorAll(".colorLegend").forEach(e => e.style.borderColor = ["white","black"][i])
 	document.querySelectorAll('input[type="radio"]').forEach(e => {e.style.accentColor = ["white","black"][i]})
-	document.querySelectorAll("#orientationDropdown, #viewModeDropdown, .shortButton, .setButton, .longButton").forEach(e => {
+	document.querySelectorAll("#orientationDropdown, #viewModeDropdown").forEach(e => {
 		e.style.background = ["#3b3b3b", "#efefef"][i]
 		e.style.color = ["white", "black"][i]})
+	document.querySelectorAll(".shortButton, .setButton, .longButton").forEach(e => {
+		e.style.background = ["#efefef", "#3b3b3b"][i]
+		e.style.color = ["black", "white"][i]})
 	for(let e of document.querySelectorAll(".panelScrollButton")) {
 		e.style.background = ["#efefef", "#3b3b3b"][i]
 		e.style.color = ["black", "white"][i]}
@@ -209,6 +226,7 @@ UI.hereButton.onclick = () => navigator.geolocation.getCurrentPosition(p => {
 			Number(UI.elevationSlider.max))
 		UI.elevationSlider.value = param.elevation
 		updateElevation()}
+	updateAllRangeFills()
 	requestSkyRender()}, error => alert("Location access failed."))
 
 UI.yearSlider.oninput = () => {
@@ -233,8 +251,20 @@ UI.timeSlider.oninput = () => {
 	updateTime()
 	requestSkyRender()}
 
+function centerViewOnSun(jc = param.julianCentury) {
+	let sun = normalize(fromNirayana(translate(scale(geoMoon()[0], 1 / MASS_FACTOR),
+		negate(translate(helioEMB(), geoObserver)))))
+	let centered = refractionEnabled() ?
+		refractHorizontal(toHorizontal(sun)) : changeSystem(sun, "equatorial", mode.orientation)
+	let [t, p] = toTP(centered)
+	view.yaw = mod(-t, 360)
+	view.pitch = p
+	update.view = true
+	update.sky = true}
+
 UI.nowButton.onclick = () => {
 	setDateTime()
+	updateAllRangeFills()
 	centerViewOnSun()
 	requestSkyRender()}
 
@@ -345,6 +375,7 @@ UI.modalSetButton.onclick = () => {
 	param.day = modal.temp.day
 	param.time = 15 * (modal.temp.hour + modal.temp.minute / 60)
 	updateYear()
+	updateAllRangeFills()
 	requestSkyRender()
 	UI.modalBackground.style.display = "none"}
 UI.modalCancelButton.onclick = () => {
@@ -362,6 +393,7 @@ UI.latitudeSlider.value = param.latitude
 updateLongitude()
 UI.longitudeSlider.value = param.longitude
 applyURLParams()
+updateAllRangeFills()
 centerViewOnSun()
 resize()
 updatePanelScrollButtons()
