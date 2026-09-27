@@ -1,11 +1,3 @@
-const STARS = initStars()
-const FAINT_NAKSATRA_STAR_INDEX = new Map([
-	"35 Ari", "39 Ari", "23 Tau", "19 Tau", "φ¹ Ori", "φ² Ori",
-	"η Cnc", "θ Cnc", "93 Leo", "ζ Psc"
-].map((name, i, names) => [name, STARS.length - names.length + i]))
-
-const PROPER_MOTION = initProperMotion()
-
 const BRIGHT_STARS = initBrightStars()
 const STAR_LABELS = [...BRIGHT_STARS, {index: 50, name: "Polaris", magnitude: 1.98}]
 const STAR_LABEL_BY_NAME = new Map(STAR_LABELS.map(star => [star.name, star]))
@@ -14,18 +6,13 @@ const SEASONAL_TRIANGLES = [
 	{name: "Summer\nTriangle", color: "magenta", stars: ["Vega", "Altair", "Deneb"]},
 	{name: "Winter\nTriangle", color: "cyan", stars: ["Sirius", "Procyon", "Betelgeuse"]}]
 
-const CONSTELLATION_FIGURES = initConstellationFigures()
-const CONSTELLATION_NAMES = initConstellationNames()
-
-const ZODIAC = [6, 76, 37, 21, 45, 84, 47, 69, 75, 11, 4, 64]
 const ZODIAC_NAMES = new Set(["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
 	"Libra", "Scorpius", "Sagittarius", "Capricornus", "Aquarius", "Pisces"])
+const ZODIAC = CONSTELLATIONS.flatMap(([name], index) => ZODIAC_NAMES.has(name) ? [index] : [])
 
 const LUNAR_MONTH_NAMES = [
 	"Vaiśākha", "Jyaiṣṭha", "Āṣāḍha", "Śrāvaṇa", "Bhādrapada", "Āśvina",
 	"Kārttika", "Mārgaśīrṣa", "Pauṣa", "Māgha", "Phālguna", "Caitra"]
-
-const NAKSATRAS = initNaksatras()
 
 const MASS_FACTOR = -82.34295832198312
 const MOON_R = 1737.4
@@ -173,13 +160,7 @@ function getStarPosition(index, jd = param.julianDay) {
 	let position = normalize(STARS[index])
 	if(!show.properMotion) return position
 	let years = (jd - 2451545) / 365.25
-	let pair = PROPER_MOTION[index].pair
-	if(pair) {
-		let angle = Math.atan(pair.rate * years)
-		let c = Math.cos(angle), s = Math.sin(angle)
-		return normalize(translate(translate(scale(position, c), scale(cross(pair.axis, position), s)),
-			scale(pair.axis, vdot(pair.axis, position) * (1 - c))))}
-	return normalize(translate(position, scale(PROPER_MOTION[index], years)))}
+	return normalize(translate(position, scale(PROPER_MOTIONS[index], years)))}
 
 function initBrightStars() {
 	let data = [

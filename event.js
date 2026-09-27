@@ -1,3 +1,33 @@
+function parseNumber(value, fallback) {
+	const input = value && typeof value === "object" && "value" in value ? value : null
+	function parse(text) {
+		text = String(text ?? "").trim().replace(/−/g, "-").replace(/,/g, "")
+		return text === "" ? NaN : Number(text)}
+	let number = parse(input ? input.value : value)
+	if(!Number.isFinite(number)) {
+		if(fallback === undefined && input) fallback = input.nudgeFallback
+		number = parse(fallback)}
+	return Number.isFinite(number) ? number : NaN}
+
+function addNudgeListeners(input, nudge, commit = null) {
+	function remember() {
+		input.nudgeFallback = input.value
+		if(typeof modal !== "undefined") modal.temp.fallback = input.value}
+	if(commit) input.onchange = commit
+	input.addEventListener("focus", remember)
+	input.addEventListener("keydown", event => {
+		if(event.key === "Enter" && commit) {event.preventDefault(); commit(); return}
+		if(event.key !== "ArrowUp" && event.key !== "ArrowDown") return
+		event.preventDefault()
+		nudge(event.key === "ArrowUp" ? 1 : -1)
+		remember()})
+	input.addEventListener("wheel", event => {
+		if(event.ctrlKey || event.metaKey || event.deltaY === 0) return
+		event.preventDefault()
+		nudge(event.deltaY < 0 ? 1 : -1)
+		remember()}, {passive: false})}
+
+if(document.getElementById("sky")) {
 const panelScrollControls = [
 	[UI.leftPanel, UI.leftPanelScrollUp, UI.leftPanelScrollDown],
 	[UI.rightPanel, UI.rightPanelScrollUp, UI.rightPanelScrollDown]]
@@ -436,26 +466,9 @@ UI.worldMap.onpointerup = e => {
 		UI.worldMap.releasePointerCapture(e.pointerId)}
 UI.worldMap.onpointercancel = UI.worldMap.onpointerup
 
-function parseNumber(e, fallback = modal.temp.fallback) {
-	let n = Number(e.value.trim().replace("−", "-").replace(/,/g, ""))
-	if(!Number.isFinite(n)) n = Number(String(fallback).replace("−", "-").replace(/,/g, ""))
-	return Number.isFinite(n) ? n : null}
-
-function addNudgeListeners(elem, step) {
-	elem.onfocus = () => {modal.temp.fallback = elem.value}
-	elem.onkeydown = e => {
-		if(e.key !== "ArrowUp" && e.key !== "ArrowDown") return
-		e.preventDefault()
-		step(e.key === "ArrowUp" ? 1 : -1)
-		modal.temp.fallback = elem.value}
-	elem.addEventListener("wheel", e => {
-		e.preventDefault()
-		step(e.deltaY < 0 ? 1 : -1)
-		modal.temp.fallback = elem.value}, {passive: false})}
-
 UI.latitudeInput.onchange = () => {
 	let l = parseNumber(UI.latitudeInput, "")
-	if(l === null || l < -90 || l > 90) {
+	if(!Number.isFinite(l) || l < -90 || l > 90) {
 		alert("Please enter a valid latitude from −90° to +90°.")
 		UI.latitudeInput.value = modal.temp.fallback
 		UI.latitudeInput.select()}
@@ -465,7 +478,7 @@ UI.latitudeInput.onchange = () => {
 		updateModal()}}
 addNudgeListeners(UI.latitudeInput, step => {
 	let l = parseNumber(UI.latitudeInput)
-	if(l === null) return
+	if(!Number.isFinite(l)) return
 	UI.latitudeInput.value = formatSignedAngleDecimal(
 			Math.round(clip(l + step, -90, 90) * 100) / 100, 2).replace("°", "")
 	updateModal()})
@@ -500,14 +513,14 @@ function updateLongitudeModal(longitude) {
 
 UI.longitudeInput.onchange = () => {
 	let l = parseNumber(UI.longitudeInput, "")
-	if(l === null || l < -180 || l > 180) {
+	if(!Number.isFinite(l) || l < -180 || l > 180) {
 		alert("Please enter a valid longitude from −180° to +180°.")
 		UI.longitudeInput.value = modal.temp.fallback
 		UI.longitudeInput.select()}
 	else updateLongitudeModal(l)}
 addNudgeListeners(UI.longitudeInput, step => {
 	let l = parseNumber(UI.longitudeInput)
-	if(l === null) return
+	if(!Number.isFinite(l)) return
 	updateLongitudeModal(mod(l + step, 360, -180))})
 
 function setDayModal() {
@@ -533,14 +546,14 @@ function updateYearModal(year, refresh = true) {
 
 UI.yearInput.onchange = () => {
 	let y = parseNumber(UI.yearInput, "")
-	if(y === null || y < 1 || y > 5000) {
+	if(!Number.isFinite(y) || y < 1 || y > 5000) {
 		alert("Please enter a valid year number from 1 to 5000.")
 		UI.yearInput.value = modal.temp.fallback
 		UI.yearInput.select()}
 	else updateYearModal(UI.eraBC.checked ? 1 - y : y)}
 addNudgeListeners(UI.yearInput, step => {
 	let y = parseNumber(UI.yearInput)
-	if(y === null) return
+	if(!Number.isFinite(y)) return
 	updateYearModal(clip(modal.temp.year + step,
 		Number(UI.yearSlider.min), Number(UI.yearSlider.max)))})
 
@@ -557,7 +570,7 @@ function updateMonthModal(month, refresh = true) {
 
 UI.monthInput.onchange = () => {
 	let m = parseNumber(UI.monthInput, "")
-	if(m === null || m < 1 || m > 12) {
+	if(!Number.isFinite(m) || m < 1 || m > 12) {
 		alert("Please enter a valid month number from 1 to 12.")
 		UI.monthInput.value = modal.temp.fallback
 		UI.monthInput.select()}
@@ -584,7 +597,7 @@ function updateDayModal(day) {
 
 UI.dayInput.onchange = () => {
 	let d = parseNumber(UI.dayInput, "")
-	if(d === null) {
+	if(!Number.isFinite(d)) {
 		alert("Please enter a valid day number.")
 		UI.dayInput.value = modal.temp.fallback
 		UI.dayInput.select()}
@@ -611,7 +624,7 @@ function updateJulianDayModal(jd) {
 
 UI.hourInput.onchange = () => {
 	let h = parseNumber(UI.hourInput, "")
-	if(h === null || h < 0 || h > 23) {
+	if(!Number.isFinite(h) || h < 0 || h > 23) {
 		alert("Please enter a valid hour number from 0 to 23.")
 		UI.hourInput.value = modal.temp.fallback
 		UI.hourInput.select()}
@@ -624,7 +637,7 @@ addNudgeListeners(UI.hourInput, step => {
 
 UI.minuteInput.onchange = () => {
 	let m = parseNumber(UI.minuteInput, "")
-	if(m === null || m < 0 || m > 59) {
+	if(!Number.isFinite(m) || m < 0 || m > 59) {
 		alert("Please enter a valid minute number from 0 to 59.")
 		UI.minuteInput.value = modal.temp.fallback
 		UI.minuteInput.select()}
@@ -637,7 +650,7 @@ addNudgeListeners(UI.minuteInput, step => {
 
 UI.julianDayInput.onchange = () => {
 	let jd = parseNumber(UI.julianDayInput, "")
-	if(jd === null || jd < -104788 || jd > 3547638) {
+	if(!Number.isFinite(jd) || jd < -104788 || jd > 3547638) {
 		alert("Please enter a valid Julian day between -104,788 and 3,547,638.")
 		UI.julianDayInput.value = modal.temp.fallback
 		UI.julianDayInput.select()}
@@ -645,3 +658,4 @@ UI.julianDayInput.onchange = () => {
 		updateJulianDayModal(jd)}}
 addNudgeListeners(UI.julianDayInput, step => {
 	updateJulianDayModal(modal.temp.julianDay + step)})
+}

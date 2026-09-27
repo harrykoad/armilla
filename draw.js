@@ -455,10 +455,11 @@ function renderSky() {
 	if(show.naksatras || show.naksatraNames) pushNaksatras()
 
 	if(show.constellationNames)
-		pushLabels(CONSTELLATION_NAMES.map(label => ({
-			name: label.name,
-			...celestialRenderPosition(fromNirayana(label.position)),
-			color: show.zodiac && ZODIAC_NAMES.has(label.name) ? color.zodiac : color.constellations,
+		pushLabels(CONSTELLATIONS.map(([name, [rightAscension, declination]]) => ({
+			name,
+			...celestialRenderPosition(fromNirayana(
+				fromEquatorialJ2000(toXYZ(rightAscension, declination)))),
+			color: show.zodiac && ZODIAC_NAMES.has(name) ? color.zodiac : color.constellations,
 			edge: mode.darkTheme ? "black" : "white",
 			border: 2, size: 11})))
 	if(show.starNames)
@@ -502,13 +503,13 @@ function renderSky() {
 		let stars = pushStars(show.stars)
 		let s = stars.vectors
 		if(show.constellations) {
-			for(let c of CONSTELLATION_FIGURES) {
+			for(let [, , c] of CONSTELLATIONS) {
 				for(let i = 0; i < c.length; i += 2)
 					pushLines({points: [s[c[i]], s[c[i + 1]]], color: color.constellations,
 						width: 0.75, fromMode: stars.fromMode, layer: "figures"})}}
 		if(show.zodiac) {
 			for(let z of ZODIAC) {
-				let c = CONSTELLATION_FIGURES[z]
+				let c = CONSTELLATIONS[z][2]
 				for(let i = 0; i < c.length; i += 2)
 					pushLines({points: [s[c[i]], s[c[i + 1]]], color: color.zodiac,
 						width: 1.5, fromMode: stars.fromMode, layer: "figures"})}}}

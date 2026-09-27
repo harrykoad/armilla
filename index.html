@@ -74,6 +74,7 @@ canvas:active{cursor: grabbing}
 #leftPanel .columns{grid-template-columns: 47.5% 52.5% !important}
 .columns > span{align-items: center; display: flex; margin-top: 2px}
 .row{align-items: center; display: flex; justify-content: flex-start; margin-top: 2px}
+.buttonRow{margin-top: 8px}
 .dropdownRow{column-gap: 8px; display: grid; grid-template-columns: auto 1fr}
 .dropdownRow select{box-sizing: border-box; text-align: center; text-align-last: center; width: 100%}
 #orientationDropdown, #viewModeDropdown{background: var(--field-background); border-radius: 5px;
@@ -91,18 +92,18 @@ input[type="range"]::-webkit-slider-runnable-track{background: transparent; bord
 	border-radius: 5px; height: 6px}
 input[type="range"]::-webkit-slider-thumb{-webkit-appearance: none; appearance: none;
 	background: var(--form-accent); border: 1px solid var(--form-accent); border-radius: 50%;
-	height: 18px; margin-top: -7px; width: 18px}
+	height: 14px; margin-top: -5px; width: 14px}
 input[type="range"]::-moz-range-track{background: transparent; border: 1px solid gray;
 	border-radius: 5px; height: 4px}
 input[type="range"]::-moz-range-progress{background: transparent; height: 4px}
 input[type="range"]::-moz-range-thumb{background: var(--form-accent); border: 1px solid var(--form-accent);
-	border-radius: 50%; height: 16px; width: 16px}
+	border-radius: 50%; height: 14px; width: 14px}
 .sliderContainer{display: flex; flex-direction: column}
 .sliderMarks{color: gray; display: flex; font-size: 10px; height: 10px; justify-content: space-between}
 .shortButton, .setButton{background: #efefef; border-radius: 6px; border: 1px solid gray; color: black;
 	cursor: pointer; font-size: 10pt; font-weight: bold; height: 24px; padding: 0px; text-align: center; width: 70px}
 .longButton{background: #efefef; border-radius: 6px; border: 1px solid gray; color: black;
-	cursor: pointer; font-size: 11px; font-weight: bold; height: 20px; padding: 0px; text-align: center; width: 70px}
+	cursor: pointer; font-size: 10pt; font-weight: bold; height: 24px; padding: 0px; text-align: center; width: 70px}
 .modalBackground{align-items: center; background: rgba(255, 255, 255, 0.5); color: white; display: none;
 	height: 100%; justify-content: center; left: 0px; position: fixed; top: 0px; width: 100%; z-index: 10000}
 .modal{background: black; border-radius: 10px; border: 1px solid gray; color: white;
@@ -222,8 +223,7 @@ input[type="range"]::-moz-range-thumb{background: var(--form-accent); border: 1p
 	<div class="row">Elevation:&nbsp;<span id="elevationValue">0 m (Hor. 0.00°)</span></div>
 	<input type="range" id="elevationSlider" min="0" max="10000" step="1" value="0" data-coarse-step="100">
 	<div class="sliderMarks"><span>0 m</span><span>10,000 m</span></div>
-	<span class="horizontalLine"></span>
-	<div class="row">
+	<div class="row buttonRow">
 		<button id="hereButton" class="shortButton">Here</button>
 		<button id="setLatLonButton" class="setButton" style="margin-left: auto">Set</button>
 	</div>
@@ -241,8 +241,7 @@ input[type="range"]::-moz-range-thumb{background: var(--form-accent); border: 1p
 	<div class="row">Local Time:&nbsp;<span id="timeValue">N/A</span>&nbsp;(<span id="timeZoneValue">UTC+7</span>)</div>
 	<input type="range" id="timeSlider" min="0" max="359.75" step="0.25" value="180" data-coarse-step="15">
 	<div class="sliderMarks"><span>00:00</span><span>12:00</span><span>23:59</span></div>
-	<span class="horizontalLine"></span>
-	<div class="row">
+	<div class="row buttonRow">
 		<button id="nowButton" class="shortButton">Now</button>
 		<button id="setDateTimeButton" class="setButton" style="margin-left: auto">Set</button>
 	</div>
@@ -331,7 +330,7 @@ input[type="range"]::-moz-range-thumb{background: var(--form-accent); border: 1p
 					</div>
 				</div>
 				<div style="display: flex; justify-content: center">
-					<button id="modalSetButton" class="longButton">Set</button>&nbsp;&nbsp;&nbsp;
+					<button id="modalSetButton" class="longButton">OK</button>&nbsp;&nbsp;&nbsp;
 					<button id="modalCancelButton" class="longButton">Cancel</button>
 				</div>
 			</div>

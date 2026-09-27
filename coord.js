@@ -39,12 +39,7 @@ function apparentAltitude(alt, temp = 26.5, pres = 1013.25) {
 
 function getGeometricAltitude(apparent, temp = 26.5, pres = 1013.25) {
 	if(pres === 0 || Math.abs(apparent) === 90) return apparent
-	let low = -90, high = 90
-	for(let i = 0; i < 55; i++) {
-		const middle = (low + high) / 2
-		if(apparentAltitude(middle, temp, pres) < apparent) low = middle
-		else high = middle}
-	return (low + high) / 2}
+	return findRoot(altitude => apparentAltitude(altitude, temp, pres) - apparent, -90, 90)}
 
 function refractHorizontal(point) {
 	let [x, y, z] = point
@@ -176,7 +171,7 @@ function getTopoLagna(
 	for(let longitude1 = 2; longitude1 <= 360; longitude1 += 2) {
 		let value1 = altitudeFromHorizon(longitude1)
 		if(value0 === 0 || value0 * value1 < 0)
-			roots.push(bisectRoot(altitudeFromHorizon, longitude0, longitude1, 45, value0))
+			roots.push(findRoot(altitudeFromHorizon, longitude0, longitude1, 1e-12))
 		longitude0 = longitude1
 		value0 = value1}
 	if(roots.length === 0) return toXYZ(0, 0)

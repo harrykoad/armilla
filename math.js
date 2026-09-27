@@ -4,18 +4,41 @@ const DEGREE = PI / 180
 
 function mod(m, n, d = 0) {return ((m - d) % n + n) % n + d}
 function clip(n, min, max) {return Math.max(min, Math.min(max, n))}
-function unwrapPeriodic(value, reference, period) {
-	return reference + mod(value - reference, period, -period / 2)}
 
-function bisectRoot(fn, low, high, iterations = 40, lowValue = fn(low)) {
-	if(lowValue === null) return null
+function findRoot(fn, low, high, tolerance = 1e-12, iterations = 100) {
+	let a = low, b = high, c = high
+	let fa = fn(a), fb = fn(b), fc = fb
+	if(fa === null || fb === null || !Number.isFinite(fa) || !Number.isFinite(fb) || fa * fb > 0)
+		return null
+	let d = b - a, e = d
 	for(let i = 0; i < iterations; i++) {
-		const middle = (low + high) / 2
-		const middleValue = fn(middle)
-		if(middleValue === null) return null
-		if(lowValue * middleValue <= 0) high = middle
-		else {low = middle; lowValue = middleValue}}
-	return (low + high) / 2}
+		if((fb > 0 && fc > 0) || (fb < 0 && fc < 0)) {
+			c = a; fc = fa; d = e = b - a}
+		if(Math.abs(fc) < Math.abs(fb)) {
+			let oldB = b, oldFb = fb
+			a = b; fa = fb; b = c; fb = fc; c = oldB; fc = oldFb}
+		let midpoint = (c - b) / 2
+		let threshold = 2 * Number.EPSILON * Math.abs(b) + tolerance / 2
+		if(Math.abs(midpoint) <= threshold || fb === 0) return b
+		if(Math.abs(e) >= threshold && Math.abs(fa) > Math.abs(fb)) {
+			let s = fb / fa, p, q
+			if(a === c) {p = 2 * midpoint * s; q = 1 - s}
+			else {
+				q = fa / fc
+				let r = fb / fc
+				p = s * (2 * midpoint * q * (q - r) - (b - a) * (r - 1))
+				q = (q - 1) * (r - 1) * (s - 1)}
+			if(p > 0) q = -q
+			else p = -p
+			if(2 * p < Math.min(3 * midpoint * q - Math.abs(threshold * q), Math.abs(e * q))) {
+				e = d; d = p / q}
+			else {d = midpoint; e = d}}
+		else {d = midpoint; e = d}
+		a = b; fa = fb
+		b += Math.abs(d) > threshold ? d : Math.sign(midpoint) * threshold
+		fb = fn(b)
+		if(fb === null || !Number.isFinite(fb)) return null}
+	return b}
 
 function toDMS(degree, range = 360, offset = 0, decimal = 2) {
 	let t = mod(degree, range, offset)
