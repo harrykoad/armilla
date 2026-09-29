@@ -7,8 +7,10 @@ new ResizeObserver(syncTopPanelHeights).observe(azimuthPanel)
 syncTopPanelHeights()
 UI.risingEventSelect.onchange = () => requestGraphRender()
 UI.settingEventSelect.onchange = () => requestGraphRender()
-function setupCoordinateInput(id, limit, wrap, minimum = -limit) {
-	const input = UI[id]
+const pageUI = new Proxy({}, {get(object, id) {
+	return document.getElementById("page" + id[0].toUpperCase() + id.slice(1)) || UI[id]}})
+function setupCoordinateInput(id, limit, wrap, minimum = -limit, onCommit = null) {
+	const input = pageUI[id]
 	const label = input.labels[0].textContent.replace(/:$/, "").toLowerCase()
 	let fallback = input.value
 	function format(value) {
@@ -19,13 +21,14 @@ function setupCoordinateInput(id, limit, wrap, minimum = -limit) {
 	function commit(value) {
 		input.value = format(value)
 		fallback = input.value
+		if(onCommit) onCommit(value)
 		requestGraphRender()}
-	function nudge(step) {
+	function nudge(direction, coarse) {
 		let value = parseNumber(input.value)
 		if(!Number.isFinite(value)) value = parseNumber(fallback)
-		value += step
-		value = wrap ? ((value + 180) % 360 + 360) % 360 - 180 :
-			Math.max(minimum, Math.min(limit, value))
+		const step = coarse ? 1 : 0.01
+		value = Math.round(value / step) * step + direction * step
+		value = Math.max(minimum, Math.min(limit, value))
 		commit(value)}
 	input.onfocus = () => {fallback = input.value}
 	function commitInput() {
@@ -38,7 +41,7 @@ function setupCoordinateInput(id, limit, wrap, minimum = -limit) {
 		else commit(value)}
 	addNudgeListeners(input, nudge, commitInput)}
 
-function setupScalarInput(input, parse, valid, format, error, adjust) {
+function setupScalarInput(input, parse, valid, format, error, adjust, coarseStep = null) {
 	let committed = input.value
 	function commit() {
 		const value = parse(input.value)
@@ -50,19 +53,136 @@ function setupScalarInput(input, parse, valid, format, error, adjust) {
 		input.value = format(value)
 		committed = input.value
 		requestGraphRender()}
-	function nudge(step) {
+	function nudge(direction, coarse) {
 		let value = parse(input.value)
 		if(!Number.isFinite(value)) value = parse(committed)
-		input.value = String(adjust(value, step))
+		input.value = String(coarse && coarseStep ?
+			adjust(Math.round(value / coarseStep) * coarseStep, direction * coarseStep) :
+			adjust(value, direction))
 		commit()}
 	addNudgeListeners(input, nudge, commit)}
 
 setupCoordinateInput("latitudeInput", 90, false)
-setupCoordinateInput("longitudeInput", 180, true)
-setupScalarInput(UI.elevationInput, parseNumber, value => value >= 0 && value <= 10000,
+function formatTwoDigitTimeZone(timeZone) {
+	return "UTC" + (timeZone >= 0 ? "+" : "−") +
+		String(Math.abs(timeZone)).padStart(2, "0")}
+setupCoordinateInput("longitudeInput", 180, true, -180, longitude => {
+	param.longitude = longitude
+	param.timeZone = Math.round(longitude / 15)
+	if(pageUI.timeZoneInput) pageUI.timeZoneInput.textContent = formatTwoDigitTimeZone(param.timeZone)})
+setupScalarInput(pageUI.elevationInput, parseNumber, value => value >= 0 && value <= 10000,
 	value => Math.round(value).toLocaleString("en-US"),
 	"Please enter a valid elevation from 0 m to 10,000 m.",
-	(value, step) => Math.max(0, Math.min(10000, Math.round(value) + step)))
+	(value, step) => Math.max(0, Math.min(10000, Math.round(value) + step)), 100)
+if(document.getElementById("hereButton")) UI.hereButton.onclick = () => getCurrentLocation()
+	.then(() => {
+		pageUI.latitudeInput.value = param.latitude
+		pageUI.longitudeInput.value = param.longitude
+		pageUI.latitudeInput.dispatchEvent(new Event("change"))
+		pageUI.longitudeInput.dispatchEvent(new Event("change"))
+		param.elevation = 0
+		pageUI.elevationInput.value = 0
+		pageUI.elevationInput.dispatchEvent(new Event("change"))})
+	.catch(error => alert(error.message))
+if(document.getElementById("nowButton")) {
+	const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep",
+		"Oct", "Nov", "Dec"]
+	function updateCalendarFields() {
+		const [hour, minute] = toDMS(param.time / 15, 24)
+		pageUI[param.year > 0 ? "eraAD" : "eraBC"].checked = true
+		pageUI.yearInput.value = param.year > 0 ? param.year : Math.abs(param.year - 1)
+		pageUI.monthInput.value = param.month
+		pageUI.dayInput.value = param.day
+		if(pageUI.dayOfWeekValue)
+			pageUI.dayOfWeekValue.textContent = getDayOfWeek(param.julianDay, param.timeZone)
+		pageUI.hourInput.value = String(hour).padStart(2, "0")
+		pageUI.minuteInput.value = String(minute).padStart(2, "0")
+		pageUI.timeZoneInput.textContent = formatTwoDigitTimeZone(param.timeZone)}
+	function commitCalendar() {
+		param.julianDay = getJulianDay()
+		updateCalendarFields()
+		requestGraphRender()}
+	function setCalendarJulianDay(julianDay) {
+		param.julianDay = julianDay
+		const [year, month, day, time] = getGregorian(julianDay, param.longitude)
+		param.year = year
+		param.month = month
+		param.day = day
+		param.time = time
+		updateCalendarFields()
+		requestGraphRender()}
+	function changeYear(step) {
+		param.year = Math.max(-4999, Math.min(5000, param.year + step))
+		param.day = Math.min(param.day, getMonthDays(getYearDays(param.year))[param.month - 1])
+		commitCalendar()}
+	function changeMonth(step) {
+		param.month += step
+		while(param.month > 12) {param.month -= 12; param.year++}
+		while(param.month < 1) {param.month += 12; param.year--}
+		param.year = Math.max(-4999, Math.min(5000, param.year))
+		param.day = Math.min(param.day, getMonthDays(getYearDays(param.year))[param.month - 1])
+		commitCalendar()}
+	UI.nowButton.onclick = () => {getCurrentDateTime(); updateCalendarFields(); requestGraphRender()}
+	for(const input of [pageUI.eraAD, pageUI.eraBC]) input.onchange = () => {
+		const year = Math.round(parseNumber(pageUI.yearInput))
+		if(!input.checked || !Number.isFinite(year) || year < 1 || year > 5000) return
+		param.year = pageUI.eraBC.checked ? 1 - year : year
+		commitCalendar()}
+	pageUI.yearInput.onchange = () => {
+		const year = Math.round(parseNumber(pageUI.yearInput, ""))
+		if(!Number.isFinite(year) || year < 1 || year > 5000) {
+			alert("Please enter a valid year number from 1 to 5000.")
+			updateCalendarFields(); pageUI.yearInput.select(); return}
+		param.year = pageUI.eraBC.checked ? 1 - year : year
+		commitCalendar()}
+	addNudgeListeners(pageUI.yearInput, direction => changeYear(direction))
+	pageUI.monthInput.onchange = () => {
+		const month = Math.round(parseNumber(pageUI.monthInput, ""))
+		if(!Number.isFinite(month) || month < 1 || month > 12) {
+			alert("Please enter a valid month number from 1 to 12.")
+			updateCalendarFields(); pageUI.monthInput.select(); return}
+		param.month = month
+		commitCalendar()}
+	addNudgeListeners(pageUI.monthInput, direction => changeMonth(direction))
+	pageUI.dayInput.onchange = () => {
+		const day = Math.round(parseNumber(pageUI.dayInput, ""))
+		const maximum = getMonthDays(getYearDays(param.year))[param.month - 1]
+		if(!Number.isFinite(day) || day < 1 || day > maximum) {
+			alert("Please enter a valid day number."); updateCalendarFields(); pageUI.dayInput.select(); return}
+		param.day = day
+		commitCalendar()}
+	addNudgeListeners(pageUI.dayInput, direction =>
+		setCalendarJulianDay(Math.round((getJulianDay() + direction) * 1440) / 1440))
+	pageUI.hourInput.onchange = () => {
+		const hour = Math.round(parseNumber(pageUI.hourInput, ""))
+		if(!Number.isFinite(hour) || hour < 0 || hour > 23) {
+			alert("Please enter a valid hour number from 0 to 23.")
+			updateCalendarFields(); pageUI.hourInput.select(); return}
+		param.time = 15 * (hour + parseNumber(pageUI.minuteInput) / 60)
+		commitCalendar()}
+	addNudgeListeners(pageUI.hourInput, direction =>
+		setCalendarJulianDay(Math.round((getJulianDay() + direction / 24) * 1440) / 1440))
+	pageUI.minuteInput.onchange = () => {
+		const minute = Math.round(parseNumber(pageUI.minuteInput, ""))
+		if(!Number.isFinite(minute) || minute < 0 || minute > 59) {
+			alert("Please enter a valid minute number from 0 to 59.")
+			updateCalendarFields(); pageUI.minuteInput.select(); return}
+		param.time = 15 * (Math.floor(param.time / 15) + minute / 60)
+		commitCalendar()}
+	addNudgeListeners(pageUI.minuteInput, direction =>
+		setCalendarJulianDay(Math.round((getJulianDay() + direction / 1440) * 1440) / 1440))}
+if(document.getElementById("nowButton")) window.addEventListener("load", () => {
+	UI.nowButton.click()
+	requestAnimationFrame(() => {
+		const elements = [document.querySelector(".timeGroup"),
+			...document.querySelectorAll(".timeGroup *")]
+			.filter(element => element && !element.closest("[hidden]") && element.offsetParent !== null)
+		const widths = elements.map(element => element.getBoundingClientRect().width)
+		for(let i = 0; i < elements.length; i++) {
+			const width = widths[i] + "px"
+			elements[i].style.width = width
+			elements[i].style.minWidth = width
+			elements[i].style.maxWidth = width}})}, {once: true})
 setupCoordinateInput("sunAltitudeInput", 90, false, -30)
 setupCoordinateInput("horizonAltitudeInput", 90, false, -30)
 UI.refractionCheckbox.onchange = () => requestGraphRender()
@@ -71,7 +191,7 @@ setupScalarInput(UI.temperatureInput, value => Number(parseNumber(value).toFixed
 	"Please enter a valid temperature above −273°C.",
 	(value, step) => Math.max(-272.9, value + step))
 setupScalarInput(UI.pressureInput, parseNumber, value => value >= 0,
-	value => Math.round(value).toString(), "Please enter a valid pressure of 0 hPa or greater.",
+	value => Math.round(value).toLocaleString("en-US"), "Please enter a valid pressure of 0 hPa or greater.",
 	(value, step) => Math.max(0, Math.round(value) + step))
 {
 	const rising = UI.risingAzimuthInput
@@ -121,18 +241,20 @@ setupScalarInput(UI.pressureInput, parseNumber, value => value >= 0,
 		if(uncertainties.includes(input))
 			return Math.abs(parseNumber(text.replace(/^(?:±|\+\/-)\s*/, "")))
 		return parseNumber(text)}
-	function nudge(input, step) {
+	function nudge(input, direction, coarse) {
 		let value = nudgeValueOf(input, input.value)
 		if(!Number.isFinite(value)) value = nudgeValueOf(input, committed.get(input))
-		if(input === rising) value = Math.max(0, Math.min(180, value + step))
-		else if(input === setting) {
-			if(value === 0) value = 360
-			value = Math.max(180, Math.min(360, value + step))}
-		else value = Math.max(0, Math.abs(value) + step)
+		if(input === setting && value === 0) value = 360
+		const step = coarse ? 1 : 0.01
+		value = Math.round(value / step) * step + direction * step
+		if(input === rising) value = Math.max(0, Math.min(180, value))
+		else if(input === setting) value = Math.max(180, Math.min(360, value))
+		else value = Math.max(0, value)
 		input.value = String(value)
 		commit(input)}
 	for(const input of inputs)
-		addNudgeListeners(input, step => nudge(input, step), () => commit(input))
+		addNudgeListeners(input, (direction, coarse) => nudge(input, direction, coarse),
+			() => commit(input))
 	UI.hemisphereButton.onclick = () => {
 		const azimuth = parseNumber(rising.value)
 		if(!Number.isFinite(azimuth)) return
@@ -175,8 +297,8 @@ function graphNumber(input) {
 	return parseNumber(input.value.replace(/^±/, ""))}
 
 function graphConditions() {
-	const conditions = {latitude: graphNumber(UI.latitudeInput), longitude: graphNumber(UI.longitudeInput),
-		elevation: graphNumber(UI.elevationInput),
+	const conditions = {latitude: graphNumber(pageUI.latitudeInput), longitude: graphNumber(pageUI.longitudeInput),
+		elevation: graphNumber(pageUI.elevationInput),
 		sunAltitude: graphNumber(UI.sunAltitudeInput), horizon: graphNumber(UI.horizonAltitudeInput),
 		rising: graphNumber(UI.risingAzimuthInput), uncertainty: graphNumber(UI.risingUncertaintyInput),
 		refraction: UI.refractionCheckbox.checked,

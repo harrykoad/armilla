@@ -70,8 +70,12 @@ function getHorizonDip(latitude = param.latitude, elevation = param.elevation, a
 			Math.pow(Math.cos(a), 2) / primeVertical)}
 	return Math.acos(clip(radius / (radius + elevation / 1000), -1, 1)) / DEGREE}
 
+function formatJulianDay(julianDay) {
+	return (julianDay < 0 ? "−" : "") + Math.abs(julianDay).toFixed(5)}
+
 function formatTimeZone(timeZone) {
-	return timeZone === 0 ? "UTC" : "UTC" + (timeZone >= 0 ? "+" : "−") + Math.abs(timeZone)}
+	return "UTC" + (timeZone >= 0 ? "+" : "−") +
+		String(Math.abs(timeZone)).padStart(2, "0")}
 
 function getDayOfWeek(julianDay, timeZone) {
 	return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][
@@ -196,7 +200,7 @@ function updateTime() {
 	UI.timeSlider.value = t
 	let jd = getJulianDay()
 	param.julianDay = jd
-	UI.julianDayValue.textContent = jd > 0 ? jd.toFixed(5) : "−" + Math.abs(jd).toFixed(5)
+	UI.julianDayValue.textContent = formatJulianDay(jd)
 	UI.dayOfWeekValue.textContent = getDayOfWeek(jd, param.timeZone)
 	let jc = (jd - 2451545) / 36525
 	param.julianCentury = jc

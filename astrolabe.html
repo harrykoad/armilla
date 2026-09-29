@@ -57,25 +57,26 @@ body {background: black; color: white; color-scheme: dark; font-family: sans-ser
 .controlGroup, .graphPanel {background: black; border: 1px solid gray; border-radius: 10px; padding: 8px}
 .controlsBar {background: black; box-shadow: 0 12px 0 black; display: grid; gap: 12px;
 	align-items: start;
-	grid-column: 1 / -1; grid-template-columns: max-content 426px minmax(0, 1fr);
+	grid-column: 1 / -1; grid-template-columns: 200px 426px 526px;
 	grid-template-rows: auto;
 	margin-top: -12px; min-width: 0; padding-top: 12px; user-select: none; width: 100%}
 .controlsBar input {user-select: text}
 .controlGroup {display: grid; grid-auto-rows: 1fr; gap: 8px}
-.leftControlStack {align-content: start; display: grid; gap: 12px; grid-column: 1; grid-row: 1}
-.locationGroup, .atmosphericGroup {align-content: start; grid-auto-rows: auto}
+.leftControlStack {align-content: start; display: grid; gap: 12px; grid-column: 1; grid-row: 1; width: 200px}
+.locationGroup, .atmosphericGroup {align-content: start; grid-auto-rows: auto;
+	max-width: 200px; min-width: 200px; width: 200px}
 .horizonAltitudeLabel, .maxAltitudeDifferenceLabel, .starMaxAltitudeLabel {color: #aaa; font-size: 12px;
 	text-align: center; white-space: nowrap}
 .azimuthGroup {align-self: start; grid-column: 2; grid-row: 1;
 	column-gap: 10px; grid-template-columns: 170px minmax(0, 1fr); grid-template-rows: auto;
-	min-height: 0; min-width: 0; overflow: hidden; width: 426px}
+	max-width: 426px; min-height: 0; min-width: 426px; overflow: hidden; width: 426px}
 .azimuthGroup::before {align-self: stretch; background: gray; content: ""; grid-column: 1;
 	grid-row: 1; justify-self: end; width: 1px}
 .azimuthControls {align-content: start; display: grid; gap: 8px; grid-column: 1; grid-row: 1;
 	min-width: 0; width: 100%}
 .intersectionGroup {align-self: start; display: grid; grid-column: 3; grid-row: 1;
 	grid-template-rows: 44px minmax(0, 1fr) auto;
-	min-height: 0; min-width: 0; overflow: hidden}
+	max-width: 526px; min-height: 0; min-width: 526px; overflow: hidden; width: 526px}
 .intersectionHeader {height: 44px; overflow: hidden; user-select: none}
 .intersectionScroller {height: auto; min-height: 0; overflow-x: hidden; overflow-y: auto;
 	scrollbar-gutter: stable}
@@ -152,6 +153,7 @@ body {background: black; color: white; color-scheme: dark; font-family: sans-ser
 .field {align-items: center; display: grid; gap: 4px;
 	grid-template-columns: 1fr 60px 2em; white-space: nowrap}
 .locationGroup .field, .atmosphericGroup .field {grid-template-columns: 1fr 60px 2em}
+.locationGroup > .field, .atmosphericGroup > .field:not(.checkboxField) {position: relative; right: 9px}
 .azimuthGroup .field {display: flex; flex-direction: column; gap: 4px}
 .azimuthAltitudeFields {align-self: center; border-bottom: 1px solid gray; box-sizing: border-box;
 	display: grid; gap: 8px; grid-column: 1; grid-row: 1; justify-self: start;
@@ -217,7 +219,7 @@ input:focus-visible {outline: 2px solid #80bfff; outline-offset: 2px}
 		</div>
 		<div class="field">
 			<label for="pressureInput">Pressure:</label>
-			<input type="text" id="pressureInput" name="pressure" inputmode="text" enterkeyhint="next" tabindex="6" value="1013" aria-describedby="pressureUnit">
+			<input type="text" id="pressureInput" name="pressure" inputmode="text" enterkeyhint="next" tabindex="6" value="1,013" aria-describedby="pressureUnit">
 			<span id="pressureUnit">hPa</span>
 		</div>
 		<div class="maxAltitudeDifferenceLabel" id="maxAltitudeDifferenceLabel">(Max. Altitude Diff.: 0.00°)</div>

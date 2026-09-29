@@ -19,13 +19,34 @@ function addNudgeListeners(input, nudge, commit = null) {
 		if(event.key === "Enter" && commit) {event.preventDefault(); commit(); return}
 		if(event.key !== "ArrowUp" && event.key !== "ArrowDown") return
 		event.preventDefault()
-		nudge(event.key === "ArrowUp" ? 1 : -1)
+		nudge(event.key === "ArrowUp" ? 1 : -1, !event.shiftKey)
 		remember()})
 	input.addEventListener("wheel", event => {
 		if(event.ctrlKey || event.metaKey || event.deltaY === 0) return
 		event.preventDefault()
-		nudge(event.deltaY < 0 ? 1 : -1)
+		nudge(event.deltaY < 0 ? 1 : -1, !event.shiftKey)
 		remember()}, {passive: false})}
+
+function getCurrentLocation() {
+	if(!navigator.geolocation)
+		return Promise.reject(new Error("Location access is not supported by this browser."))
+	return new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(
+		position => {
+			param.latitude = Math.round(mod(position.coords.latitude, 180, -90) * 100) / 100
+			param.longitude = Math.round(mod(position.coords.longitude, 360, -180) * 100) / 100
+			param.elevation = 0
+			param.timeZone = Math.round(param.longitude / 15)
+			resolve()},
+		() => reject(new Error("Location access failed."))))}
+
+function getCurrentDateTime() {
+	const now = new Date()
+	const local = new Date(now.getTime() + param.timeZone * 3600000)
+	param.year = local.getUTCFullYear()
+	param.month = local.getUTCMonth() + 1
+	param.day = local.getUTCDate()
+	param.time = 15 * (local.getUTCHours() + local.getUTCMinutes() / 60)
+	param.julianDay = getJulianDay()}
 
 if(document.getElementById("sky")) {
 const panelScrollControls = [
@@ -199,13 +220,13 @@ function moveRangeCoarse(s, value, dir) {
 
 document.querySelectorAll('input[type="range"]').forEach(s => {
 	let coarsePointer = false
-	s.addEventListener("pointerdown", e => {coarsePointer = e.shiftKey})
+	s.addEventListener("pointerdown", e => {coarsePointer = !e.shiftKey})
 	s.addEventListener("pointerup", () => {coarsePointer = false})
 	s.addEventListener("pointercancel", () => {coarsePointer = false})
 	s.addEventListener("input", () => {
 		if(coarsePointer) s.value = snapRangeCoarse(s, parseFloat(s.value))}, {capture: true})
 	s.addEventListener("keydown", e => {
-		if(!e.shiftKey || !["ArrowLeft", "ArrowDown", "ArrowRight", "ArrowUp"].includes(e.key)) return
+		if(e.shiftKey || !["ArrowLeft", "ArrowDown", "ArrowRight", "ArrowUp"].includes(e.key)) return
 		e.preventDefault()
 		let dir = e.key === "ArrowRight" || e.key === "ArrowUp" ? 1 : -1
 		s.value = moveRangeCoarse(s, parseFloat(s.value), dir)
@@ -217,11 +238,11 @@ document.querySelectorAll('input[type="range"]').forEach(s => {
 		let current = parseFloat(s.value)
 		let baseStep = parseFloat(s.step)
 		let coarseStep = getRangeCoarseStep(s)
-		let step = e.shiftKey ? coarseStep : baseStep
+		let step = e.shiftKey ? baseStep : coarseStep
 		let dir = Math.sign(e.deltaY)
 		if((dir > 0 && current <= min) || (dir < 0 && current >= max)) return
-		let value = e.shiftKey ? moveRangeCoarse(s, current, -dir) : current - dir * step
-		if(!e.shiftKey) value = min + Math.round((value - min) / baseStep) * baseStep
+		let value = e.shiftKey ? current - dir * step : moveRangeCoarse(s, current, -dir)
+		if(e.shiftKey) value = min + Math.round((value - min) / baseStep) * baseStep
 		if(value < min) value = min
 		if(value > max) value = max
 		value = parseFloat(value.toFixed(10))
@@ -246,18 +267,16 @@ UI.elevationSlider.oninput = () => {
 	updateElevation(parseFloat(UI.elevationSlider.value))
 	requestSkyRender()}
 
-UI.hereButton.onclick = () => navigator.geolocation.getCurrentPosition(p => {
-	param.latitude = Math.round(mod(p.coords.latitude, 180, -90) * 100) / 100
+UI.hereButton.onclick = () => getCurrentLocation().then(() => {
+	UI.latitudeSlider.value = param.latitude
+	UI.longitudeSlider.value = param.longitude
+	UI.elevationSlider.value = param.elevation
 	updateLatitude()
-	param.longitude = Math.round(mod(p.coords.longitude, 360, -180) * 100) / 100
 	updateLongitude()
-	if(Number.isFinite(p.coords.altitude)) {
-		param.elevation = clip(Math.round(p.coords.altitude), Number(UI.elevationSlider.min),
-			Number(UI.elevationSlider.max))
-		UI.elevationSlider.value = param.elevation
-		updateElevation()}
+	UI.elevationSlider.dispatchEvent(new Event("input"))
 	updateAllRangeFills()
-	requestSkyRender()}, error => alert("Location access failed."))
+	requestSkyRender()
+}).catch(error => alert(error.message))
 
 UI.yearSlider.oninput = () => {
 	param.year = parseInt(UI.yearSlider.value)
@@ -293,7 +312,8 @@ function centerViewOnSun(jc = param.julianCentury) {
 	update.sky = true}
 
 UI.nowButton.onclick = () => {
-	setDateTime()
+	getCurrentDateTime()
+	updateYear()
 	updateAllRangeFills()
 	centerViewOnSun()
 	requestSkyRender()}
@@ -367,6 +387,7 @@ window.onresize = () => {
 	update.sky = true
 	requestSkyRender()}
 
+if(false) { // Modal-only events are initialized by modal.js.
 function populateModalFromParameters() {
 	let [h, m] = toDMS(param.time / 15, 24)
 	modal.temp.fallback = null
@@ -388,7 +409,7 @@ function populateModalFromParameters() {
 	UI.dayInput.value = param.day
 	UI.hourInput.value = String(h).padStart(2, "0")
 	UI.minuteInput.value = String(m).padStart(2, "0")
-	UI.julianDayInput.value = modal.temp.julianDay < 0 ? "−" + Math.abs(modal.temp.julianDay).toFixed(5) : modal.temp.julianDay.toFixed(5)
+	UI.julianDayInput.value = formatJulianDay(modal.temp.julianDay)
 	updateModal()
 	UI.modalBackground.style.display = "flex"}
 
@@ -415,7 +436,9 @@ function setModalVisible(visible) {
 	if(!visible) {
 		UI.modalBackground.style.display = "none"
 		return}
-	populateModalFromParameters()}
+	populateModalFromParameters()}}
+
+if(typeof initializeModalEvents === "function") initializeModalEvents()
 
 setDateTime()
 updateLatitude()
@@ -430,11 +453,11 @@ updatePanelScrollButtons()
 window.addEventListener("load", updatePanelScrollButtons)
 requestSkyRender()
 
+if(false) { // Modal-only events are initialized by modal.js.
 function setJulianDayModal() {
 	modal.temp.julianDay = getJulianDay(modal.temp.year, modal.temp.month, modal.temp.day,
 		15 * (modal.temp.hour + modal.temp.minute / 60), Math.round(modal.temp.longitude / 15))
-	UI.julianDayInput.value = modal.temp.julianDay < 0 ?
-		"−" + Math.abs(modal.temp.julianDay).toFixed(5) : modal.temp.julianDay.toFixed(5)
+	UI.julianDayInput.value = formatJulianDay(modal.temp.julianDay)
 	updateModal()}
 
 function setLocationFromMap(event) {
@@ -608,7 +631,7 @@ addNudgeListeners(UI.dayInput, step => {
 function updateJulianDayModal(jd) {
 	jd = clip(jd, -104788, 3547638)
 	modal.temp.julianDay = jd
-	UI.julianDayInput.value = jd < 0 ? "−" + Math.abs(jd).toFixed(5) : jd.toFixed(5)
+	UI.julianDayInput.value = formatJulianDay(jd)
 	let [Y, M, D, t] = getGregorian(jd, modal.temp.longitude)
 	let [h, m] = toDMS(t / 15, 24)
 	updateYearModal(Y, false)
@@ -659,3 +682,6 @@ UI.julianDayInput.onchange = () => {
 addNudgeListeners(UI.julianDayInput, step => {
 	updateJulianDayModal(modal.temp.julianDay + step)})
 }
+}
+
+if(typeof initializeModalEvents === "function") initializeModalEvents()
