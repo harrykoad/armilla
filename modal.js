@@ -65,7 +65,8 @@ function initializeModalGraphics() {
 		modal.world.graticule.push([[0, y], [w, y]])}
 		modal.world.equator = [[[0, h / 2], [w, h / 2]]]
 	modal.world.map.onload = () => {
-		if(UI.modalBackground.style.display === "flex") updateModal()}}
+		if(UI.modalBackground.style.display === "flex") updateModal()
+		if(typeof requestGraphRender === "function") requestGraphRender()}}
 
 
 function updateHoraryStars(jd) {
@@ -216,6 +217,68 @@ function lunarSearch(t0, latitude, longitude, elevation = 0) {
 			until: formatEvent("until", nksUntil)},
 		moonEvents: moonEvents.slice(0, 2)}}
 
+function drawSharedWorldMap(ctx, options) {
+	const w = options.width ?? 360, h = options.height ?? 180
+	const latitude = options.latitude, longitude = options.longitude
+	const elevation = options.elevation ?? 0, jd = options.julianDay
+	const darkTheme = options.darkTheme ?? mode.darkTheme
+	const edgeColor = options.edgeColor ?? (darkTheme ? "white" : "black")
+	const showRahu = options.showRahu ?? true, showLagna = options.showLagna ?? true
+	const jc = (jd - 2451545) / 36525
+	const ayanamsa = getAyanamsa(jc), obliquity = getObliquity(jc)
+	const sidereal = getSidereal(jc, longitude)
+	const ss = solarSystem(jc).map(normalize)
+	const lagna = getTopoLagna(sidereal, latitude, ayanamsa, obliquity, elevation)
+	const objects = [
+		{position: ss[8], label: "N", color: color.neptune},
+		{position: ss[7], label: "U", color: color.uranus},
+		{position: ss[6], label: "7", color: color.saturn},
+		{position: ss[5], label: "5", color: color.jupiter},
+		{position: ss[4], label: "3", color: color.mars},
+		{position: ss[3], label: "6", color: color.venus},
+		{position: ss[2], label: "4", color: color.mercury},
+		...(showRahu ? [{position: ss[9], label: "8", color: color.rahu}] : []),
+		{position: ss[1], label: "1", color: color.sun},
+		{position: ss[0], label: "2", color: color.moon},
+		...(showLagna ? [{position: lagna, label: "L", color: color.horizontal}] : [])]
+	const equatorialToNirayana = mul(rotateZ(ayanamsa), rotateX(-obliquity))
+	const nirayanaToWorld = mul(rotateZ(-getSidereal(jc, 0)), transpose(equatorialToNirayana))
+	ctx.clearRect(0, 0, w, h)
+	ctx.save()
+	ctx.filter = darkTheme ? "brightness(35%)" : "brightness(35%) invert(1)"
+	if(modal.world.map.complete && modal.world.map.naturalWidth > 0)
+		ctx.drawImage(modal.world.map, 0, 0, w, h)
+	else {ctx.filter = "none"; ctx.fillStyle = darkTheme ? "black" : "white"; ctx.fillRect(0, 0, w, h)}
+	ctx.restore()
+	drawLines(ctx, [{points: modal.world.graticule, color: "gray", width: 0.5}])
+	const sunNormal = mdot(nirayanaToWorld, ss[1])
+	const eclipticNormal = mdot(nirayanaToWorld, [0, 0, 1]), ecliptic = []
+	ctx.fillStyle = "rgba(128, 128, 128, 0.75)"; ctx.beginPath()
+	for(let x = 0; x <= w; x++) {
+		const lon = (x - w / 2) * 360 / w * DEGREE
+		const cosine = Math.cos(lon), sine = Math.sin(lon)
+		const sunLatitude = Math.atan(-(sunNormal[0] * cosine + sunNormal[1] * sine) /
+			sunNormal[2]) / DEGREE
+		const eclipticLatitude = Math.atan(-(eclipticNormal[0] * cosine +
+			eclipticNormal[1] * sine) / eclipticNormal[2]) / DEGREE
+		const y = h / 2 - sunLatitude * h / 180
+		x ? ctx.lineTo(x, y) : ctx.moveTo(x, y)
+		ecliptic.push([x, h / 2 - eclipticLatitude * h / 180])}
+	const pole = sunNormal[2] > 0 ? h : 0
+	ctx.lineTo(w, pole); ctx.lineTo(0, pole); ctx.closePath(); ctx.fill()
+	drawLines(ctx, [{points: modal.world.equator, color: color.equatorial, width: 1.5},
+		{points: [ecliptic], color: color.ecliptic, width: 1.5}])
+	const observerX = (longitude + 180) / 360 * w
+	const observerY = (90 - latitude) / 180 * h
+	drawLines(ctx, [{points: [[[0, observerY], [w, observerY]], [[observerX, 0], [observerX, h]]],
+		color: edgeColor, width: 1.5, dash: [5, 3]}])
+	const points = objects.map(object => {
+		const [lon, lat] = toTP(mdot(nirayanaToWorld, object.position))
+		return {position: [mod(lon + 180, 360) / 360 * w, (90 - lat) / 180 * h],
+			size: 4, color: object.color, border: 1, edge: edgeColor}})
+	drawPoints(ctx, points)
+	return {nirayanaToWorld, solarSystemPositions: ss, sunNormal}}
+
 function updateModal() {
 	let dpr = 2 //window.devicePixelRatio || 1
 	let col = mode.darkTheme ? "white" : "black"
@@ -252,7 +315,7 @@ function updateModal() {
 	let equatorN = gc.map(p => toTP(mdot(mEN, p)))
 	let mHN = mul(mEN, mul(rotateZ(90 + sidereal), rotateX(90 - latitude)))
 	let horizonN = localHorizon(latitude, elevation).map(p => toTP(mdot(mHN, p)))
-	let mNW = mul(rotateZ(longitude - sidereal), transpose(mEN))
+	let mNW = mul(rotateZ(-getSidereal(jc, 0)), transpose(mEN))
 
 	{// Horary Chart
 		let hor = UI.horaryChart
@@ -482,46 +545,8 @@ function updateModal() {
 		map.style.height = h + "px"
 		let ctx = map.getContext("2d", {alpha: false})
 		ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-		ctx.clearRect(0, 0, w, h)
-		ctx.save()
-		ctx.filter = mode.darkTheme ? "none" : "invert(1)"
-		if(modal.world.map.complete && modal.world.map.naturalWidth > 0)
-			ctx.drawImage(modal.world.map, 0, 0, w, h)
-		else {
-			ctx.fillStyle = mode.darkTheme ? "black" : "white"
-			ctx.fillRect(0, 0, w, h)}
-		ctx.restore()
-		drawLines(ctx, [{points: modal.world.graticule, color: "gray", width: 0.5},
-			{points: modal.world.equator, color: color.equatorial, width: 1.5}])
-		let nS = mdot(mNW, ss[1])
-		let nE = mdot(mNW, [0, 0, 1])
-		let points = []
-		ctx.fillStyle = "rgba(128, 128, 128, 0.75)"
-		ctx.beginPath()
-		for(let x = 0; x <= w; x++) {
-			let lon = (x - 180) * DEGREE
-			let cl = Math.cos(lon), sl = Math.sin(lon)
-			let latS = Math.atan(-(nS[0] * cl + nS[1] * sl) / nS[2]) / DEGREE
-			let latE = Math.atan(-(nE[0] * cl + nE[1] * sl) / nE[2]) / DEGREE
-			let y = 90 - latS
-			x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
-			points.push([x, 90 - latE])}
-		let pole = nS[2] > 0 ? h : 0
-		ctx.lineTo(w, pole)
-		ctx.lineTo(0, pole)
-		ctx.closePath()
-		ctx.fill()
-		drawLines(ctx, [{points: [points], color: color.ecliptic, width: 1.5}])
-		let x = longitude + 180, y = 90 - latitude
-		drawLines(ctx, [{points: [[[0, y], [w, y]], [[x, 0], [x, h]]],
-			color: color.horizontal, width: 2, dash: [5, 3]}])
-		points = []
-		for(let o of obj) {
-			let [lon, lat] = toTP(mdot(mNW, o.position))
-			let x = mod(lon + 180, 360)
-			let y = 90 - lat
-			points.push({position: [x, y], size: 4, color: o.color, border: 1, edge: col})}
-		drawPoints(ctx, points)}}
+		drawSharedWorldMap(ctx, {julianDay: jd, latitude, longitude, elevation,
+			darkTheme: mode.darkTheme, edgeColor: col})}}
 
 function initSharedParameterModal(target) {
 	const style = document.createElement("style")
@@ -539,7 +564,8 @@ function initSharedParameterModal(target) {
 		.modal .row > div {align-items:center !important; align-self:center}
 		.modal .row input, .modal .row span {vertical-align:middle}
 		.modalCell {align-items:center; display:flex; white-space:nowrap}
-		.modal input.textInput {background:#3b3b3b; border:1px solid gray; border-radius:5px; color:white;
+		.modal input.textInput {background:var(--field-background, #3b3b3b); border:1px solid gray;
+			border-radius:5px; color:var(--field-color, white);
 			box-sizing:content-box; font-family:Arial; font-size:12px; font-weight:400; height:auto; line-height:normal;
 			margin:0; padding:2px 4px; text-align:center}
 		.modal input[type="radio"] {accent-color:white; height:auto; margin:0 3px 0 5px; padding:0; width:auto}
@@ -565,8 +591,10 @@ function initSharedParameterModal(target) {
 					<div class="row modalLocationRow" style="align-items: center; display: flex; justify-content: space-between; margin-bottom: 5px; width: 100%">
 						<div style="align-items: center; display: flex; justify-self: start; white-space: nowrap">Lat.:&nbsp;<input type="text" id="latitudeInput" class="textInput" value="N/A" style="width: 40px">&nbsp;°</div>
 						<div style="align-items: center; display: flex; justify-self: center; white-space: nowrap">Lon.:&nbsp;<input type="text" id="longitudeInput" class="textInput" value="N/A" style="width: 45px">&nbsp;°</div>
-						<div style="align-items: center; display: flex; white-space: nowrap">Elv.:&nbsp;<input type="text" id="elevationInput" class="textInput" value="N/A" style="width: 40px">&nbsp;m</div>
-						<div id="modalHorizonGroup" class="modalSecondaryLabel" style="contain: inline-size; flex: 0 0 80px; overflow: visible; text-align: right; white-space: nowrap; width: 80px">(Hor.:&nbsp;<span id="modalHorizonValue" style="display: inline-block; text-align: right; width: 38px">0.00°</span>)</div>
+						<div style="align-items: center; column-gap: 4px; display: flex; white-space: nowrap">
+							<div style="align-items: center; display: flex; white-space: nowrap">Elv.:&nbsp;<input type="text" id="elevationInput" class="textInput" value="N/A" style="width: 40px">&nbsp;m</div>
+							<div id="modalHorizonGroup" class="modalSecondaryLabel" style="white-space: nowrap">(Hor.:<span id="modalHorizonValue" style="display: inline-block; text-align: right; width: 38px">0.00°</span>)</div>
+						</div>
 					</div>
 					<span class="horizontalLine"></span>
 					<div class="row" style="display: grid; grid-template-columns: auto 1fr auto; margin-bottom: 5px; margin-top: 5px; width: 100%">
@@ -695,7 +723,8 @@ function initializeModalEvents() {
 		param.latitude = parseNumber(UI.latitudeInput); param.longitude = modal.temp.longitude
 		param.elevation = modal.temp.elevation; param.timeZone = Math.round(param.longitude / 15)
 		param.year = modal.temp.year; param.month = modal.temp.month; param.day = modal.temp.day
-		param.time = 15 * (modal.temp.hour + modal.temp.minute / 60); param.julianDay = modal.temp.julianDay
+		param.time = 15 * (modal.temp.hour + modal.temp.minute / 60)
+		param.julianDay = getJulianDay(param.year, param.month, param.day, param.time, param.timeZone)
 		if(document.getElementById("latitudeSlider")) {
 			UI.latitudeSlider.value=param.latitude; UI.longitudeSlider.value=param.longitude; UI.elevationSlider.value=param.elevation
 			updateLatitude(); updateLongitude(); updateYear(); updateAllRangeFills(); requestSkyRender()}

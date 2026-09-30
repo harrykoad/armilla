@@ -70,7 +70,10 @@ function formatTwoDigitTimeZone(timeZone) {
 setupCoordinateInput("longitudeInput", 180, true, -180, longitude => {
 	param.longitude = longitude
 	param.timeZone = Math.round(longitude / 15)
-	if(pageUI.timeZoneInput) pageUI.timeZoneInput.textContent = formatTwoDigitTimeZone(param.timeZone)})
+	param.julianDay = getJulianDay()
+	if(pageUI.timeZoneInput) pageUI.timeZoneInput.textContent = formatTwoDigitTimeZone(param.timeZone)
+	if(pageUI.dayOfWeekValue)
+		pageUI.dayOfWeekValue.textContent = getDayOfWeek(param.julianDay, param.timeZone)})
 setupScalarInput(pageUI.elevationInput, parseNumber, value => value >= 0 && value <= 10000,
 	value => Math.round(value).toLocaleString("en-US"),
 	"Please enter a valid elevation from 0 m to 10,000 m.",
@@ -264,6 +267,10 @@ setupScalarInput(UI.pressureInput, parseNumber, value => value >= 0,
 	updateHemisphereButton()}
 
 const graph = {yearMin: -700, yearMax: 2200, oppositionDates: new Map()}
+const worldMapPreviewImage = UI.worldMapPreview ? new Image() : null
+if(worldMapPreviewImage) {
+	worldMapPreviewImage.onload = () => requestGraphRender()
+	worldMapPreviewImage.src = WORLD_MAP_DATA_URL}
 const GRAPH_STAR_COLORS = {
 	Capella: "#6699da", Deneb: "#ffbe32", Vega: "#a4cf38", Castor: "#ff8967",
 	Pollux: "#c7afe8", Arcturus: "#f6ad48", Aldebaran: "#ffe23e", Regulus: "#67badd",
@@ -615,7 +622,7 @@ function updateIntersectionPanel(intersections, conditions) {
 		graph.selectedIntersection = completeRange ? completeRange.id :
 			(intersections.length ? intersections[0].id : null)}
 	const selectedItem = intersections.find(item => item.id === graph.selectedIntersection)
-	if(selectedItem) {
+	if(selectedItem && UI.intersectionTimeNote) {
 		const sunAltitude = geometricHorizon(conditions, conditions.sunAltitude)
 		const selectedSolarEvents = [
 			{eventType: risingEvent, stellarEvent:
@@ -646,7 +653,7 @@ function updateIntersectionPanel(intersections, conditions) {
 			event.time + "; solar azm. " + event.azimuth.toFixed(2) +
 			"°, alt. " + altitudeText + "°.")
 		UI.intersectionTimeNote.textContent = eventDescriptions.join("\n")}
-	else UI.intersectionTimeNote.textContent = ""
+	else if(UI.intersectionTimeNote) UI.intersectionTimeNote.textContent = ""
 	const scrollTop = scroller.scrollTop
 	const focusedId = document.activeElement?.dataset.intersectionId
 	list.replaceChildren()
@@ -720,6 +727,7 @@ function requestGraphRender() {
 		graph.pending = false
 		const conditions = graphConditions()
 		if(!conditions) {drawSkyPath(null, null); drawRisingSettingGraph(null, null); return}
+		drawWorldMapPreview(conditions)
 		const tracks = getGraphTracks(conditions)
 		const selected = updateIntersectionPanel(uncertaintyIntersections(tracks, conditions), conditions)
 		const naksatraTracks = tracks.filter(track => NAKSATRA_BY_INDEX.has(track.index))
@@ -730,6 +738,59 @@ function requestGraphRender() {
 		drawAzimuthGraph(UI.naksatraGraph, naksatraTracks, selected, conditions, true)
 		drawAzimuthGraph(UI.azimuthGraph, starTracks, selected, conditions)
 		drawRisingSettingGraph(selected, conditions)})}
+
+function drawWorldMapPreview(conditions) {
+	const canvas = UI.worldMapPreview
+	if(!canvas) return
+	const rect = canvas.getBoundingClientRect()
+	const width = rect.width || 408, height = rect.height || width / 2
+	const dpr = window.devicePixelRatio || 1
+	canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr)
+	const ctx = canvas.getContext("2d", {alpha: false})
+	ctx.setTransform(dpr * width / 360, 0, 0, dpr * height / 180, 0, 0)
+	ctx.clearRect(0, 0, 360, 180)
+	if(worldMapPreviewImage?.complete && worldMapPreviewImage.naturalWidth)
+		ctx.drawImage(worldMapPreviewImage, 0, 0, 360, 180)
+	else {ctx.fillStyle = "black"; ctx.fillRect(0, 0, 360, 180)}
+	function line(points, strokeStyle, lineWidth = 1, dash = []) {
+		ctx.strokeStyle = strokeStyle; ctx.lineWidth = lineWidth; ctx.setLineDash(dash)
+		ctx.beginPath(); points.forEach((point, index) =>
+			index ? ctx.lineTo(point[0], point[1]) : ctx.moveTo(point[0], point[1]))
+		ctx.stroke(); ctx.setLineDash([])}
+	ctx.strokeStyle = "gray"; ctx.lineWidth = 0.5
+	for(let longitude = 30; longitude < 360; longitude += 30) line([[longitude, 0], [longitude, 180]], "gray", 0.5)
+	for(let latitude = 30; latitude < 180; latitude += 30) line([[0, latitude], [360, latitude]], "gray", 0.5)
+	const latitude = conditions.latitude, longitude = conditions.longitude
+	const julianDay = param.julianDay
+	const jc = (julianDay - 2451545) / 36525
+	const ayanamsa = getAyanamsa(jc), obliquity = getObliquity(jc)
+	const sidereal = getSidereal(jc, longitude)
+	const solarSystemPositions = solarSystem(jc).map(normalize)
+	const equatorialToNirayana = mul(rotateZ(ayanamsa), rotateX(-obliquity))
+	const nirayanaToWorld = mul(rotateZ(longitude - sidereal), transpose(equatorialToNirayana))
+	const sunNormal = mdot(nirayanaToWorld, solarSystemPositions[1])
+	const eclipticNormal = mdot(nirayanaToWorld, [0, 0, 1])
+	const ecliptic = []
+	ctx.fillStyle = "rgba(128, 128, 128, 0.75)"; ctx.beginPath()
+	for(let x = 0; x <= 360; x++) {
+		const lon = (x - 180) * DEGREE, cosine = Math.cos(lon), sine = Math.sin(lon)
+		const sunLatitude = Math.atan(-(sunNormal[0] * cosine + sunNormal[1] * sine) / sunNormal[2]) / DEGREE
+		const eclipticLatitude = Math.atan(-(eclipticNormal[0] * cosine + eclipticNormal[1] * sine) / eclipticNormal[2]) / DEGREE
+		if(x) ctx.lineTo(x, 90 - sunLatitude); else ctx.moveTo(x, 90 - sunLatitude)
+		ecliptic.push([x, 90 - eclipticLatitude])}
+	const nightPole = sunNormal[2] > 0 ? 180 : 0
+	ctx.lineTo(360, nightPole); ctx.lineTo(0, nightPole); ctx.closePath(); ctx.fill()
+	const observerX = longitude + 180, observerY = 90 - latitude
+	line([[0, observerY], [360, observerY]], color.horizontal, 2, [5, 3])
+	line([[observerX, 0], [observerX, 180]], color.horizontal, 2, [5, 3])
+	const objects = [
+		[8, color.neptune], [7, color.uranus], [6, color.saturn],
+		[3, color.venus], [5, color.jupiter], [2, color.mercury], [4, color.mars],
+		[0, color.moon], [1, color.sun]]
+	for(const [index, fillStyle] of objects) {
+		const [lon, lat] = toTP(mdot(nirayanaToWorld, solarSystemPositions[index]))
+		ctx.beginPath(); ctx.arc(mod(lon + 180, 360), 90 - lat, 3, 0, 2 * Math.PI)
+		ctx.fillStyle = fillStyle; ctx.fill(); ctx.strokeStyle = "white"; ctx.lineWidth = 0.75; ctx.stroke()}}
 
 function spreadGraphLabels(labels, min, max, gap) {
 	labels.sort((a, b) => a.x - b.x)

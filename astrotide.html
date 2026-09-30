@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1200, initial-scale=1.0, minimum-scale=0.25, maximum-scale=5.0, user-scalable=yes">
+<title>Astrotide</title>
+<meta name="description" content="Astrotide is an interactive module within the Armilla project for predicting tides from astronomical data.">
+<meta name="author" content="Peeravit Koad">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<link rel="canonical" href="https://harrykoad.github.io/armilla/astrotide.html">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<meta property="og:locale" content="en_US">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Armilla">
+<meta property="og:title" content="Astrotide">
+<meta property="og:description" content="Astrotide is an interactive module within the Armilla project for predicting tides from astronomical data.">
+<meta property="og:image" content="https://raw.githubusercontent.com/harrykoad/armilla/refs/heads/main/preview.png">
+<meta property="og:image:alt" content="The Astrotide module of the Armilla project">
+<meta property="og:url" content="https://harrykoad.github.io/armilla/astrotide.html">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Astrotide">
+<meta name="twitter:description" content="Astrotide is an interactive module within the Armilla project for predicting tides from astronomical data.">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/harrykoad/armilla/refs/heads/main/preview.png">
+<meta name="copyright" content="© Peeravit Koad. Walailak University, Nakhon Si Thammarat, THAILAND.">
+<script type="application/ld+json">
+{
+	"@context": "https://schema.org",
+	"@type": "WebApplication",
+	"name": "Astrotide",
+	"url": "https://harrykoad.github.io/armilla/astrotide.html",
+	"description": "Astrotide is an interactive module within the Armilla project for predicting tides from astronomical data.",
+	"applicationCategory": "EducationalApplication",
+	"operatingSystem": "Any",
+	"browserRequirements": "Requires JavaScript and an HTML5-compatible web browser.",
+	"isAccessibleForFree": true,
+	"image": "https://raw.githubusercontent.com/harrykoad/armilla/refs/heads/main/preview.png",
+	"isPartOf": {
+		"@type": "WebApplication",
+		"name": "Armilla",
+		"url": "https://harrykoad.github.io/armilla/"
+	},
+	"author": {
+		"@type": "Person",
+		"name": "Peeravit Koad",
+		"affiliation": {
+			"@type": "CollegeOrUniversity",
+			"name": "Walailak University"
+		}
+	}
+}
+</script>
+<style>
+* {box-sizing: border-box}
+body {background: black; color: white; color-scheme: dark; font-family: sans-serif;
+	font-size: 10pt; margin: 12px auto; overflow-x: auto; touch-action: pan-x pan-y pinch-zoom; width: 1176px}
+.controls {display: grid; gap: 12px; grid-template-columns: repeat(3, max-content) minmax(0, 1fr)}
+.controlGroup, .graphPanel {background: black; border: 1px solid gray; border-radius: 10px; padding: 8px}
+.controlsBar {background: black; box-shadow: 0 12px 0 black; display: grid; gap: 12px;
+	align-items: start;
+	grid-column: 1 / -1; grid-template-columns: 478px 200px 472px;
+	grid-template-rows: auto;
+	margin-top: -12px; min-width: 0; padding-top: 12px; user-select: none; width: 100%}
+.controlsBar input {user-select: text}
+.controlGroup {display: grid; grid-auto-rows: 1fr; gap: 8px}
+.leftControlStack {align-content: start; display: grid; gap: 12px; grid-column: 2; grid-row: 1; width: 200px}
+.locationGroup, .timeGroup {align-content: start; grid-auto-rows: auto;
+	max-width: 200px; min-width: 200px; width: 200px}
+.panelButtonRow {display: flex; margin-top: 1px}
+.panelButtonRow button {background: #efefef; border: 1px solid gray; border-radius: 6px; color: black;
+	cursor: pointer; font-size: 10pt; font-weight: bold; height: 24px; padding: 0; text-align: center; width: 70px}
+.panelButtonRow button:last-child {margin-left: auto}
+.horizonAltitudeLabel, .maxAltitudeDifferenceLabel, .starMaxAltitudeLabel {color: #aaa; font-size: 12px;
+	text-align: center; white-space: nowrap}
+.azimuthGroup {align-items: flex-start; align-self: start; column-gap: 8px; display: flex;
+	grid-column: 3; grid-row: 1;
+	max-width: 472px; min-height: 0; min-width: 472px; overflow: hidden; width: 472px}
+.azimuthGroup .azimuthControls, .azimuthGroup .skyPathCanvas {display: none}
+.worldMapBlock {flex: 0 0 370px; width: 370px}
+.worldMapPreview {aspect-ratio: 2 / 1; border: 1px solid gray; cursor: crosshair;
+	display: block; height: auto; width: 100%}
+.worldMapPotentialLegend {display: grid; font-size: 10pt; gap: 8px;
+	grid-template-columns: 1fr; justify-items: stretch; margin: 5px auto 0; width: max-content}
+.worldMapPotentialItem {align-items: center; display: flex; gap: 5px; justify-content: flex-start;
+	width: 100%}
+.worldMapPotentialItem input {cursor: pointer; margin: 0}
+.worldMapPotentialLine {flex: 0 0 24px; height: 7px; position: relative; width: 24px}
+.worldMapPotentialStroke {left: 0; position: absolute; width: 100%}
+.worldMapPotentialStroke::before, .worldMapPotentialStroke::after {
+	content: ""; left: 0; position: absolute; top: 0; width: 100%}
+.worldMapPotentialStroke.solid::after {border-top: 2px solid}
+.worldMapPotentialStroke.solid {top: 0}
+.worldMapPotentialStroke.dashed {bottom: 0.8px}
+.worldMapPotentialStroke.dashed::after {background: repeating-linear-gradient(to right,
+	#70b7ff 0 4px, transparent 4px 7px); height: 0.8px}
+.worldMapPotentialLine.gravitational .worldMapPotentialStroke::after {border-color: #70b7ff}
+.worldMapPotentialLine.radiative .worldMapPotentialStroke::after {border-color: #ff6f6f}
+.worldMapPotentialLine.radiative .worldMapPotentialStroke {top: 50%; transform: translateY(-1px)}
+.worldMapPotentialText {line-height: 14px; text-align: center}
+.worldMapLegend {display: flex; flex: 0 0 auto; flex-direction: column; font-size: 10pt;
+	justify-content: space-between; min-width: 0}
+.worldMapLegendItem {align-items: center; display: flex; gap: 5px; line-height: 15px;
+	white-space: nowrap}
+.worldMapLegendDot {border: 1px solid white; border-radius: 50%; box-sizing: border-box;
+	flex: 0 0 8px; height: 8px; width: 8px}
+.azimuthControls {align-content: start; display: grid; gap: 8px; grid-column: 1; grid-row: 1;
+	min-width: 0; width: 100%}
+.intersectionGroup {align-self: start; display: grid; grid-column: 1; grid-row: 1;
+	grid-template-rows: 44px minmax(0, 1fr);
+	max-width: 478px; min-height: 0; min-width: 478px; overflow: hidden; width: 478px}
+.intersectionHeader {height: 44px; overflow: hidden; user-select: none}
+.intersectionScroller {height: auto; min-height: 0; overflow-x: hidden; overflow-y: auto;
+	scrollbar-gutter: stable}
+.intersectionHeaderTable, .intersectionTable {border-collapse: separate; border-spacing: 0;
+	margin-left: auto; margin-right: auto; table-layout: fixed; width: 440px}
+.intersectionHeaderTable {font-size: 10pt}
+.intersectionTable {font-size: 9pt}
+.intersectionHeaderTable col:nth-child(1), .intersectionTable col:nth-child(1) {width: 75px}
+.intersectionHeaderTable col:nth-child(2), .intersectionTable col:nth-child(2) {width: 75px}
+.intersectionHeaderTable col:nth-child(3), .intersectionTable col:nth-child(3) {width: 70px}
+.intersectionHeaderTable col:nth-child(4), .intersectionTable col:nth-child(4) {width: 110px}
+.intersectionHeaderTable col:nth-child(5), .intersectionTable col:nth-child(5) {width: 110px}
+.intersectionHeaderTable, .intersectionHeaderTable th, .intersectionTable,
+.intersectionTable th, .intersectionTable td {border: 0}
+.intersectionHeader th {background: black; font-weight: 400; height: 44px; line-height: 16px;
+	padding: 0 5px; vertical-align: middle; white-space: nowrap}
+.intersectionHeaderCell {align-items: center; display: grid; grid-template-rows: 22px 18px;
+	height: 40px}
+.intersectionHeaderLine {display: block; line-height: 18px; text-align: center}
+.intersectionEventSelect {background: #3b3b3b; border: 1px solid gray; border-radius: 5px;
+	box-sizing: border-box; color: white; cursor: pointer; display: block; font: inherit; height: 22px;
+	margin: 0 auto; padding: 2px 4px; text-align: center; text-align-last: center; width: 100px}
+.intersectionEventLabel {display: block; line-height: 18px; text-align: center}
+.intersectionHeader th:nth-last-child(-n+2) {letter-spacing: -0.35px;
+	padding-left: 2.5px; padding-right: 2.5px; text-align: center}
+.intersectionHeader th:nth-last-child(2) {padding-right: 7.5px}
+.intersectionHeader th:last-child {padding-left: 7.5px}
+.intersectionHeader th:first-child, .intersectionStarHeading {text-align: center}
+.intersectionOption {cursor: pointer; height: 24px}
+.intersectionOption td {height: 24px; line-height: 24px; padding: 0 5px; white-space: nowrap}
+.intersectionOption td:nth-child(-n+2) {text-align: center}
+.intersectionOption:focus-visible {outline: 2px solid #80bfff; outline-offset: -2px}
+.intersectionOption:hover td {background: #1d1d1d}
+.intersectionOption.selected td {background: #303030}
+.intersectionOption:is(:hover, .selected) td:first-child {border-radius: 4px 0 0 4px}
+.intersectionOption:is(:hover, .selected) td:last-child {border-radius: 0 4px 4px 0}
+.intersectionDate {padding-left: 2.5px !important; padding-right: 2.5px !important; text-align: center}
+.intersectionOption .intersectionDate:nth-last-child(2) {padding-right: 7.5px !important}
+.intersectionOption .intersectionDate:last-child {padding-left: 7.5px !important}
+.intersectionDateLink {border: 1px solid currentColor; border-radius: 4px; color: inherit;
+	display: block; line-height: 18px; margin: 0 auto; padding: 0 3px; text-decoration: none; width: 100px}
+.intersectionDateLink:hover {background: #2a2a2a}
+.intersectionDateLink:focus-visible {outline: 2px solid #80bfff; outline-offset: 1px}
+.intersectionCentral {text-align: center}
+.intersectionRange {padding-left: 2px !important; text-align: left}
+.intersectionOption span {min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap}
+.graphPanel {cursor: grab; grid-column: 1 / -1; min-width: 0; overflow: hidden;
+	position: relative; user-select: none}
+.graphPanel:has(#naksatraGraph), .graphPanel:has(#azimuthGraph) {display: none}
+.graphPanel.dragging {cursor: grabbing}
+.graphPanel.collapsed {height: 50px}
+.graphPanel.collapsed .graphCanvas {display: none}
+.graphCollapsedLabel {display: none; font-size: 14pt; font-weight: normal}
+.graphPanel.collapsed .graphCollapsedLabel {align-items: center; display: flex; inset: 8px 48px;
+	justify-content: center; pointer-events: none; position: absolute; text-align: center}
+.graphToggleButton {align-items: center; background: #f2f2f2; border: 1px solid gray;
+	border-radius: 50%; color: black; cursor: pointer; display: flex; font-size: 18px;
+	height: 32px; justify-content: center; line-height: 1; padding: 0; position: absolute;
+	top: 8px; width: 32px; z-index: 2}
+.graphToggleButton.left {left: 8px}
+.graphToggleButton.right {right: 8px}
+.graphToggleButton:focus-visible {outline: 2px solid #80bfff; outline-offset: 2px}
+.graphCanvas {aspect-ratio: 21 / 9; display: block; height: auto; touch-action: pan-x pan-y pinch-zoom; width: 100%}
+.skyPathCanvas {align-self: stretch; aspect-ratio: 1; contain: size; display: block; height: 100%; justify-self: start;
+	grid-column: 2; grid-row: 1; max-height: 100%; max-width: 100%; min-height: 0;
+	min-width: 0; width: auto}
+.footnotes {font-size: 12px; grid-column: 1 / -1; margin: 0 8px;
+	text-align: left}
+.footnotes a {color: inherit}
+.footnotes p {display: grid; grid-template-columns: 3em minmax(0, 1fr); margin: 10px 0}
+.footnotes .footnoteCredit {color: gray; display: block; margin-top: 14px; text-align: center}
+.footnoteMarker {padding-right: 0.5em; text-align: right}
+.field {align-items: center; display: grid; gap: 4px;
+	grid-template-columns: 1fr 60px 2em; white-space: nowrap}
+.locationGroup .field {grid-template-columns: 1fr 60px 2em}
+.locationGroup > .field {position: relative; right: 9px}
+.timeGroup .field {grid-template-columns: 43px minmax(0, 1fr)}
+.timeGroup > .field {position: relative; right: 3px; width: calc(100% + 3px)}
+.yearFields, .dateFields, .timeFields {align-items: center; display: flex; gap: 2px; justify-self: stretch;
+	min-width: 0; white-space: nowrap; width: 100%}
+.yearFields, .dateFields {justify-content: space-between}
+.eraChoice {align-items: center; cursor: pointer; display: flex}
+.yearFields input[type="radio"] {cursor: pointer; margin: 0}
+.timeGroup .yearFields input[type="text"] {flex: 0 0 55px; margin: 0; min-width: 0; width: 55px}
+.dateFields input:nth-of-type(1) {flex: 0 0 30px; min-width: 0; width: 30px}
+.dateFields input:nth-of-type(2) {width: 28px}
+.dateDayGroup {align-items: center; display: flex; gap: 2px}
+.dateFields label {margin: 0}
+.calendarWeekday {color: gray; font-size: 12px; margin: 0; text-align: right; white-space: nowrap}
+.calendarWeekdayValue {display: inline-block; text-align: center; width: 25px}
+.timeGroup .timeFields input {flex: 0 0 28px; min-width: 0; width: 28px}
+#pageDayInput, #pageHourInput, #pageMinuteInput {flex-basis: 35px; width: 35px}
+.timeZoneText {color: gray; font-size: 12px; margin-left: auto}
+.azimuthGroup .field {display: flex; flex-direction: column; gap: 4px}
+.azimuthAltitudeFields {align-self: center; border-bottom: 1px solid gray; box-sizing: border-box;
+	display: grid; gap: 8px; grid-column: 1; grid-row: 1; justify-self: start;
+	padding-bottom: 11px; width: calc(100% - 8px)}
+.azimuthGroup .azimuthAltitudeFields .field {display: grid; gap: 4px;
+	grid-template-columns: 1fr 60px max-content}
+.azimuthAltitudeFields .field > label {text-align: right}
+.risingAzimuthField {align-self: center; grid-column: 1; grid-row: 2; justify-self: start;
+	width: calc(100% - 8px)}
+.risingAzimuthField > label {padding-top: 4px}
+.starMaxAltitudeLabel {grid-column: 1; grid-row: 3; margin: 3px 0;
+	width: calc(100% - 8px)}
+.settingAzimuthField {align-self: center; grid-column: 1; grid-row: 4; justify-self: start;
+	width: calc(100% - 8px)}
+.azimuthInputs {align-items: center; display: grid; gap: 4px;
+	grid-template-columns: 60px auto 60px max-content}
+.hemisphereButton {background: #f2f2f2; border: 1px solid gray; border-radius: 6px; color: black;
+	cursor: pointer; font: inherit; font-weight: bold; grid-column: 1; grid-row: 5; justify-self: center;
+	height: 24px; margin: 5px 8px 0 0; padding: 3px 4px; text-align: center;
+	white-space: nowrap; width: 130px}
+.field:not(.checkboxField) > label {text-align: right}
+.timeGroup .field:not(.checkboxField) > label {text-align: right}
+.checkboxField {display: flex; gap: 4px; justify-content: center}
+input[type="text"] {border: 1px solid gray; border-radius: 5px; font: inherit;
+	padding: 3px 5px; text-align: center; width: 60px}
+#risingUncertaintyInput, #settingUncertaintyInput {width: 60px}
+input[type="checkbox"], input[type="radio"] {accent-color: currentColor; cursor: pointer; margin: 0}
+.checkboxLabel {cursor: pointer}
+input:focus-visible {outline: 2px solid #80bfff; outline-offset: 2px}
+</style>
+</head>
+<body>
+
+<main class="controls" aria-label="Azimuth–epoch chart and observing conditions">
+	<div class="controlsBar">
+	<div class="leftControlStack">
+	<div class="controlGroup locationGroup" role="group" aria-label="Location">
+		<div class="field">
+			<label for="pageLatitudeInput">Latitude:</label>
+			<input type="text" id="pageLatitudeInput" name="latitude" inputmode="text" enterkeyhint="next" tabindex="1" value="+8.64" aria-describedby="latitudeUnit">
+			<span id="latitudeUnit">°</span>
+		</div>
+		<div class="field">
+			<label for="pageLongitudeInput">Longitude:</label>
+			<input type="text" id="pageLongitudeInput" name="longitude" inputmode="text" enterkeyhint="next" tabindex="2" value="+99.90" aria-describedby="longitudeUnit">
+			<span id="longitudeUnit">°</span>
+		</div>
+		<div class="panelButtonRow">
+			<button type="button" id="hereButton">Here</button>
+			<button type="button" id="setLatLonButton" class="setButton">Set</button>
+		</div>
+		<input type="text" id="pageElevationInput" name="elevation" value="0" hidden>
+		<div id="geometricHorizonLabel" hidden>(Horizon's Altitude: 0.00°)</div>
+	</div>
+	<div class="controlGroup timeGroup" role="group" aria-label="Local date and time">
+		<div class="field">
+			<label for="pageYearInput">Year:</label>
+			<span class="yearFields">
+				<label class="eraChoice" for="pageEraAD"><input type="radio" id="pageEraAD" name="tideEra" value="AD" checked>&nbsp;AD</label>
+				<input type="text" id="pageYearInput" name="year" inputmode="numeric" tabindex="3" value="N/A">
+				<label class="eraChoice" for="pageEraBC"><input type="radio" id="pageEraBC" name="tideEra" value="BC">&nbsp;BC</label>
+			</span>
+		</div>
+		<div class="field">
+			<label for="pageMonthInput">Month:</label>
+			<span class="dateFields">
+				<input type="text" id="pageMonthInput" name="month" inputmode="text" tabindex="4" value="N/A" aria-label="Month">
+				<span class="dateDayGroup"><label for="pageDayInput">Day:</label>
+				<input type="text" id="pageDayInput" name="day" inputmode="numeric" tabindex="5" value="N/A" aria-label="Day"></span>
+				<span class="calendarWeekday">(<span class="calendarWeekdayValue" id="pageDayOfWeekValue">N/A</span>)</span>
+			</span>
+		</div>
+		<div class="field">
+			<label for="pageHourInput">Time:</label>
+			<span class="timeFields">
+				<input type="text" id="pageHourInput" name="hour" inputmode="numeric" tabindex="6" value="N/A" aria-label="Hour">
+				<span>:</span>
+				<input type="text" id="pageMinuteInput" name="minute" inputmode="numeric" tabindex="7" value="N/A" aria-label="Minute">
+				<span class="timeZoneText">(<span id="pageTimeZoneInput">UTC+07</span>)</span>
+			</span>
+		</div>
+		<div class="panelButtonRow">
+			<button type="button" id="nowButton">Now</button>
+			<button type="button" id="setDateTimeButton" class="setButton">Set</button>
+		</div>
+		<div hidden>
+			<input type="checkbox" id="refractionCheckbox" checked>
+			<input type="text" id="temperatureInput" value="26.5">
+			<input type="text" id="pressureInput" value="1,013">
+			<div id="maxAltitudeDifferenceLabel"></div>
+		</div>
+	</div>
+	</div>
+	<div class="controlGroup azimuthGroup" role="group" aria-label="World map with astronomical overlays">
+		<div class="worldMapBlock">
+			<canvas class="worldMapPreview" id="worldMapPreview" width="720" height="360"
+				aria-label="World map with astronomical overlays for the selected location and time"></canvas>
+			<div class="worldMapPotentialLegend" aria-label="Potential line legend">
+				<label class="worldMapPotentialItem"><input type="checkbox" id="verticalTidalAccelerationCheckbox" checked><span class="worldMapPotentialLine gravitational"><span class="worldMapPotentialStroke solid"></span><span class="worldMapPotentialStroke dashed"></span></span><span class="worldMapPotentialText">Vertical Tide-Generating Acceleration: TGA (Sun+Moon+Planets)</span></label>
+				<label class="worldMapPotentialItem"><input type="checkbox" id="solarIrradianceCheckbox" checked><span class="worldMapPotentialLine radiative"><span class="worldMapPotentialStroke solid"></span></span><span class="worldMapPotentialText">Clear-Sky Global Horizontal Irradiance: GHI (Sun-only)</span></label>
+			</div>
+		</div>
+		<div class="worldMapLegend" aria-label="World-map point legend">
+			<div class="worldMapLegendItem"><span class="worldMapLegendDot" style="background:red"></span>Sun</div>
+			<div class="worldMapLegendItem"><span class="worldMapLegendDot" style="background:#c0c000"></span>Moon</div>
+			<div class="worldMapLegendItem"><span class="worldMapLegendDot" style="background:green"></span>Mercury</div>
+			<div class="worldMapLegendItem"><span class="worldMapLegendDot" style="background:cyan"></span>Venus</div>
+			<div class="worldMapLegendItem"><span class="worldMapLegendDot" style="background:magenta"></span>Mars</div>
+			<div class="worldMapLegendItem"><span class="worldMapLegendDot" style="background:orange"></span>Jupiter</div>
+			<div class="worldMapLegendItem"><span class="worldMapLegendDot" style="background:purple"></span>Saturn</div>
+			<div class="worldMapLegendItem"><span class="worldMapLegendDot" style="background:#00ff80"></span>Uranus</div>
+			<div class="worldMapLegendItem"><span class="worldMapLegendDot" style="background:#0080ff"></span>Neptune</div>
+		</div>
+		<div class="azimuthControls">
+		<div class="azimuthAltitudeFields">
+			<div class="field">
+				<label for="sunAltitudeInput">Sun's Altitude:</label>
+				<input type="text" id="sunAltitudeInput" name="sunAltitude" inputmode="text" enterkeyhint="next" tabindex="7" value="0.00" aria-describedby="sunAltitudeUnit">
+				<span id="sunAltitudeUnit">°</span>
+			</div>
+			<div class="field">
+				<label for="horizonAltitudeInput">Star's Altitude:</label>
+				<input type="text" id="horizonAltitudeInput" name="horizonAltitude" inputmode="text" enterkeyhint="next" tabindex="8" value="+2.00" aria-describedby="horizonAltitudeUnit">
+				<span id="horizonAltitudeUnit">°</span>
+			</div>
+		</div>
+		<div class="field risingAzimuthField">
+			<label for="risingAzimuthInput">Star's Rising Azimuth:</label>
+			<div class="azimuthInputs">
+				<input type="text" id="risingAzimuthInput" name="risingAzimuth" inputmode="text" enterkeyhint="next" tabindex="9" value="97.50" aria-describedby="risingAzimuthUnit">
+				<span>±</span>
+				<input type="text" id="risingUncertaintyInput" name="risingUncertainty" inputmode="text" enterkeyhint="next" tabindex="10" value="1.00" aria-label="Rising azimuth uncertainty" aria-describedby="risingAzimuthUnit">
+				<span id="risingAzimuthUnit">°</span>
+			</div>
+		</div>
+		<div class="starMaxAltitudeLabel" id="starMaxAltitudeLabel">(Star's Max. Altitude: +0.00°)</div>
+		<div class="field settingAzimuthField">
+			<label for="settingAzimuthInput">Star's Setting Azimuth:</label>
+			<div class="azimuthInputs">
+				<input type="text" id="settingAzimuthInput" name="settingAzimuth" inputmode="text" enterkeyhint="next" tabindex="11" value="262.50" aria-describedby="settingAzimuthUnit">
+				<span>±</span>
+				<input type="text" id="settingUncertaintyInput" name="settingUncertainty" inputmode="text" enterkeyhint="done" tabindex="12" value="1.00" aria-label="Setting azimuth uncertainty" aria-describedby="settingAzimuthUnit">
+				<span id="settingAzimuthUnit">°</span>
+			</div>
+		</div>
+		<button class="hemisphereButton" id="hemisphereButton" type="button"></button>
+		</div>
+		<canvas class="skyPathCanvas" id="skyPathCanvas" width="300" height="300"
+			aria-label="Visible stellar path derived from the entered azimuth and altitude, with east at the top and north at the left"></canvas>
+	</div>
+	<div class="controlGroup intersectionGroup" role="group" aria-labelledby="intersectionTitle">
+		<div class="intersectionHeader" id="intersectionTitle">
+			<table class="intersectionHeaderTable">
+				<colgroup><col><col><col><col><col></colgroup>
+				<thead><tr><th><span class="intersectionHeaderCell"><span class="intersectionHeaderLine">Indian</span><span class="intersectionHeaderLine">Nakṣatra</span></span></th>
+					<th class="intersectionStarHeading"><span class="intersectionHeaderCell"><span class="intersectionHeaderLine">Star or</span><span class="intersectionHeaderLine">Yogatārā</span></span></th>
+					<th><span class="intersectionHeaderCell"><span class="intersectionHeaderLine">Central</span><span class="intersectionHeaderLine">Year</span></span></th>
+					<th><span class="intersectionHeaderCell"><select class="intersectionEventSelect" id="risingEventSelect" aria-label="Rising event type">
+						<option value="acronRising">Acronychal</option><option value="cosmRising">Cosmical</option>
+					</select><span class="intersectionEventLabel">Rising*</span></span></th>
+					<th><span class="intersectionHeaderCell"><select class="intersectionEventSelect" id="settingEventSelect" aria-label="Setting event type">
+						<option value="acronSetting">Acronychal</option><option value="cosmSetting" selected>Cosmical</option>
+					</select><span class="intersectionEventLabel">Setting*</span></span></th></tr></thead>
+			</table>
+		</div>
+		<div class="intersectionScroller">
+			<table class="intersectionTable">
+				<colgroup><col><col><col><col><col></colgroup>
+				<tbody class="intersectionList" id="intersectionList" role="radiogroup"
+					aria-label="Stars intersecting the azimuth uncertainty band" aria-live="polite"></tbody>
+			</table>
+		</div>
+	</div>
+	</div>
+	<section class="graphPanel" aria-label="Naksatra azimuth–epoch graph">
+		<button class="graphToggleButton left" type="button" aria-controls="naksatraGraph" aria-expanded="true" aria-label="Hide Naksatra graph">▲</button>
+		<button class="graphToggleButton right" type="button" aria-controls="naksatraGraph" aria-expanded="true" aria-label="Hide Naksatra graph">▲</button>
+		<div class="graphCollapsedLabel">Rising and setting azimuths of Indian nakṣatras by year.</div>
+		<canvas class="graphCanvas" id="naksatraGraph" width="1200" height="600" aria-label="Naksatra principal star rising and setting azimuths versus year">
+			Your browser does not support the canvas element.
+		</canvas>
+	</section>
+	<section class="graphPanel" aria-label="Azimuth–epoch graph">
+		<button class="graphToggleButton left" type="button" aria-controls="azimuthGraph" aria-expanded="true" aria-label="Hide stellar graph">▲</button>
+		<button class="graphToggleButton right" type="button" aria-controls="azimuthGraph" aria-expanded="true" aria-label="Hide stellar graph">▲</button>
+		<div class="graphCollapsedLabel">Rising and setting azimuths of bright stars by year.</div>
+		<canvas class="graphCanvas" id="azimuthGraph" width="1200" height="600" aria-label="Stellar rising and setting azimuths versus year">
+			Your browser does not support the canvas element.
+		</canvas>
+	</section>
+	<section class="graphPanel" aria-label="Selected-star acronychal and cosmical detail graph">
+		<button class="graphToggleButton left" type="button" aria-controls="risingSettingGraph" aria-expanded="true" aria-label="Hide selected-star graph">▲</button>
+		<button class="graphToggleButton right" type="button" aria-controls="risingSettingGraph" aria-expanded="true" aria-label="Hide selected-star graph">▲</button>
+		<div class="graphCollapsedLabel">Rising and setting azimuths of the selected nakṣatra/star and the Sun by year.</div>
+		<canvas class="graphCanvas" id="risingSettingGraph" width="1200" height="600"
+			aria-label="Selected star rising and setting azimuth with acronychal rising and cosmical setting dates">
+			Your browser does not support the canvas element.
+		</canvas>
+	</section>
+	<footer class="footnotes" aria-label="Chart notes">
+		<p><span class="footnoteMarker">*</span><span>Cosmical rising or setting of a star occurs at sunrise, whereas acronychal rising or setting occurs at sunset. Heliacal rising is a star’s first visible rising before sunrise, usually several days after cosmical rising; heliacal setting is its last visible setting after sunset, usually several days before acronychal setting. Acronychal or cosmical rising or setting dates are given in the Gregorian calendar for the central year only. Clicking each date links to the Armilla page, which displays the celestial sphere for the specified observational parameters.</span></p>
+		<p><span class="footnoteMarker">**</span><span>The Indian lunar mansions (nakṣatras) and their principal stars (yogatārās) are adapted from the <i>Sūryasiddhānta</i>. Nakṣatras marked with a double asterisk (**) are alternative asterisms used in various Indian-influenced cultural traditions and are listed separately from their main forms. Several bright stars not associated with nakṣatras are also included for reference.</span></p>
+		<p><span class="footnoteMarker">***</span><span>Acronychal and cosmical rising and setting dates are approximate; the reported civil date may differ by about one day.</span></p>
+		<p class="footnoteCredit">© <span id="copyrightYear"></span> Peeravit Koad, Walailak University, Thailand. Astrolabe is an interactive astronomical module within the Armilla project. Visit this project on GitHub: <a href="https://github.com/harrykoad/armilla" target="_blank" rel="noopener">github.com/harrykoad/armilla</a>.</p>
+	</footer>
+</main>
+
+<script src="state.js"></script>
+<script src="math.js"></script>
+<script src="coord.js"></script>
+<script src="data.js"></script>
+<script src="astro.js"></script>
+<script src="sphere.js"></script>
+<script src="event.js"></script>
+<script src="astrotide.js"></script>
+<script src="modal.js"></script>
+
+</body>
+</html>
