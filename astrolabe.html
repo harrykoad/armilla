@@ -76,12 +76,14 @@ body {background: black; color: white; color-scheme: dark; font-family: sans-ser
 	min-width: 0; width: 100%}
 .intersectionGroup {align-self: start; display: grid; grid-column: 3; grid-row: 1;
 	grid-template-rows: 44px minmax(0, 1fr) auto;
-	max-width: 526px; min-height: 0; min-width: 526px; overflow: hidden; width: 526px}
+	max-width: 526px; min-height: 0; min-width: 526px; overflow: hidden; row-gap: 4px;
+	width: 526px}
 .intersectionHeader {height: 44px; overflow: hidden; user-select: none}
 .intersectionScroller {height: auto; min-height: 0; overflow-x: hidden; overflow-y: auto;
 	scrollbar-gutter: stable}
-.intersectionTimeNote {color: gray; font-size: 11px; line-height: 16px; padding-top: 4px;
-	text-align: center; white-space: nowrap}
+.intersectionTimeNote {box-sizing: border-box; color: white; font-size: 11px;
+	justify-self: center; line-height: 16px; padding-top: 2px; text-align: center;
+	white-space: pre-line; width: 100%}
 .intersectionHeaderTable, .intersectionTable {border-collapse: separate; border-spacing: 0;
 	margin-left: auto; margin-right: auto; table-layout: fixed; width: 480px}
 .intersectionHeaderTable {font-size: 10pt}
@@ -140,8 +142,8 @@ body {background: black; color: white; color-scheme: dark; font-family: sans-ser
 .graphToggleButton.left {left: 8px}
 .graphToggleButton.right {right: 8px}
 .graphToggleButton:focus-visible {outline: 2px solid #80bfff; outline-offset: 2px}
-.graphCanvas {aspect-ratio: 21 / 9; display: block; height: auto; touch-action: pan-x pan-y pinch-zoom; width: 100%}
-.skyPathCanvas {align-self: stretch; aspect-ratio: 1; contain: size; display: block; height: 100%; justify-self: start;
+.graphCanvas {aspect-ratio: 21 / 9; cursor: crosshair; display: block; height: auto; touch-action: pan-x pan-y pinch-zoom; width: 100%}
+.skyPathCanvas {align-self: stretch; aspect-ratio: 1; contain: size; cursor: crosshair; display: block; height: 100%; justify-self: start;
 	grid-column: 2; grid-row: 1; max-height: 100%; max-width: 100%; min-height: 0;
 	min-width: 0; width: auto}
 .footnotes {font-size: 12px; grid-column: 1 / -1; margin: 0 8px;
@@ -314,7 +316,8 @@ input:focus-visible {outline: 2px solid #80bfff; outline-offset: 2px}
 		</canvas>
 	</section>
 	<footer class="footnotes" aria-label="Chart notes">
-		<p><span class="footnoteMarker">*</span><span>Cosmical rising or setting of a star occurs at sunrise, whereas acronychal rising or setting occurs at sunset. Heliacal rising is a star’s first visible rising before sunrise, usually several days after cosmical rising; heliacal setting is its last visible setting after sunset, usually several days before acronychal setting. Acronychal or cosmical rising or setting dates are given in the Gregorian calendar for the central year only. Clicking each date links to the Armilla page, which displays the celestial sphere for the specified observational parameters.</span></p>
+		<p><span class="footnoteMarker"></span><span>Cosmical rising or setting of a star occurs at sunrise, whereas acronychal rising or setting occurs at sunset. Heliacal rising is a star’s first visible rising before sunrise, usually several days after cosmical rising; heliacal setting is its last visible setting after sunset, usually several days before acronychal setting.</span></p>
+		<p><span class="footnoteMarker">*</span><span>Acronychal or cosmical rising or setting dates are given in the Gregorian calendar for the central year only, and local times are converted to Coordinated Universal Time (UTC) using the specified longitude. Clicking each date links to the Armilla page, which displays the celestial sphere for the specified observational parameters.</span></p>
 		<p><span class="footnoteMarker">**</span><span>The Indian lunar mansions (nakṣatras) and their principal stars (yogatārās) are adapted from the <i>Sūryasiddhānta</i>. Nakṣatras marked with a double asterisk (**) are alternative asterisms used in various Indian-influenced cultural traditions and are listed separately from their main forms. Several bright stars not associated with nakṣatras are also included for reference.</span></p>
 		<p><span class="footnoteMarker">***</span><span>Acronychal and cosmical rising and setting dates are approximate; the reported civil date may differ by about one day.</span></p>
 		<p class="footnoteCredit">© <span id="copyrightYear"></span> Peeravit Koad, Walailak University, Thailand. Astrolabe is an interactive astronomical module within the Armilla project. Visit this project on GitHub: <a href="https://github.com/harrykoad/armilla" target="_blank" rel="noopener">github.com/harrykoad/armilla</a>.</p>

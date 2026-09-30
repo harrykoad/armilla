@@ -64,6 +64,7 @@ function setupScalarInput(input, parse, valid, format, error, adjust, coarseStep
 
 setupCoordinateInput("latitudeInput", 90, false)
 function formatTwoDigitTimeZone(timeZone) {
+	if(timeZone === 0) return "UTC"
 	return "UTC" + (timeZone >= 0 ? "+" : "−") +
 		String(Math.abs(timeZone)).padStart(2, "0")}
 setupCoordinateInput("longitudeInput", 180, true, -180, longitude => {
@@ -604,10 +605,6 @@ function updateIntersectionPanel(intersections, conditions) {
 	const scroller = list.closest(".intersectionScroller")
 	const risingEvent = selectedIntersectionEvent(UI.risingEventSelect)
 	const settingEvent = selectedIntersectionEvent(UI.settingEventSelect)
-	const timeZone = Math.round(conditions.longitude / 15)
-	UI.intersectionTimeNote.textContent = "The star's rising and setting times " +
-		"are local times (time zone UTC" + (timeZone >= 0 ? "+" : "−") +
-		String(Math.abs(timeZone)).padStart(2, "0") + ")."
 	intersections = intersections.filter(item => {
 		if(!Number.isFinite(item.centralYear)) return false
 		return starOppositionEvent(item.track, item.centralYear, conditions, ...risingEvent).julianDay !== null &&
@@ -617,6 +614,39 @@ function updateIntersectionPanel(intersections, conditions) {
 			item.start > graph.yearMin + 1e-6 && item.end < graph.yearMax - 1e-6)
 		graph.selectedIntersection = completeRange ? completeRange.id :
 			(intersections.length ? intersections[0].id : null)}
+	const selectedItem = intersections.find(item => item.id === graph.selectedIntersection)
+	if(selectedItem) {
+		const sunAltitude = geometricHorizon(conditions, conditions.sunAltitude)
+		const selectedSolarEvents = [
+			{eventType: risingEvent, stellarEvent:
+				UI.risingEventSelect.selectedOptions[0].textContent.toLowerCase() + " rising"},
+			{eventType: settingEvent, stellarEvent:
+				UI.settingEventSelect.selectedOptions[0].textContent.toLowerCase() + " setting"}]
+		const solarEvents = selectedSolarEvents.map(({eventType, stellarEvent}) => {
+			const event = starOppositionEvent(
+				selectedItem.track, selectedItem.centralYear, conditions, ...eventType)
+			if(event.julianDay === null) return null
+			const jc = (event.julianDay - 2451545) / 36525
+			const declination = toTP(normalize(mdot(
+				getEquatorialRotation(jc), getGeocentricSunPosition(jc))))[1]
+			const risingAzimuth = getRisingAzimuth(
+				declination, conditions.latitude, sunAltitude)
+			if(!Number.isFinite(risingAzimuth)) return null
+			return {name: eventType[1] ? "sunrise" : "sunset",
+				azimuth: eventType[1] ? risingAzimuth : mod(360 - risingAzimuth, 360),
+				date: event.label, time: event.time, stellarEvent}}
+		).filter(Boolean)
+		const altitudeText = (conditions.sunAltitude < 0 ? "−" :
+			conditions.sunAltitude > 0 ? "+" : "") +
+			Math.abs(conditions.sunAltitude).toFixed(2)
+		const eventDescriptions = solarEvents.map(event =>
+			event.name[0].toUpperCase() + event.name.slice(1) + " at " +
+			event.stellarEvent + ": " +
+			formatIntersectionYear(selectedItem.centralYear) + " " + event.date + ", " +
+			event.time + "; solar azm. " + event.azimuth.toFixed(2) +
+			"°, alt. " + altitudeText + "°.")
+		UI.intersectionTimeNote.textContent = eventDescriptions.join("\n")}
+	else UI.intersectionTimeNote.textContent = ""
 	const scrollTop = scroller.scrollTop
 	const focusedId = document.activeElement?.dataset.intersectionId
 	list.replaceChildren()
@@ -680,7 +710,6 @@ function updateIntersectionPanel(intersections, conditions) {
 		headerTable.style.width = widths.reduce((sum, width) => sum + width, 0) + "px"}
 	const gutter = Math.max(0, scroller.offsetWidth - scroller.clientWidth) + "px"
 	UI.intersectionTitle.style.paddingRight = gutter
-	UI.intersectionTimeNote.style.paddingRight = gutter
 	scroller.scrollTop = scrollTop
 	return intersections.find(item => item.id === graph.selectedIntersection) || null}
 
@@ -1328,13 +1357,16 @@ function drawSkyPath(selectedIntersection, conditions) {
 		ctx.setLineDash([])
 		ctx.lineCap = "butt"}
 	if(!conditions) drawHorizon()
-	ctx.fillStyle = "#aaa"
+	ctx.fillStyle = "white"
 	ctx.font = "12px sans-serif"
-	ctx.textAlign = "center"; ctx.textBaseline = "bottom"; ctx.fillText("East", cx, cy - radius - 2)
-	ctx.textBaseline = "top"; ctx.fillText("West", cx, cy + radius + 4)
+	ctx.textAlign = "center"; ctx.textBaseline = "bottom"
+	ctx.fillText("East 90°", cx, cy - radius - 2)
+	ctx.textBaseline = "top"; ctx.fillText("West 270°", cx, cy + radius + 4)
 	ctx.textBaseline = "middle"
-	ctx.save(); ctx.translate(8, cy); ctx.rotate(-Math.PI / 2); ctx.fillText("North", 0, 0); ctx.restore()
-	ctx.save(); ctx.translate(width - 8, cy); ctx.rotate(Math.PI / 2); ctx.fillText("South", 0, 0); ctx.restore()
+	ctx.save(); ctx.translate(8, cy); ctx.rotate(-Math.PI / 2)
+	ctx.fillText("North 0°", 0, 0); ctx.restore()
+	ctx.save(); ctx.translate(width - 8, cy); ctx.rotate(Math.PI / 2)
+	ctx.fillText("South 180°", 0, 0); ctx.restore()
 	if(!conditions) {
 		canvas.setAttribute("aria-label", "Visible sky path plot, with east at the top and north at the left")
 		return}

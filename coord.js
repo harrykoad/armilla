@@ -74,6 +74,7 @@ function formatJulianDay(julianDay) {
 	return (julianDay < 0 ? "−" : "") + Math.abs(julianDay).toFixed(5)}
 
 function formatTimeZone(timeZone) {
+	if(timeZone === 0) return "UTC"
 	return "UTC" + (timeZone >= 0 ? "+" : "−") +
 		String(Math.abs(timeZone)).padStart(2, "0")}
 

@@ -615,89 +615,6 @@ function initSharedParameterModal(target) {
 			ctx.restore()}}
 	initializeModalGraphics()
 
-	const field = id => document.getElementById(id)
-	const latitude = UI.latitudeInput, longitude = UI.longitudeInput
-	const year = UI.yearInput, month = UI.monthInput, day = UI.dayInput
-	const hour = UI.hourInput, minute = UI.minuteInput
-	const eraAD = UI.eraAD, eraBC = UI.eraBC
-	const julianDay = UI.julianDayInput, timeZone = UI.timeZoneInput
-	const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-
-	function numeric(input) {return parseNumber(input.value)}
-	function modalYear() {
-		const value = Math.round(numeric(year))
-		return eraBC.checked ? 1 - value : value}
-	function refreshJulianDay() {
-		const y = modalYear(), mo = Math.round(numeric(month))
-		const d = Math.round(numeric(day)), h = Math.round(numeric(hour)), mi = Math.round(numeric(minute))
-		const lon = numeric(longitude)
-		if([y, mo, d, h, mi, lon].every(Number.isFinite)) {
-			const jd = getJulianDay(y, mo, d, 15 * (h + mi / 60), Math.round(lon / 15))
-			modal.temp.year = y; modal.temp.month = mo; modal.temp.day = d
-			modal.temp.hour = h; modal.temp.minute = mi; modal.temp.longitude = lon
-			modal.temp.elevation = 0; modal.temp.julianDay = jd
-			julianDay.value = formatJulianDay(jd)
-			timeZone.textContent = formatTimeZone(Math.round(lon / 15))
-			if(background.style.display === "flex") updateModal()}}
-	function open() {
-		const hm = toDMS(param.time / 15, 24)
-		modal.temp.fallback = null
-		modal.temp.year = param.year; modal.temp.month = param.month; modal.temp.day = param.day
-		modal.temp.hour = hm[0]; modal.temp.minute = hm[1]
-		modal.temp.longitude = param.longitude; modal.temp.elevation = 0
-		modal.temp.julianDay = param.julianDay
-		latitude.value = formatSignedAngleDecimal(param.latitude, 2).replace("°", "")
-		longitude.value = formatSignedAngleDecimal(param.longitude, 2).replace("°", "")
-		UI.elevationInput.value = "0"
-		eraAD.checked = param.year > 0
-		eraBC.checked = param.year < 1
-		year.value = param.year > 0 ? param.year : 1 - param.year
-		month.value = param.month
-		day.value = param.day
-		hour.value = String(hm[0]).padStart(2, "0")
-		minute.value = String(hm[1]).padStart(2, "0")
-		refreshJulianDay()
-		updateModal()
-		background.style.display = "flex"}
-
-	if(false) { // Event behavior is initialized once by initializeModalEvents().
-	for(const button of document.querySelectorAll(".setButton")) button.addEventListener("click", open)
-	for(const input of [latitude, longitude, year, month, day, hour, minute]) input.addEventListener("input", refreshJulianDay)
-	for(const input of [eraAD, eraBC]) input.addEventListener("change", refreshJulianDay)
-	UI.modalCancelButton.onclick = () => background.style.display = "none"
-	background.addEventListener("pointerdown", event => {
-		if(event.target === background) background.style.display = "none"})
-	UI.modalSetButton.onclick = () => {
-		const lat = numeric(latitude), lon = numeric(longitude), y = modalYear()
-		const mo = Math.round(numeric(month))
-		const d = Math.round(numeric(day)), h = Math.round(numeric(hour)), mi = Math.round(numeric(minute))
-		if(!Number.isFinite(lat) || lat < -90 || lat > 90 || !Number.isFinite(lon) || lon < -180 || lon > 180 ||
-			!Number.isFinite(y) || y < -4999 || y > 5000 || mo < 1 || mo > 12 || d < 1 || d > 31 ||
-			h < 0 || h > 23 || mi < 0 || mi > 59) {
-			alert("Please enter valid location, date, and time values.")
-			return}
-		param.latitude = Math.round(lat * 100) / 100
-		param.longitude = Math.round(lon * 100) / 100
-		param.elevation = 0
-		param.timeZone = Math.round(param.longitude / 15)
-		param.year = y; param.month = mo; param.day = d
-		param.time = 15 * (h + mi / 60)
-		param.julianDay = getJulianDay()
-		pageUI.latitudeInput.value = param.latitude
-		pageUI.longitudeInput.value = param.longitude
-		pageUI.elevationInput.value = 0
-		pageUI.latitudeInput.dispatchEvent(new Event("change"))
-		pageUI.longitudeInput.dispatchEvent(new Event("change"))
-		pageUI.elevationInput.dispatchEvent(new Event("change"))
-		pageUI[param.year > 0 ? "eraAD" : "eraBC"].checked = true
-		pageUI.yearInput.value = param.year > 0 ? param.year : 1 - param.year
-		pageUI.monthInput.value = param.month
-		pageUI.dayInput.value = param.day
-		pageUI.hourInput.value = String(h).padStart(2, "0")
-		pageUI.minuteInput.value = String(mi).padStart(2, "0")
-		pageUI.timeZoneInput.textContent = formatTimeZone(param.timeZone)
-		if(typeof requestGraphRender === "function") requestGraphRender()
-		background.style.display = "none"}}
 }
 
 function initModal(target = document.body) {
@@ -729,6 +646,7 @@ function initializeModalEvents() {
 		modal.temp.julianDay = getJulianDay(modal.temp.year, modal.temp.month, modal.temp.day,
 			15 * (modal.temp.hour + modal.temp.minute / 60), Math.round(modal.temp.longitude / 15))
 		UI.julianDayInput.value = formatJulianDay(modal.temp.julianDay)
+		UI.timeZoneInput.textContent = formatTimeZone(Math.round(modal.temp.longitude / 15))
 		updateModal()}
 	function setYear(value, refresh = true) {
 		modal.temp.year = Math.round(clip(value, yearMin, yearMax))
@@ -759,7 +677,8 @@ function initializeModalEvents() {
 		UI.julianDayInput.value = formatJulianDay(modal.temp.julianDay); updateModal()}
 	function open() {
 		const [hour, minute] = toDMS(param.time / 15, 24)
-		Object.assign(modal.temp, {fallback:null, year:param.year, month:param.month, day:param.day,
+		Object.assign(modal.temp, {fallback:null, latitude:param.latitude,
+			year:param.year, month:param.month, day:param.day,
 			hour, minute, longitude:param.longitude, elevation:param.elevation, julianDay:param.julianDay})
 		UI.latitudeInput.value = signed(param.latitude); UI.longitudeInput.value = signed(param.longitude)
 		UI.elevationInput.value = param.elevation.toLocaleString("en-US")
@@ -788,13 +707,13 @@ function initializeModalEvents() {
 			pageUI.hourInput.value=String(modal.temp.hour).padStart(2,"0"); pageUI.minuteInput.value=String(modal.temp.minute).padStart(2,"0")
 			pageUI.timeZoneInput.textContent=formatTimeZone(param.timeZone); requestGraphRender()}
 		UI.modalBackground.style.display="none"}
-	function mapPoint(event) {const r=UI.worldMap.getBoundingClientRect(); UI.latitudeInput.value=signed(Math.round((90-clip(event.clientY-r.top,0,r.height)/r.height*180)*100)/100); const lon=Math.round((clip(event.clientX-r.left,0,r.width)/r.width*360-180)*100)/100; modal.temp.longitude=lon===-180?180:lon; UI.longitudeInput.value=signed(modal.temp.longitude); UI.timeZoneInput.textContent=formatTimeZone(Math.round(modal.temp.longitude/15)); setJulian()}
+	function mapPoint(event) {const r=UI.worldMap.getBoundingClientRect(); UI.latitudeInput.value=signed(Math.round((90-clip(event.clientY-r.top,0,r.height)/r.height*180)*100)/100); const lon=Math.round((clip(event.clientX-r.left,0,r.width)/r.width*360-180)*100)/100; modal.temp.longitude=lon===-180?180:lon; UI.longitudeInput.value=signed(modal.temp.longitude); setJulian()}
 	UI.worldMap.onpointerdown=e=>{if(e.button!==0)return;e.preventDefault();UI.worldMap.setPointerCapture(e.pointerId);UI.worldMap.dataset.dragging="true";mapPoint(e)}
 	UI.worldMap.onpointermove=e=>{if(UI.worldMap.dataset.dragging==="true")mapPoint(e)}
 	UI.worldMap.onpointerup=e=>{UI.worldMap.dataset.dragging="false";if(UI.worldMap.hasPointerCapture(e.pointerId))UI.worldMap.releasePointerCapture(e.pointerId)}
 	UI.worldMap.onpointercancel=UI.worldMap.onpointerup
 	addNudgeListeners(UI.latitudeInput, (direction, coarse)=>{const step=coarse?1:0.01;UI.latitudeInput.value=signed(clip(Math.round(parseNumber(UI.latitudeInput)/step)*step+direction*step,-90,90));updateModal()})
-	addNudgeListeners(UI.longitudeInput, (direction, coarse)=>{const step=coarse?1:0.01;modal.temp.longitude=mod(Math.round(parseNumber(UI.longitudeInput)/step)*step+direction*step,360,-180);UI.longitudeInput.value=signed(modal.temp.longitude);UI.timeZoneInput.textContent=formatTimeZone(Math.round(modal.temp.longitude/15));setJulian()})
+	addNudgeListeners(UI.longitudeInput, (direction, coarse)=>{const step=coarse?1:0.01;modal.temp.longitude=mod(Math.round(parseNumber(UI.longitudeInput)/step)*step+direction*step,360,-180);UI.longitudeInput.value=signed(modal.temp.longitude);setJulian()})
 	addNudgeListeners(UI.elevationInput, (direction, coarse)=>{const step=coarse?100:1;modal.temp.elevation=Math.round(clip(Math.round(parseNumber(UI.elevationInput)/step)*step+direction*step,elevationMin,elevationMax));UI.elevationInput.value=modal.temp.elevation.toLocaleString("en-US");updateModal()})
 	addNudgeListeners(UI.yearInput, step=>setYear(modal.temp.year+step))
 	addNudgeListeners(UI.monthInput, step=>setMonth(modal.temp.month+step))
@@ -802,14 +721,70 @@ function initializeModalEvents() {
 	addNudgeListeners(UI.hourInput, step=>setJulianValue(modal.temp.julianDay+step/24))
 	addNudgeListeners(UI.minuteInput, step=>setJulianValue(modal.temp.julianDay+step/1440))
 	addNudgeListeners(UI.julianDayInput, step=>setJulianValue(modal.temp.julianDay+step))
-	UI.latitudeInput.onchange=()=>{const value=parseNumber(UI.latitudeInput);if(Number.isFinite(value)&&value>=-90&&value<=90){UI.latitudeInput.value=signed(value);updateModal()}}
-	UI.longitudeInput.onchange=()=>{const value=parseNumber(UI.longitudeInput);if(Number.isFinite(value)&&value>=-180&&value<=180){modal.temp.longitude=value;UI.longitudeInput.value=signed(value);setJulian()}}
-	UI.elevationInput.onchange=()=>{const value=parseNumber(UI.elevationInput);if(Number.isFinite(value)&&value>=elevationMin&&value<=elevationMax){modal.temp.elevation=Math.round(value);UI.elevationInput.value=modal.temp.elevation.toLocaleString("en-US");updateModal()}}
-	UI.yearInput.onchange=()=>setYear(UI.eraBC.checked?1-parseNumber(UI.yearInput):parseNumber(UI.yearInput))
-	UI.monthInput.onchange=()=>setMonth(parseNumber(UI.monthInput)); UI.dayInput.onchange=()=>setDay(parseNumber(UI.dayInput))
-	UI.hourInput.onchange=()=>{modal.temp.hour=Math.round(parseNumber(UI.hourInput));setJulian()}; UI.minuteInput.onchange=()=>{modal.temp.minute=Math.round(parseNumber(UI.minuteInput));setJulian()}
-	UI.julianDayInput.onchange=()=>setJulianValue(parseNumber(UI.julianDayInput))
-	for(const id of ["eraAD","eraBC"]) UI[id].onchange=()=>setYear(UI.eraBC.checked?1-parseNumber(UI.yearInput):parseNumber(UI.yearInput))
+	function reject(input, message, previous) {
+		alert(message)
+		input.value = previous
+		input.select()}
+	UI.latitudeInput.onchange=()=>{
+		const value=parseNumber(UI.latitudeInput, "")
+		if(!Number.isFinite(value)||value < -90||value > 90)
+			return reject(UI.latitudeInput,
+				"Please enter a valid latitude from −90° to +90°.", signed(modal.temp.latitude))
+		modal.temp.latitude=value; UI.latitudeInput.value=signed(value); updateModal()}
+	UI.longitudeInput.onchange=()=>{
+		const value=parseNumber(UI.longitudeInput, "")
+		if(!Number.isFinite(value)||value < -180||value > 180)
+			return reject(UI.longitudeInput,
+				"Please enter a valid longitude from −180° to +180°.", signed(modal.temp.longitude))
+		modal.temp.longitude=value; UI.longitudeInput.value=signed(value); setJulian()}
+	UI.elevationInput.onchange=()=>{
+		const value=parseNumber(UI.elevationInput, "")
+		if(!Number.isFinite(value)||value < elevationMin||value > elevationMax)
+			return reject(UI.elevationInput,
+				"Please enter a valid elevation from 0 m to 10,000 m.",
+				modal.temp.elevation.toLocaleString("en-US"))
+		modal.temp.elevation=Math.round(value)
+		UI.elevationInput.value=modal.temp.elevation.toLocaleString("en-US"); updateModal()}
+	UI.yearInput.onchange=()=>{
+		const value=Math.round(parseNumber(UI.yearInput, ""))
+		if(!Number.isFinite(value)||value < 1||value > 5000) {
+			UI[modal.temp.year < 1 ? "eraBC" : "eraAD"].checked=true
+			return reject(UI.yearInput, "Please enter a valid year number from 1 to 5000.",
+				modal.temp.year > 0 ? modal.temp.year : 1 - modal.temp.year)}
+		setYear(UI.eraBC.checked ? 1-value : value)}
+	UI.monthInput.onchange=()=>{
+		const value=Math.round(parseNumber(UI.monthInput, ""))
+		if(!Number.isFinite(value)||value < 1||value > 12)
+			return reject(UI.monthInput, "Please enter a valid month number from 1 to 12.",
+				modal.temp.month)
+		setMonth(value)}
+	UI.dayInput.onchange=()=>{
+		const value=Math.round(parseNumber(UI.dayInput, ""))
+		const maximum=getMonthDays(getYearDays(modal.temp.year))[modal.temp.month-1]
+		if(!Number.isFinite(value)||value < 1||value > maximum)
+			return reject(UI.dayInput, "Please enter a valid day number from 1 to "+maximum+".",
+				modal.temp.day)
+		setDay(value)}
+	UI.hourInput.onchange=()=>{
+		const value=Math.round(parseNumber(UI.hourInput, ""))
+		if(!Number.isFinite(value)||value < 0||value > 23)
+			return reject(UI.hourInput, "Please enter a valid hour number from 0 to 23.",
+				String(modal.temp.hour).padStart(2,"0"))
+		modal.temp.hour=value; UI.hourInput.value=String(value).padStart(2,"0"); setJulian()}
+	UI.minuteInput.onchange=()=>{
+		const value=Math.round(parseNumber(UI.minuteInput, ""))
+		if(!Number.isFinite(value)||value < 0||value > 59)
+			return reject(UI.minuteInput, "Please enter a valid minute number from 0 to 59.",
+				String(modal.temp.minute).padStart(2,"0"))
+		modal.temp.minute=value; UI.minuteInput.value=String(value).padStart(2,"0"); setJulian()}
+	UI.julianDayInput.onchange=()=>{
+		const value=parseNumber(UI.julianDayInput, "")
+		if(!Number.isFinite(value)||value < -104788||value > 3547638)
+			return reject(UI.julianDayInput,
+				"Please enter a valid Julian day between −104,788 and 3,547,638.",
+				formatJulianDay(modal.temp.julianDay))
+		setJulianValue(value)}
+	for(const id of ["eraAD","eraBC"]) UI[id].onchange=()=>UI.yearInput.onchange()
 }
 
 initModal(document.body)
