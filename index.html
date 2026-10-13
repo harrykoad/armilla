@@ -294,39 +294,39 @@ input[type="range"]::-moz-range-thumb{background: var(--form-accent); border: 1p
 			<canvas id="horaryChart" width="320" height="320" style="cursor: crosshair"></canvas>
 			<div class="modalRight">
 				<canvas id="lunarChart" width="360" height="80" style="cursor: default; margin-bottom: 5px"></canvas>
-				<canvas id="worldMap" width="360" height="180" style="border: 1px solid gray; cursor: crosshair; margin-bottom: 10px; margin-top: 5px"></canvas>
+				<canvas id="modalWorldMap" width="360" height="180" style="border: 1px solid gray; cursor: crosshair; margin-bottom: 10px; margin-top: 5px"></canvas>
 				<div class="row" style="display: grid; grid-template-columns: auto 1fr auto; margin-bottom: 5px; width: 100%">
 					<div style="align-items: center; display: flex; justify-self: start; white-space: nowrap">
-						Lat.:&nbsp;<input type="text" id="latitudeInput" class="textInput" value="N/A" style="width: 40px">&nbsp;°
+						Lat.:&nbsp;<input type="text" id="modalLatitudeInput" class="textInput" value="N/A" style="width: 40px">&nbsp;°
 					</div>
 					<div style="align-items: center; display: flex; justify-self: center; white-space: nowrap">
-						Lon.:&nbsp;<input type="text" id="longitudeInput" class="textInput" value="N/A" style="width: 45px">&nbsp;°
+						Lon.:&nbsp;<input type="text" id="modalLongitudeInput" class="textInput" value="N/A" style="width: 45px">&nbsp;°
 					</div>
 					<div style="align-items: center; display: flex; justify-self: end; white-space: nowrap">
-						Elv.:&nbsp;<input type="text" id="elevationInput" class="textInput" value="N/A" style="width: 40px">&nbsp;m&nbsp;(Hor.&nbsp;<span id="modalHorizonValue">0.00°</span>)
+						Elv.:&nbsp;<input type="text" id="modalElevationInput" class="textInput" value="N/A" style="width: 40px">&nbsp;m&nbsp;(Hor.&nbsp;<span id="modalHorizonValue">0.00°</span>)
 					</div>
 				</div>
 				<span class="horizontalLine"></span>
 				<div class="row" style="display: grid; grid-template-columns: auto 1fr auto; margin-bottom: 5px; margin-top: 5px; width: 100%">
 					<div style="align-items: center; display: flex; justify-self: start; white-space: nowrap">Year:&nbsp;
-						<input type="radio" id="eraAD" name="era" value="AD" checked>AD&nbsp;
-						<input type="text" id="yearInput" class="textInput" value="N/A" style="width: 40px">
-						<input type="radio" id="eraBC" name="era" value="BC">BC
+						<input type="radio" id="modalEraAD" name="modalEra" value="AD" checked>AD&nbsp;
+						<input type="text" id="modalYearInput" class="textInput" value="N/A" style="width: 40px">
+						<input type="radio" id="modalEraBC" name="modalEra" value="BC">BC
 					</div>
 					<div style="align-items: center; display: flex; justify-self: center; white-space: nowrap">
-						Month:&nbsp;<input type="text" id="monthInput" class="textInput" value="N/A" style="width: 20px">
+						Month:&nbsp;<input type="text" id="modalMonthInput" class="textInput" value="N/A" style="width: 20px">
 					</div>
 					<div style="align-items: center; display: flex; justify-self: end; white-space: nowrap">
-						Day:&nbsp;<input type="text" id="dayInput" class="textInput" value="N/A" style="width: 20px">&nbsp;(<span id="modalDayOfWeekValue" style="display: inline-block; text-align: center; width: 25px">N/A</span>)
+						Day:&nbsp;<input type="text" id="modalDayInput" class="textInput" value="N/A" style="width: 20px">&nbsp;(<span id="modalDayOfWeekValue" style="display: inline-block; text-align: center; width: 25px">N/A</span>)
 					</div>
 				</div>
 				<div class="row" style="display: grid; grid-template-columns: auto 1fr auto; margin-bottom: 15px; width: 100%">
 					<div style="align-items: center; display: flex; justify-self: start; white-space: nowrap">
-						Local Time:&nbsp;<input type="text" id="hourInput" class="textInput" value="N/A" style="width: 20px">
-						&nbsp;:&nbsp;<input type="text" id="minuteInput" class="textInput" value="N/A" style="width: 20px">&nbsp;(<span id="timeZoneInput"></span>)
+						Local Time:&nbsp;<input type="text" id="modalHourInput" class="textInput" value="N/A" style="width: 20px">
+						&nbsp;:&nbsp;<input type="text" id="modalMinuteInput" class="textInput" value="N/A" style="width: 20px">&nbsp;(<span id="modalTimeZoneInput"></span>)
 					</div>
 					<div style="align-items: center; display: flex; grid-column: 3; justify-self: end; white-space: nowrap">
-						Julian Day:&nbsp;<input type="text" id="julianDayInput" class="textInput" value="N/A" style="width: 90px">
+						Julian Day:&nbsp;<input type="text" id="modalJulianDayInput" class="textInput" value="N/A" style="width: 90px">
 					</div>
 				</div>
 				<div style="display: flex; justify-content: center">

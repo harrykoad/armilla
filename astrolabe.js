@@ -79,7 +79,8 @@ setupScalarInput(pageUI.elevationInput, parseNumber, value => value >= 0 && valu
 	"Please enter a valid elevation from 0 m to 10,000 m.",
 	(value, step) => Math.max(0, Math.min(10000, Math.round(value) + step)), 100)
 if(document.getElementById("hereButton")) UI.hereButton.onclick = () => getCurrentLocation()
-	.then(() => {
+	.then(location => {
+		Object.assign(param, location)
 		pageUI.latitudeInput.value = param.latitude
 		pageUI.longitudeInput.value = param.longitude
 		pageUI.latitudeInput.dispatchEvent(new Event("change"))
@@ -126,7 +127,11 @@ if(document.getElementById("nowButton")) {
 		param.year = Math.max(-4999, Math.min(5000, param.year))
 		param.day = Math.min(param.day, getMonthDays(getYearDays(param.year))[param.month - 1])
 		commitCalendar()}
-	UI.nowButton.onclick = () => {getCurrentDateTime(); updateCalendarFields(); requestGraphRender()}
+	UI.nowButton.onclick = () => {
+		Object.assign(param, getCurrentDateTime(param.timeZone))
+		param.julianDay = getJulianDay()
+		updateCalendarFields()
+		requestGraphRender()}
 	for(const input of [pageUI.eraAD, pageUI.eraBC]) input.onchange = () => {
 		const year = Math.round(parseNumber(pageUI.yearInput))
 		if(!input.checked || !Number.isFinite(year) || year < 1 || year > 5000) return
@@ -479,7 +484,7 @@ function horizonOppositionError(
 	const jc = (julianDay - 2451545) / 36525
 	const rotation = getEquatorialRotation(jc)
 	const [starRA, starDec] = toTP(mdot(rotation, getStarPosition(star.index, julianDay)))
-	const [sunRA, sunDec] = toTP(normalize(mdot(rotation, getGeocentricSunPosition(jc))))
+	const [sunRA, sunDec] = toTP(normalize(mdot(rotation, GeoSun(jc))))
 	const starHourAngle = getHorizonHourAngle(starDec, conditions.latitude, starAltitude)
 	const sunHourAngle = getHorizonHourAngle(sunDec, conditions.latitude, sunAltitude)
 	if(starHourAngle === null || sunHourAngle === null) return null
@@ -497,7 +502,7 @@ function sunEventAzimuthAtYear(
 		const rotation = getEquatorialRotation(jc)
 		return {
 			star: toTP(mdot(rotation, getStarPosition(star.index, julianDay))),
-			sun: toTP(normalize(mdot(rotation, getGeocentricSunPosition(jc))))}}
+			sun: toTP(normalize(mdot(rotation, GeoSun(jc))))}}
 	function error(julianDay) {
 		const {star: [starRA, starDec], sun: [sunRA, sunDec]} = coordinatesAt(julianDay)
 		const starHourAngle = getHorizonHourAngle(starDec, conditions.latitude, starAltitude)
@@ -543,7 +548,7 @@ function starCrossingNearOpposition(
 	const visibleCandidates = candidates.filter(candidate => {
 		const jc = (candidate - 2451545) / 36525
 		const [rightAscension, declination] = toTP(normalize(mdot(
-			getEquatorialRotation(jc), getGeocentricSunPosition(jc))))
+			getEquatorialRotation(jc), GeoSun(jc))))
 		return getEquatorialAltitude(rightAscension, declination, candidate,
 			conditions.latitude, conditions.longitude) - sunAltitude >= -1e-9})
 	return (visibleCandidates.length ? visibleCandidates : candidates).reduce((closest, candidate) =>
@@ -635,7 +640,7 @@ function updateIntersectionPanel(intersections, conditions) {
 			if(event.julianDay === null) return null
 			const jc = (event.julianDay - 2451545) / 36525
 			const declination = toTP(normalize(mdot(
-				getEquatorialRotation(jc), getGeocentricSunPosition(jc))))[1]
+				getEquatorialRotation(jc), GeoSun(jc))))[1]
 			const risingAzimuth = getRisingAzimuth(
 				declination, conditions.latitude, sunAltitude)
 			if(!Number.isFinite(risingAzimuth)) return null
@@ -830,7 +835,7 @@ function prepareGraphCanvas(canvas) {
 	if(canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
 		canvas.width = pixelWidth
 		canvas.height = pixelHeight}
-	const ctx = canvas.getContext("2d")
+	const ctx = canvas.getContext("2d", {alpha: false})
 	ctx.setTransform(1, 0, 0, 1, 0, 0)
 	ctx.fillStyle = "black"
 	ctx.fillRect(0, 0, pixelWidth, pixelHeight)
@@ -1354,9 +1359,10 @@ function drawSkyPath(selectedIntersection, conditions) {
 	if(canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
 		canvas.width = pixelWidth
 		canvas.height = pixelHeight}
-	const ctx = canvas.getContext("2d")
+	const ctx = canvas.getContext("2d", {alpha: false})
 	ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-	ctx.clearRect(0, 0, width, height)
+	ctx.fillStyle = "black"
+	ctx.fillRect(0, 0, width, height)
 	const cx = width / 2, cy = height / 2
 	const radius = Math.max(1, Math.min(width, height) / 2 - 16)
 	const minimumAltitude = -30

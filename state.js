@@ -1,5 +1,25 @@
 const UI = new Proxy({}, {get(obj, id) {if(!obj[id]) obj[id] = document.getElementById(id); return obj[id]}})
 
+function getCurrentLocation() {
+	if(!navigator.geolocation)
+		return Promise.reject(new Error("Location access is not supported by this browser."))
+	return new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(
+		position => {
+			const latitude = Math.round(position.coords.latitude * 100) / 100
+			const longitude = Math.round(position.coords.longitude * 100) / 100
+			resolve({latitude, longitude, elevation: 0,
+				timeZone: Math.round(longitude / 15)})},
+		() => reject(new Error("Location access failed."))))}
+
+function getCurrentDateTime(timeZone = 0, date = new Date()) {
+	const local = new Date(date.getTime() + timeZone * 3600000)
+	return {
+		year: local.getUTCFullYear(),
+		month: local.getUTCMonth() + 1,
+		day: local.getUTCDate(),
+		time: 15 * (local.getUTCHours() + local.getUTCMinutes() / 60),
+	}}
+
 const buffer = {backLines: [], backNaksatras: [], backFigures: [], backStars: [], backPoints: [], backTexts: [],
 	frontLines: [], frontNaksatras: [], frontFigures: [], frontStars: [], frontPoints: [], frontTexts: []}
 const cache = {stars: null, refractedStars: null, graticule: {}, solarSystem: null, analemma: null, lunar: null,

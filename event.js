@@ -27,27 +27,6 @@ function addNudgeListeners(input, nudge, commit = null) {
 		nudge(event.deltaY < 0 ? 1 : -1, !event.shiftKey)
 		remember()}, {passive: false})}
 
-function getCurrentLocation() {
-	if(!navigator.geolocation)
-		return Promise.reject(new Error("Location access is not supported by this browser."))
-	return new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(
-		position => {
-			param.latitude = Math.round(mod(position.coords.latitude, 180, -90) * 100) / 100
-			param.longitude = Math.round(mod(position.coords.longitude, 360, -180) * 100) / 100
-			param.elevation = 0
-			param.timeZone = Math.round(param.longitude / 15)
-			resolve()},
-		() => reject(new Error("Location access failed."))))}
-
-function getCurrentDateTime() {
-	const now = new Date()
-	const local = new Date(now.getTime() + param.timeZone * 3600000)
-	param.year = local.getUTCFullYear()
-	param.month = local.getUTCMonth() + 1
-	param.day = local.getUTCDate()
-	param.time = 15 * (local.getUTCHours() + local.getUTCMinutes() / 60)
-	param.julianDay = getJulianDay()}
-
 if(document.getElementById("sky")) {
 const panelScrollControls = [
 	[UI.leftPanel, UI.leftPanelScrollUp, UI.leftPanelScrollDown],
@@ -267,7 +246,8 @@ UI.elevationSlider.oninput = () => {
 	updateElevation(parseFloat(UI.elevationSlider.value))
 	requestSkyRender()}
 
-UI.hereButton.onclick = () => getCurrentLocation().then(() => {
+UI.hereButton.onclick = () => getCurrentLocation().then(location => {
+	Object.assign(param, location)
 	UI.latitudeSlider.value = param.latitude
 	UI.longitudeSlider.value = param.longitude
 	UI.elevationSlider.value = param.elevation
@@ -312,7 +292,8 @@ function centerViewOnSun(jc = param.julianCentury) {
 	update.sky = true}
 
 UI.nowButton.onclick = () => {
-	getCurrentDateTime()
+	Object.assign(param, getCurrentDateTime(param.timeZone))
+	param.julianDay = getJulianDay()
 	updateYear()
 	updateAllRangeFills()
 	centerViewOnSun()

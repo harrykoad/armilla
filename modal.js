@@ -110,7 +110,7 @@ function updateHoraryStars(jd) {
 function lunarState(julianDay, latitude, longitude, elevation = 0) {
 	let jc = (julianDay - 2451545) / 36525
 	let gm = geoMoon(jc)[0]
-	let gs = getGeocentricSunPosition(jc, gm)
+	let gs = GeoSun(jc, gm)
 	let go = getGeoObserver(getSidereal(jc, longitude), latitude, getAyanamsa(jc), getObliquity(jc), elevation)
 	let tm = normalize(translate(gm, negate(go)))
 	let ts = normalize(translate(gs, negate(go)))
@@ -282,7 +282,7 @@ function drawSharedWorldMap(ctx, options) {
 function updateModal() {
 	let dpr = 2 //window.devicePixelRatio || 1
 	let col = mode.darkTheme ? "white" : "black"
-	let latitude = Number(UI.latitudeInput.value.replace("−", "-"))
+	let latitude = Number(UI.modalLatitudeInput.value.replace("−", "-"))
 	let longitude = modal.temp.longitude
 	let elevation = modal.temp.elevation
 	let jd = modal.temp.julianDay
@@ -537,7 +537,7 @@ function updateModal() {
 				position: [w, 64], size: 11.5, align: "right", baseline: "top", color: col}])}
 
 	{// World Map
-		let map = UI.worldMap
+		let map = UI.modalWorldMap
 		let w = 360, h = 180
 		if(map.width !== w * dpr) map.width = w * dpr
 		if(map.height !== h * dpr) map.height = h * dpr
@@ -587,28 +587,28 @@ function initSharedParameterModal(target) {
 				<canvas id="horaryChart" width="320" height="320" style="cursor: crosshair"></canvas>
 				<div class="modalRight">
 					<canvas id="lunarChart" width="360" height="80" style="cursor: default; margin-bottom: 5px"></canvas>
-					<canvas id="worldMap" width="360" height="180" style="border: 1px solid gray; cursor: crosshair; margin-bottom: 10px; margin-top: 5px"></canvas>
+					<canvas id="modalWorldMap" width="360" height="180" style="border: 1px solid gray; cursor: crosshair; margin-bottom: 10px; margin-top: 5px"></canvas>
 					<div class="row modalLocationRow" style="align-items: center; display: flex; justify-content: space-between; margin-bottom: 5px; width: 100%">
-						<div style="align-items: center; display: flex; justify-self: start; white-space: nowrap">Lat.:&nbsp;<input type="text" id="latitudeInput" class="textInput" value="N/A" style="width: 40px">&nbsp;°</div>
-						<div style="align-items: center; display: flex; justify-self: center; white-space: nowrap">Lon.:&nbsp;<input type="text" id="longitudeInput" class="textInput" value="N/A" style="width: 45px">&nbsp;°</div>
+						<div style="align-items: center; display: flex; justify-self: start; white-space: nowrap">Lat.:&nbsp;<input type="text" id="modalLatitudeInput" class="textInput" value="N/A" style="width: 40px">&nbsp;°</div>
+						<div style="align-items: center; display: flex; justify-self: center; white-space: nowrap">Lon.:&nbsp;<input type="text" id="modalLongitudeInput" class="textInput" value="N/A" style="width: 45px">&nbsp;°</div>
 						<div style="align-items: center; column-gap: 4px; display: flex; white-space: nowrap">
-							<div style="align-items: center; display: flex; white-space: nowrap">Elv.:&nbsp;<input type="text" id="elevationInput" class="textInput" value="N/A" style="width: 40px">&nbsp;m</div>
+							<div style="align-items: center; display: flex; white-space: nowrap">Elv.:&nbsp;<input type="text" id="modalElevationInput" class="textInput" value="N/A" style="width: 40px">&nbsp;m</div>
 							<div id="modalHorizonGroup" class="modalSecondaryLabel" style="white-space: nowrap">(Hor.:<span id="modalHorizonValue" style="display: inline-block; text-align: right; width: 38px">0.00°</span>)</div>
 						</div>
 					</div>
 					<span class="horizontalLine"></span>
 					<div class="row" style="display: grid; grid-template-columns: auto 1fr auto; margin-bottom: 5px; margin-top: 5px; width: 100%">
 						<div style="align-items: center; display: flex; justify-self: start; white-space: nowrap">Year:&nbsp;
-							<input type="radio" id="eraAD" name="era" value="AD" checked>AD&nbsp;
-							<input type="text" id="yearInput" class="textInput" value="N/A" style="width: 40px">
-							<input type="radio" id="eraBC" name="era" value="BC">BC
+							<input type="radio" id="modalEraAD" name="era" value="AD" checked>AD&nbsp;
+							<input type="text" id="modalYearInput" class="textInput" value="N/A" style="width: 40px">
+							<input type="radio" id="modalEraBC" name="era" value="BC">BC
 						</div>
-						<div style="align-items: center; display: flex; justify-self: center; white-space: nowrap">Month:&nbsp;<input type="text" id="monthInput" class="textInput" value="N/A" style="width: 20px"></div>
-						<div style="align-items: center; display: flex; justify-self: end; white-space: nowrap">Day:&nbsp;<input type="text" id="dayInput" class="textInput" value="N/A" style="width: 20px">&nbsp;<span class="modalSecondaryLabel">(<span id="modalDayOfWeekValue" style="display: inline-block; text-align: center; width: 25px">N/A</span>)</span></div>
+						<div style="align-items: center; display: flex; justify-self: center; white-space: nowrap">Month:&nbsp;<input type="text" id="modalMonthInput" class="textInput" value="N/A" style="width: 20px"></div>
+						<div style="align-items: center; display: flex; justify-self: end; white-space: nowrap">Day:&nbsp;<input type="text" id="modalDayInput" class="textInput" value="N/A" style="width: 20px">&nbsp;<span class="modalSecondaryLabel">(<span id="modalDayOfWeekValue" style="display: inline-block; text-align: center; width: 25px">N/A</span>)</span></div>
 					</div>
 					<div class="row" style="display: grid; grid-template-columns: auto 1fr auto; margin-bottom: 15px; width: 100%">
-						<div style="align-items: center; display: flex; justify-self: start; white-space: nowrap">Local Time:&nbsp;<input type="text" id="hourInput" class="textInput" value="N/A" style="width: 20px">&nbsp;:&nbsp;<input type="text" id="minuteInput" class="textInput" value="N/A" style="width: 20px">&nbsp;<span class="modalSecondaryLabel">(<span id="timeZoneInput"></span>)</span></div>
-						<div style="align-items: center; display: flex; grid-column: 3; justify-self: end; white-space: nowrap">Julian Day:&nbsp;<input type="text" id="julianDayInput" class="textInput" value="N/A" style="width: 90px"></div>
+						<div style="align-items: center; display: flex; justify-self: start; white-space: nowrap">Local Time:&nbsp;<input type="text" id="modalHourInput" class="textInput" value="N/A" style="width: 20px">&nbsp;:&nbsp;<input type="text" id="modalMinuteInput" class="textInput" value="N/A" style="width: 20px">&nbsp;<span class="modalSecondaryLabel">(<span id="modalTimeZoneInput"></span>)</span></div>
+						<div style="align-items: center; display: flex; grid-column: 3; justify-self: end; white-space: nowrap">Julian Day:&nbsp;<input type="text" id="modalJulianDayInput" class="textInput" value="N/A" style="width: 90px"></div>
 					</div>
 					<div style="display: flex; justify-content: center"><button id="modalSetButton" class="longButton">OK</button>&nbsp;&nbsp;&nbsp;<button id="modalCancelButton" class="longButton">Cancel</button></div>
 				</div>
@@ -658,6 +658,27 @@ function initModal(target = document.body) {
 	created.dataset.sharedModal = "true"
 	return created}
 
+function addModalNudgeListeners(input, nudge, commit = null) {
+	if(commit) input.onchange = commit
+	input.addEventListener("keydown", event => {
+		if(event.key === "Enter" && commit) {event.preventDefault(); commit(); return}
+		if(event.key !== "ArrowUp" && event.key !== "ArrowDown") return
+		event.preventDefault()
+		nudge(event.key === "ArrowUp" ? 1 : -1, !event.shiftKey)})
+	input.addEventListener("wheel", event => {
+		if(event.ctrlKey || event.metaKey || event.deltaY === 0) return
+		event.preventDefault()
+		nudge(event.deltaY < 0 ? 1 : -1, !event.shiftKey)}, {passive: false})}
+
+function parseModalNumber(value, fallback) {
+	const input = value && typeof value === "object" && "value" in value ? value : null
+	const parse = text => {
+		const normalized = String(text ?? "").trim().replace(/−/g, "-").replace(/,/g, "")
+		return normalized === "" ? NaN : Number(normalized)}
+	let number = parse(input ? input.value : value)
+	if(!Number.isFinite(number)) number = parse(fallback)
+	return Number.isFinite(number) ? number : NaN}
+
 function initializeModalEvents() {
 	if(!UI.modalBackground || UI.modalBackground.dataset.eventsInitialized === "true") return
 	UI.modalBackground.dataset.eventsInitialized = "true"
@@ -673,19 +694,19 @@ function initializeModalEvents() {
 	function setJulian() {
 		modal.temp.julianDay = getJulianDay(modal.temp.year, modal.temp.month, modal.temp.day,
 			15 * (modal.temp.hour + modal.temp.minute / 60), Math.round(modal.temp.longitude / 15))
-		UI.julianDayInput.value = formatJulianDay(modal.temp.julianDay)
-		UI.timeZoneInput.textContent = formatTimeZone(Math.round(modal.temp.longitude / 15))
+		UI.modalJulianDayInput.value = formatJulianDay(modal.temp.julianDay)
+		UI.modalTimeZoneInput.textContent = formatTimeZone(Math.round(modal.temp.longitude / 15))
 		updateModal()}
 	function setYear(value, refresh = true) {
 		modal.temp.year = Math.round(clip(value, yearMin, yearMax))
-		UI[modal.temp.year < 1 ? "eraBC" : "eraAD"].checked = true
-		UI.yearInput.value = modal.temp.year > 0 ? modal.temp.year : 1 - modal.temp.year
+		UI[modal.temp.year < 1 ? "modalEraBC" : "modalEraAD"].checked = true
+		UI.modalYearInput.value = modal.temp.year > 0 ? modal.temp.year : 1 - modal.temp.year
 		if(refresh) setDay(modal.temp.day)}
 	function setMonth(value, refresh = true) {
 		let month = Math.round(value), year = modal.temp.year
 		while(month > 12) {month -= 12; year++}
 		while(month < 1) {month += 12; year--}
-		modal.temp.month = month; UI.monthInput.value = month
+		modal.temp.month = month; UI.modalMonthInput.value = month
 		setYear(year, refresh)}
 	function setDay(value) {
 		let day = Math.round(value), days = getMonthDays(getYearDays(modal.temp.year))
@@ -693,34 +714,34 @@ function initializeModalEvents() {
 			if(day > days[modal.temp.month - 1]) {day -= days[modal.temp.month - 1]; setMonth(modal.temp.month + 1, false)}
 			else {setMonth(modal.temp.month - 1, false); days = getMonthDays(getYearDays(modal.temp.year)); day += days[modal.temp.month - 1]}
 			days = getMonthDays(getYearDays(modal.temp.year))}
-		modal.temp.day = day; UI.dayInput.value = day; setJulian()}
+		modal.temp.day = day; UI.modalDayInput.value = day; setJulian()}
 	function setJulianValue(value) {
 		modal.temp.julianDay = clip(value, -104788, 3547638)
 		const [y, month, day, time] = getGregorian(modal.temp.julianDay, modal.temp.longitude)
 		const [hour, minute] = toDMS(time / 15, 24)
 		setYear(y, false); modal.temp.month = month; modal.temp.day = day
 		modal.temp.hour = hour; modal.temp.minute = minute
-		UI.monthInput.value = month; UI.dayInput.value = day
-		UI.hourInput.value = String(hour).padStart(2, "0"); UI.minuteInput.value = String(minute).padStart(2, "0")
-		UI.julianDayInput.value = formatJulianDay(modal.temp.julianDay); updateModal()}
+		UI.modalMonthInput.value = month; UI.modalDayInput.value = day
+		UI.modalHourInput.value = String(hour).padStart(2, "0"); UI.modalMinuteInput.value = String(minute).padStart(2, "0")
+		UI.modalJulianDayInput.value = formatJulianDay(modal.temp.julianDay); updateModal()}
 	function open() {
 		const [hour, minute] = toDMS(param.time / 15, 24)
 		Object.assign(modal.temp, {fallback:null, latitude:param.latitude,
 			year:param.year, month:param.month, day:param.day,
 			hour, minute, longitude:param.longitude, elevation:param.elevation, julianDay:param.julianDay})
-		UI.latitudeInput.value = signed(param.latitude); UI.longitudeInput.value = signed(param.longitude)
-		UI.elevationInput.value = param.elevation.toLocaleString("en-US")
-		UI.timeZoneInput.textContent = formatTimeZone(param.timeZone)
-		setYear(param.year, false); UI.monthInput.value = param.month; UI.dayInput.value = param.day
-		UI.hourInput.value = String(hour).padStart(2, "0"); UI.minuteInput.value = String(minute).padStart(2, "0")
-		UI.julianDayInput.value = formatJulianDay(param.julianDay); updateModal()
+		UI.modalLatitudeInput.value = signed(param.latitude); UI.modalLongitudeInput.value = signed(param.longitude)
+		UI.modalElevationInput.value = param.elevation.toLocaleString("en-US")
+		UI.modalTimeZoneInput.textContent = formatTimeZone(param.timeZone)
+		setYear(param.year, false); UI.modalMonthInput.value = param.month; UI.modalDayInput.value = param.day
+		UI.modalHourInput.value = String(hour).padStart(2, "0"); UI.modalMinuteInput.value = String(minute).padStart(2, "0")
+		UI.modalJulianDayInput.value = formatJulianDay(param.julianDay); updateModal()
 		UI.modalBackground.style.display = "flex"
 		lockModalFieldPositions()}
 	window.setModalVisible = visible => visible ? open() : UI.modalBackground.style.display = "none"
 	for(const button of document.querySelectorAll(".setButton")) button.onclick = open
 	UI.modalCancelButton.onclick = () => UI.modalBackground.style.display = "none"
 	UI.modalSetButton.onclick = () => {
-		param.latitude = parseNumber(UI.latitudeInput); param.longitude = modal.temp.longitude
+		param.latitude = parseModalNumber(UI.modalLatitudeInput); param.longitude = modal.temp.longitude
 		param.elevation = modal.temp.elevation; param.timeZone = Math.round(param.longitude / 15)
 		param.year = modal.temp.year; param.month = modal.temp.month; param.day = modal.temp.day
 		param.time = 15 * (modal.temp.hour + modal.temp.minute / 60)
@@ -729,92 +750,101 @@ function initializeModalEvents() {
 			UI.latitudeSlider.value=param.latitude; UI.longitudeSlider.value=param.longitude; UI.elevationSlider.value=param.elevation
 			updateLatitude(); updateLongitude(); updateYear(); updateAllRangeFills(); requestSkyRender()}
 		else {
-			pageUI.latitudeInput.value=param.latitude; pageUI.longitudeInput.value=param.longitude; pageUI.elevationInput.value=0; param.elevation=0
-			pageUI.latitudeInput.dispatchEvent(new Event("change")); pageUI.longitudeInput.dispatchEvent(new Event("change"))
-			pageUI[param.year>0?"eraAD":"eraBC"].checked=true; pageUI.yearInput.value=param.year>0?param.year:1-param.year
-			pageUI.monthInput.value=param.month; pageUI.dayInput.value=param.day
-			pageUI.hourInput.value=String(modal.temp.hour).padStart(2,"0"); pageUI.minuteInput.value=String(modal.temp.minute).padStart(2,"0")
-			pageUI.timeZoneInput.textContent=formatTimeZone(param.timeZone); requestGraphRender()}
+			const fields = new Proxy({}, {get: (_, id) =>
+				document.getElementById("page" + id[0].toUpperCase() + id.slice(1)) ||
+				document.getElementById(id)})
+			fields.latitudeInput.value=param.latitude; fields.longitudeInput.value=param.longitude
+			fields.elevationInput.value=param.elevation
+			fields.latitudeInput.dispatchEvent(new Event("change")); fields.longitudeInput.dispatchEvent(new Event("change"))
+			fields.elevationInput.dispatchEvent(new Event("change"))
+			fields[param.year>0?"eraAD":"eraBC"].checked=true
+			fields.yearInput.value=param.year>0?param.year:1-param.year
+			fields.monthInput.value=param.month; fields.dayInput.value=param.day
+			fields.hourInput.value=String(modal.temp.hour).padStart(2,"0")
+			fields.minuteInput.value=String(modal.temp.minute).padStart(2,"0")
+			fields.timeZoneInput.textContent=formatTimeZone(param.timeZone)
+			if(typeof requestAstrotideRender === "function") requestAstrotideRender()
+			else if(typeof requestGraphRender === "function") requestGraphRender()}
 		UI.modalBackground.style.display="none"}
-	function mapPoint(event) {const r=UI.worldMap.getBoundingClientRect(); UI.latitudeInput.value=signed(Math.round((90-clip(event.clientY-r.top,0,r.height)/r.height*180)*100)/100); const lon=Math.round((clip(event.clientX-r.left,0,r.width)/r.width*360-180)*100)/100; modal.temp.longitude=lon===-180?180:lon; UI.longitudeInput.value=signed(modal.temp.longitude); setJulian()}
-	UI.worldMap.onpointerdown=e=>{if(e.button!==0)return;e.preventDefault();UI.worldMap.setPointerCapture(e.pointerId);UI.worldMap.dataset.dragging="true";mapPoint(e)}
-	UI.worldMap.onpointermove=e=>{if(UI.worldMap.dataset.dragging==="true")mapPoint(e)}
-	UI.worldMap.onpointerup=e=>{UI.worldMap.dataset.dragging="false";if(UI.worldMap.hasPointerCapture(e.pointerId))UI.worldMap.releasePointerCapture(e.pointerId)}
-	UI.worldMap.onpointercancel=UI.worldMap.onpointerup
-	addNudgeListeners(UI.latitudeInput, (direction, coarse)=>{const step=coarse?1:0.01;UI.latitudeInput.value=signed(clip(Math.round(parseNumber(UI.latitudeInput)/step)*step+direction*step,-90,90));updateModal()})
-	addNudgeListeners(UI.longitudeInput, (direction, coarse)=>{const step=coarse?1:0.01;modal.temp.longitude=mod(Math.round(parseNumber(UI.longitudeInput)/step)*step+direction*step,360,-180);UI.longitudeInput.value=signed(modal.temp.longitude);setJulian()})
-	addNudgeListeners(UI.elevationInput, (direction, coarse)=>{const step=coarse?100:1;modal.temp.elevation=Math.round(clip(Math.round(parseNumber(UI.elevationInput)/step)*step+direction*step,elevationMin,elevationMax));UI.elevationInput.value=modal.temp.elevation.toLocaleString("en-US");updateModal()})
-	addNudgeListeners(UI.yearInput, step=>setYear(modal.temp.year+step))
-	addNudgeListeners(UI.monthInput, step=>setMonth(modal.temp.month+step))
-	addNudgeListeners(UI.dayInput, step=>setDay(modal.temp.day+step))
-	addNudgeListeners(UI.hourInput, step=>setJulianValue(modal.temp.julianDay+step/24))
-	addNudgeListeners(UI.minuteInput, step=>setJulianValue(modal.temp.julianDay+step/1440))
-	addNudgeListeners(UI.julianDayInput, step=>setJulianValue(modal.temp.julianDay+step))
+	function mapPoint(event) {const r=UI.modalWorldMap.getBoundingClientRect(); UI.modalLatitudeInput.value=signed(Math.round((90-clip(event.clientY-r.top,0,r.height)/r.height*180)*100)/100); const lon=Math.round((clip(event.clientX-r.left,0,r.width)/r.width*360-180)*100)/100; modal.temp.longitude=lon===-180?180:lon; UI.modalLongitudeInput.value=signed(modal.temp.longitude); setJulian()}
+	UI.modalWorldMap.onpointerdown=e=>{if(e.button!==0)return;e.preventDefault();UI.modalWorldMap.setPointerCapture(e.pointerId);UI.modalWorldMap.dataset.dragging="true";mapPoint(e)}
+	UI.modalWorldMap.onpointermove=e=>{if(UI.modalWorldMap.dataset.dragging==="true")mapPoint(e)}
+	UI.modalWorldMap.onpointerup=e=>{UI.modalWorldMap.dataset.dragging="false";if(UI.modalWorldMap.hasPointerCapture(e.pointerId))UI.modalWorldMap.releasePointerCapture(e.pointerId)}
+	UI.modalWorldMap.onpointercancel=UI.modalWorldMap.onpointerup
+	addModalNudgeListeners(UI.modalLatitudeInput, (direction, coarse)=>{const step=coarse?1:0.01;UI.modalLatitudeInput.value=signed(clip(Math.round(parseModalNumber(UI.modalLatitudeInput)/step)*step+direction*step,-90,90));updateModal()})
+	addModalNudgeListeners(UI.modalLongitudeInput, (direction, coarse)=>{const step=coarse?1:0.01;modal.temp.longitude=mod(Math.round(parseModalNumber(UI.modalLongitudeInput)/step)*step+direction*step,360,-180);UI.modalLongitudeInput.value=signed(modal.temp.longitude);setJulian()})
+	addModalNudgeListeners(UI.modalElevationInput, (direction, coarse)=>{const step=coarse?100:1;modal.temp.elevation=Math.round(clip(Math.round(parseModalNumber(UI.modalElevationInput)/step)*step+direction*step,elevationMin,elevationMax));UI.modalElevationInput.value=modal.temp.elevation.toLocaleString("en-US");updateModal()})
+	addModalNudgeListeners(UI.modalYearInput, step=>setYear(modal.temp.year+step))
+	addModalNudgeListeners(UI.modalMonthInput, step=>setMonth(modal.temp.month+step))
+	addModalNudgeListeners(UI.modalDayInput, step=>setDay(modal.temp.day+step))
+	addModalNudgeListeners(UI.modalHourInput, step=>setJulianValue(modal.temp.julianDay+step/24))
+	addModalNudgeListeners(UI.modalMinuteInput, step=>setJulianValue(modal.temp.julianDay+step/1440))
+	addModalNudgeListeners(UI.modalJulianDayInput, step=>setJulianValue(modal.temp.julianDay+step))
 	function reject(input, message, previous) {
 		alert(message)
 		input.value = previous
 		input.select()}
-	UI.latitudeInput.onchange=()=>{
-		const value=parseNumber(UI.latitudeInput, "")
+	UI.modalLatitudeInput.onchange=()=>{
+		const value=parseModalNumber(UI.modalLatitudeInput, "")
 		if(!Number.isFinite(value)||value < -90||value > 90)
-			return reject(UI.latitudeInput,
+			return reject(UI.modalLatitudeInput,
 				"Please enter a valid latitude from −90° to +90°.", signed(modal.temp.latitude))
-		modal.temp.latitude=value; UI.latitudeInput.value=signed(value); updateModal()}
-	UI.longitudeInput.onchange=()=>{
-		const value=parseNumber(UI.longitudeInput, "")
+		modal.temp.latitude=value; UI.modalLatitudeInput.value=signed(value); updateModal()}
+	UI.modalLongitudeInput.onchange=()=>{
+		const value=parseModalNumber(UI.modalLongitudeInput, "")
 		if(!Number.isFinite(value)||value < -180||value > 180)
-			return reject(UI.longitudeInput,
+			return reject(UI.modalLongitudeInput,
 				"Please enter a valid longitude from −180° to +180°.", signed(modal.temp.longitude))
-		modal.temp.longitude=value; UI.longitudeInput.value=signed(value); setJulian()}
-	UI.elevationInput.onchange=()=>{
-		const value=parseNumber(UI.elevationInput, "")
+		modal.temp.longitude=value; UI.modalLongitudeInput.value=signed(value); setJulian()}
+	UI.modalElevationInput.onchange=()=>{
+		const value=parseModalNumber(UI.modalElevationInput, "")
 		if(!Number.isFinite(value)||value < elevationMin||value > elevationMax)
-			return reject(UI.elevationInput,
+			return reject(UI.modalElevationInput,
 				"Please enter a valid elevation from 0 m to 10,000 m.",
 				modal.temp.elevation.toLocaleString("en-US"))
 		modal.temp.elevation=Math.round(value)
-		UI.elevationInput.value=modal.temp.elevation.toLocaleString("en-US"); updateModal()}
-	UI.yearInput.onchange=()=>{
-		const value=Math.round(parseNumber(UI.yearInput, ""))
+		UI.modalElevationInput.value=modal.temp.elevation.toLocaleString("en-US"); updateModal()}
+	UI.modalYearInput.onchange=()=>{
+		const value=Math.round(parseModalNumber(UI.modalYearInput, ""))
 		if(!Number.isFinite(value)||value < 1||value > 5000) {
-			UI[modal.temp.year < 1 ? "eraBC" : "eraAD"].checked=true
-			return reject(UI.yearInput, "Please enter a valid year number from 1 to 5000.",
+			UI[modal.temp.year < 1 ? "modalEraBC" : "modalEraAD"].checked=true
+			return reject(UI.modalYearInput, "Please enter a valid year number from 1 to 5000.",
 				modal.temp.year > 0 ? modal.temp.year : 1 - modal.temp.year)}
-		setYear(UI.eraBC.checked ? 1-value : value)}
-	UI.monthInput.onchange=()=>{
-		const value=Math.round(parseNumber(UI.monthInput, ""))
+		setYear(UI.modalEraBC.checked ? 1-value : value)}
+	UI.modalMonthInput.onchange=()=>{
+		const value=Math.round(parseModalNumber(UI.modalMonthInput, ""))
 		if(!Number.isFinite(value)||value < 1||value > 12)
-			return reject(UI.monthInput, "Please enter a valid month number from 1 to 12.",
+			return reject(UI.modalMonthInput, "Please enter a valid month number from 1 to 12.",
 				modal.temp.month)
 		setMonth(value)}
-	UI.dayInput.onchange=()=>{
-		const value=Math.round(parseNumber(UI.dayInput, ""))
+	UI.modalDayInput.onchange=()=>{
+		const value=Math.round(parseModalNumber(UI.modalDayInput, ""))
 		const maximum=getMonthDays(getYearDays(modal.temp.year))[modal.temp.month-1]
 		if(!Number.isFinite(value)||value < 1||value > maximum)
-			return reject(UI.dayInput, "Please enter a valid day number from 1 to "+maximum+".",
+			return reject(UI.modalDayInput, "Please enter a valid day number from 1 to "+maximum+".",
 				modal.temp.day)
 		setDay(value)}
-	UI.hourInput.onchange=()=>{
-		const value=Math.round(parseNumber(UI.hourInput, ""))
+	UI.modalHourInput.onchange=()=>{
+		const value=Math.round(parseModalNumber(UI.modalHourInput, ""))
 		if(!Number.isFinite(value)||value < 0||value > 23)
-			return reject(UI.hourInput, "Please enter a valid hour number from 0 to 23.",
+			return reject(UI.modalHourInput, "Please enter a valid hour number from 0 to 23.",
 				String(modal.temp.hour).padStart(2,"0"))
-		modal.temp.hour=value; UI.hourInput.value=String(value).padStart(2,"0"); setJulian()}
-	UI.minuteInput.onchange=()=>{
-		const value=Math.round(parseNumber(UI.minuteInput, ""))
+		modal.temp.hour=value; UI.modalHourInput.value=String(value).padStart(2,"0"); setJulian()}
+	UI.modalMinuteInput.onchange=()=>{
+		const value=Math.round(parseModalNumber(UI.modalMinuteInput, ""))
 		if(!Number.isFinite(value)||value < 0||value > 59)
-			return reject(UI.minuteInput, "Please enter a valid minute number from 0 to 59.",
+			return reject(UI.modalMinuteInput, "Please enter a valid minute number from 0 to 59.",
 				String(modal.temp.minute).padStart(2,"0"))
-		modal.temp.minute=value; UI.minuteInput.value=String(value).padStart(2,"0"); setJulian()}
-	UI.julianDayInput.onchange=()=>{
-		const value=parseNumber(UI.julianDayInput, "")
+		modal.temp.minute=value; UI.modalMinuteInput.value=String(value).padStart(2,"0"); setJulian()}
+	UI.modalJulianDayInput.onchange=()=>{
+		const value=parseModalNumber(UI.modalJulianDayInput, "")
 		if(!Number.isFinite(value)||value < -104788||value > 3547638)
-			return reject(UI.julianDayInput,
+			return reject(UI.modalJulianDayInput,
 				"Please enter a valid Julian day between −104,788 and 3,547,638.",
 				formatJulianDay(modal.temp.julianDay))
 		setJulianValue(value)}
-	for(const id of ["eraAD","eraBC"]) UI[id].onchange=()=>UI.yearInput.onchange()
+	for(const id of ["modalEraAD","modalEraBC"]) UI[id].onchange=()=>UI.modalYearInput.onchange()
 }
 
 initModal(document.body)
-if(typeof addNudgeListeners === "function") initializeModalEvents()
+initializeModalEvents()
