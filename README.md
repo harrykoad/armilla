@@ -82,21 +82,8 @@ armilla/
 └── astrotide/
     ├── astrotide.js              # Astrotide interface, forcing, model loading, and plots
     ├── metadata.js               # Browser-readable station metadata
-    └── models/
-        └── PLUSCODE.js           # Fitted model loaded for one station at a time
+    └── models/                   # Station-specific fitted model files
 ```
-
-### Local Astrotide Development Files
-
-The following are local data-processing, fitting, and diagnostic artifacts and are not required by the deployed website:
-
-```text
-astrotide/data/                   # Raw station data and local data-preparation outputs
-astrotide/**/*.py                 # Downloading, updating, and fitting scripts
-astrotide/**/*.png                # Diagnostic plots and generated maps
-```
-
-The fitted `astrotide/models/*.js` files are web assets and must remain available to Astrotide. Do not exclude them from deployment.
 
 ## Scope and Accuracy
 
