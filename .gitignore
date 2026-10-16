@@ -1,0 +1,6 @@
+astrotide/data/
+astrotide/**/*.py
+astrotide/**/*.png
+.codex_backups/
+__pycache__/
+*.pyc

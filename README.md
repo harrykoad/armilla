@@ -1,20 +1,22 @@
 # The Armilla Project
 
-The Armilla Project combines two complementary astronomical modules. **Armilla** is an interactive celestial sphere for astronomy education, while **Astrolabe** is an analytical tool for exploratory archaeoastronomical research.
+The Armilla Project combines three complementary browser-based astronomical modules:
 
-Armilla models the sky for a selected location, date, and time. It presents the relationships among the local horizon, celestial equator, ecliptic, zodiac, stars, Sun, Moon, planets, lunar nodes, and selected astronomical phenomena. Its visual environment helps users study spherical geometry, coordinate systems, sidereal reference frames, precession, and the changing appearance of the sky from different places on Earth.
+- **Armilla** is an interactive celestial sphere for astronomy education and visual exploration.
+- **Astrolabe** is an analytical tool for exploratory archaeoastronomical research.
+- **Astrotide** predicts station-specific sea level from astronomical forcing and displays the underlying forcing time series.
 
-Astrolabe complements this visualization by examining how stellar and nakṣatra rising and setting directions change across historical epochs. It can compare those directions with the measured orientation and horizon altitude of a sacred site, monument, temple, or other structure, identify possible stellar candidates, and estimate periods when an alignment may have occurred. Calculated events can then be opened in Armilla for visual inspection of the corresponding sky.
+All three modules run locally in a modern web browser and can be hosted as a static website. No server-side runtime is required for normal use.
 
 ## Armilla for Astronomical Education
 
-Armilla is the project's main educational module and a visual teaching and learning environment for celestial sphere geometry. It helps explain how the horizon, equator, ecliptic, zodiac, stars, Sun, Moon, and planets relate to one another in different coordinate systems.
+Armilla models the sky for a selected location, date, and time. It presents the relationships among the local horizon, celestial equator, ecliptic, zodiac, stars, Sun, Moon, planets, lunar nodes, and selected astronomical phenomena.
 
-Armilla is useful for classroom demonstrations, self-study, and preparation of explanatory diagrams. By changing date, time, latitude, longitude, and viewing orientation, users can explore how the apparent sky depends on both time and observer location.
+The module supports classroom demonstrations, self-study, and the preparation of explanatory diagrams. Users can change the date, time, observer location, and viewing orientation to explore spherical geometry, coordinate systems, sidereal reference frames, precession, and the changing appearance of the sky.
 
-Draw mode allows users to annotate directly on the sky view, making it possible to mark alignments, highlight coordinate relationships, trace apparent paths, or prepare teaching illustrations. Black and white background modes support classroom projection, documentation, screen capture, and different presentation contexts.
+Draw mode allows annotations to be added directly to the celestial-sphere view. Black and white background modes support projection, documentation, and screen capture.
 
-Armilla can support lessons on local sidereal time, obliquity, precession, ayanāṃśa, topocentric observation, lunar nodes, eclipses, analemma, atmospheric halo geometry, rainbow geometry, and coordinate graticules.
+Armilla can support lessons on local sidereal time, obliquity, precession, ayanāṃśa, topocentric observation, lunar nodes, eclipses, analemmas, atmospheric halo geometry, rainbow geometry, and coordinate graticules.
 
 ```text
 https://harrykoad.github.io/armilla/
@@ -22,61 +24,85 @@ https://harrykoad.github.io/armilla/
 
 ## Astrolabe for Archaeoastronomical Research
 
-Astrolabe is an interactive astronomical module for exploratory archaeoastronomical research. A user can enter the measured orientation and horizon altitude of a sacred site, monument, temple, or other structure, apply an uncertainty range, and identify stars or nakṣatras (Indian lunar mansions) whose acronychal rising or cosmical setting directions intersect that range.
+Astrolabe examines how stellar and nakṣatra rising and setting directions change across historical epochs. A user can enter the measured orientation and horizon altitude of a sacred site, monument, temple, or other structure, apply an uncertainty range, and identify stars or Indian lunar mansions whose acronychal-rising or cosmical-setting directions intersect that range.
 
-Astrolabe plots how stellar rising and setting azimuths change across historical epochs because of precession. It estimates possible alignment year ranges and calculates approximate acronychal-rising and cosmical-setting dates. Each calculated event can be opened in Armilla for visual inspection of the corresponding sky, location, date, and time.
+The module estimates possible alignment-year ranges and approximate event dates. Each computed event can be opened in Armilla for visual inspection of the corresponding sky, location, date, and time.
 
-This approach may be useful when studying sacred sites, ancient monuments, temples, ritual landscapes, orientation traditions, and cultural associations with prominent stars or lunar mansions. Long-term plots make the effects of precession visible, while Armilla provides a celestial-sphere reconstruction for closer examination of a selected event.
-
-Armilla's supplementary diagrams extend this interpretive use. Its horary-style view arranges zodiacal divisions, stars, constellation references, and celestial positions in a compact form, providing another way to inspect relationships relevant to traditional astronomy and historical sky interpretation.
-
-Astrolabe identifies astronomical possibilities, not archaeological conclusions. A correspondence between a structure's orientation and a stellar rising or setting direction does not by itself demonstrate intentional alignment. Interpretation still requires reliable field measurements, local horizon-altitude data, chronological evidence, cultural context, atmospheric-refraction considerations, and independent ephemeris verification.
+Astrolabe identifies astronomical possibilities, not archaeological conclusions. A correspondence between a structure's orientation and an astronomical direction does not by itself demonstrate intentional alignment. Interpretation also requires reliable field measurements, local horizon data, chronological evidence, cultural context, atmospheric-refraction considerations, and independent ephemeris verification.
 
 ```text
 https://harrykoad.github.io/armilla/astrolabe.html
 ```
 
+## Astrotide for Astronomical Sea Level Prediction
+
+Astrotide displays predicted sea level for tide-gauge stations together with the astronomical quantities used by the prediction model. Stations can be selected by country, first-level administrative division, name, and data source. When coordinates without a station are entered, the nearest available station is selected using spherical distance.
+
+Each station uses its own fitted model. The model combines hourly lunisolar tide-generating acceleration components, estimated clear-sky global horizontal irradiance, nonlinear terms, and cross terms over the preceding 30 days. Lag-dependent coefficients are represented by cubic splines and expanded when the station model is loaded. Only one station model is retained in memory at a time.
+
+The sea level graph includes the station model's prediction, local minima and maxima, the current trend, and a three-RMSE uncertainty band. The astronomical-forcing graph displays vertical tide-generating acceleration and clear-sky irradiance over the same time window.
+
+Astrotide is experimental. Historical records differ among stations in duration, continuity, quality, and recency, so predictions may be unreliable. The predictions must not be used for navigation, hazard response, engineering, or other safety-critical decisions.
+
+```text
+https://harrykoad.github.io/armilla/astrotide.html
+```
+
 ## Astronomical Basis
 
-Armilla is based on principles from spherical astronomy, positional astronomy, and traditional sidereal sky reckoning. Calendar date and civil time are converted into Julian Day, including the fractional day, and then into Julian Century relative to the J2000.0 epoch. These values are used as time arguments for sidereal time, obliquity, ayanāṃśa, and celestial body computations.
+The project is based on spherical astronomy, positional astronomy, and traditional sidereal sky reckoning. Calendar date and civil time are converted to Julian Day and Julian Century relative to J2000.0. These values provide the time arguments for sidereal time, obliquity, ayanāṃśa, solar-system positions, and other astronomical computations.
 
-Armilla connects horizontal, equatorial, nirāyana ecliptic, and galactic coordinate system concepts through vector and matrix transformations. These transformations account for observer latitude, longitude, local sidereal time, Earth’s axial tilt, and sidereal offset.
+Armilla connects horizontal, equatorial, nirāyaṇa ecliptic, and galactic coordinate systems through vector and matrix transformations. The transformations account for observer latitude and longitude, local sidereal time, Earth's axial tilt, and sidereal offset.
 
-A central feature of Armilla is its use of nirāyana, an Indian sidereal ecliptic coordinate system in which zodiacal longitude is measured along the ecliptic against a fixed reference. Armilla defines the First Point of Aries (FPA) as fixed to the position of the vernal equinox at the J500.0 epoch, then applies an ayanāṃśa correction to relate tropical and nirāyana longitudes. This allows users to study fixed-star references, zodiacal divisions, precession, and the difference between tropical and sidereal sky systems.
+The project defines the First Point of Aries as fixed to the position of the vernal equinox at the J500.0 epoch, then applies an ayanāṃśa correction to relate tropical and nirāyaṇa longitude. Long-term precession and catalogued stellar proper motions are included where relevant. The negligibly small nutation term is not included.
 
-Armilla includes long-term precessional change for interpreting historical sky positions. Because the equinox shifts gradually against the fixed-star background, the relationship between tropical and sidereal coordinates changes over historical time. The model treats this long-term precessional component, while the negligibly small nutation term is not included.
+Armilla can apply atmospheric refraction to apparent horizontal positions. Astrolabe converts an entered apparent horizon altitude to its corresponding geometric altitude using the selected temperature and pressure. The observer is modeled from geodetic latitude and longitude with Earth-shape parameters used for topocentric geometry.
 
-Although stars are conventionally described as “fixed,” Armilla and Astrolabe account for their catalogued proper motions when calculating positions at different epochs. This is especially important in Astrolabe's long-term analysis, where accumulated stellar motion can affect a star's calculated rising and setting directions.
-
-Both modules also account for atmospheric refraction when that option is enabled. Armilla applies refraction to apparent horizontal positions, while Astrolabe converts the entered apparent horizon altitude to the corresponding geometric altitude using the selected temperature and pressure. This keeps horizon-crossing and rising or setting calculations consistent with the displayed observational conditions.
-
-The observer is modeled from geodetic latitude and longitude, with Earth shape parameters used for topocentric geometry. This supports local horizon, zenith, meridian, rising and setting directions, and visible-sky relationships from a specific place on Earth.
+Astrotide computes lunisolar tide-generating acceleration in the local east, north, and up directions. These astronomical predictors describe forcing rather than local hydrodynamics directly; station-specific fitted coefficients capture the response represented in the available historical observations.
 
 ## Technical Implementation
 
-The Armilla project is built with HTML, CSS, JavaScript, and the HTML5 Canvas API. Its modules run entirely in the browser and do not require a server-side runtime.
+The web application is built with HTML, CSS, JavaScript, and the HTML5 Canvas API. Shared files provide astronomical computation, coordinate transformation, rendering, interaction, modal controls, and application state.
 
-The modules use consistent models for stellar positions, precession, atmospheric refraction, horizon geometry, sidereal time, and calendar conversion. This allows an event identified analytically in Astrolabe to be examined coherently in Armilla. The codebase separates astronomical computation, coordinate transformation, rendering, user interaction, supplementary diagrams, and module state management into focused files.
+Astrotide station metadata and fitted prediction models are JavaScript assets so that the module works from static hosting and when opened locally without fetching JSON. A station's model file is loaded only when needed.
 
 ```text
 armilla/
-├── index.html       # Armilla celestial-sphere module
-├── astrolabe.html   # Stellar orientation and historical-epoch analysis
-├── astro.js         # Stellar, solar-system, lunar, and observer calculations
-├── coord.js         # Time, refraction, horizon, and coordinate calculations
-├── draw.js          # Celestial-sphere canvas projection and rendering
-├── event.js         # Armilla interface interactions and controls
-├── math.js          # Numerical, vector, matrix, angle, and formatting utilities
-├── modal.js         # Horary, lunar, and supplementary diagrams
-├── sphere.js        # Celestial-sphere objects and overlays
-└── state.js         # Module state, defaults, colors, and display settings
+├── index.html                    # Armilla celestial-sphere module
+├── astrolabe.html                # Historical stellar-orientation analysis
+├── astrotide.html                # Astronomical sea level prediction module
+├── astro.js                      # Stellar, solar-system, lunar, and observer calculations
+├── coord.js                      # Time, refraction, horizon, and coordinate calculations
+├── draw.js                       # Celestial-sphere projection and rendering
+├── event.js                      # Armilla interactions and controls
+├── math.js                       # Numerical, vector, matrix, angle, and formatting utilities
+├── modal.js                      # Shared date, time, location, and supplementary diagrams
+├── sphere.js                     # Celestial-sphere objects and overlays
+├── state.js                      # Shared state, defaults, colors, and display settings
+└── astrotide/
+    ├── astrotide.js              # Astrotide interface, forcing, model loading, and plots
+    ├── metadata.js               # Browser-readable station metadata
+    └── models/
+        └── PLUSCODE.js           # Fitted model loaded for one station at a time
 ```
+
+### Local Astrotide Development Files
+
+The following are local data-processing, fitting, and diagnostic artifacts and are not required by the deployed website:
+
+```text
+astrotide/data/                   # Raw station data and local data-preparation outputs
+astrotide/**/*.py                 # Downloading, updating, and fitting scripts
+astrotide/**/*.png                # Diagnostic plots and generated maps
+```
+
+The fitted `astrotide/models/*.js` files are web assets and must remain available to Astrotide. Do not exclude them from deployment.
 
 ## Scope and Accuracy
 
-Armilla is intended for astronomy education, visualization, and conceptual study. Astrolabe is intended for exploratory analysis of possible historical stellar orientations. Its long-term curves account for precession and catalogued stellar proper motion, and its horizon calculations can include atmospheric refraction under the selected conditions.
+Armilla is intended for astronomy education, visualization, and conceptual study. Astrolabe is intended for exploratory analysis of possible historical stellar orientations. Astrotide is intended for experimental astronomical sea level prediction from station-specific historical data.
 
-Neither module is intended to replace high-precision ephemeris systems, observatory-grade astrometric software, navigation tools, archaeological evidence, or formal archaeoastronomical field analysis without independent verification.
+These modules do not replace high-precision ephemerides, observatory-grade astrometric software, navigation systems, official tide services, hazard-warning systems, archaeological evidence, or formal field analysis. Results should be independently verified before they are used outside education and exploration.
 
 ## Author
 
