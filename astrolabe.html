@@ -65,9 +65,9 @@ body {background: black; color: white; color-scheme: dark; font-family: sans-ser
 .leftControlStack {align-content: start; display: grid; gap: 12px; grid-column: 1; grid-row: 1; width: 200px}
 .locationGroup, .atmosphericGroup {align-content: start; grid-auto-rows: auto;
 	max-width: 200px; min-width: 200px; width: 200px}
-.horizonAltitudeLabel, .maxAltitudeDifferenceLabel, .starMaxAltitudeLabel {color: #aaa; font-size: 12px;
+.horizonAltitudeLabel, .zenithSunLabel, .starMaxAltitudeLabel {color: #aaa; font-size: 12px;
 	text-align: center; white-space: nowrap}
-.azimuthGroup {align-self: start; grid-column: 2; grid-row: 1;
+.azimuthGroup {align-self: stretch; grid-column: 2; grid-row: 1;
 	column-gap: 10px; grid-template-columns: 170px minmax(0, 1fr); grid-template-rows: auto;
 	max-width: 426px; min-height: 0; min-width: 426px; overflow: hidden; width: 426px}
 .azimuthGroup::before {align-self: stretch; background: gray; content: ""; grid-column: 1;
@@ -163,19 +163,21 @@ body {background: black; color: white; color-scheme: dark; font-family: sans-ser
 .azimuthGroup .azimuthAltitudeFields .field {display: grid; gap: 4px;
 	grid-template-columns: 1fr 60px max-content}
 .azimuthAltitudeFields .field > label {text-align: right}
+.sunAltitudeField .zenithSunLabel {grid-column: 1 / -1; grid-row: 2}
+.starAltitudeField .starMaxAltitudeLabel {grid-column: 1 / -1; grid-row: 2}
 .risingAzimuthField {align-self: center; grid-column: 1; grid-row: 2; justify-self: start;
 	width: calc(100% - 8px)}
 .risingAzimuthField > label {padding-top: 4px}
-.starMaxAltitudeLabel {grid-column: 1; grid-row: 3; margin: 3px 0;
-	width: calc(100% - 8px)}
-.settingAzimuthField {align-self: center; grid-column: 1; grid-row: 4; justify-self: start;
+.starMaxAltitudeLabel {margin: 0; width: 100%}
+.settingAzimuthField {align-self: center; grid-column: 1; grid-row: 3; justify-self: start;
 	width: calc(100% - 8px)}
 .azimuthInputs {align-items: center; display: grid; gap: 4px;
 	grid-template-columns: 60px auto 60px max-content}
 .hemisphereButton {background: #f2f2f2; border: 1px solid gray; border-radius: 6px; color: black;
-	cursor: pointer; font: inherit; font-weight: bold; grid-column: 1; grid-row: 5; justify-self: center;
+	cursor: pointer; font: inherit; font-weight: bold; grid-column: 1; grid-row: 4; justify-self: center;
 	height: 24px; margin: 5px 8px 0 0; padding: 3px 4px; text-align: center;
 	white-space: nowrap; width: 130px}
+.locationHereButton {grid-column: auto; grid-row: auto; margin: 0; width: 70px}
 .field:not(.checkboxField) > label {text-align: right}
 .checkboxField {display: flex; gap: 4px; justify-content: center}
 input[type="text"] {border: 1px solid gray; border-radius: 5px; font: inherit;
@@ -208,62 +210,63 @@ input:focus-visible {outline: 2px solid #80bfff; outline-offset: 2px}
 			<span id="elevationUnit">m</span>
 		</div>
 		<div class="horizonAltitudeLabel" id="geometricHorizonLabel">(Horizon's Altitude: 0.00°)</div>
+		<button class="hemisphereButton locationHereButton" id="hereButton" type="button" tabindex="4">Here</button>
 	</div>
 	<div class="controlGroup atmosphericGroup" role="group" aria-label="Atmospheric conditions">
 		<div class="field checkboxField">
-			<input type="checkbox" id="refractionCheckbox" name="refraction" tabindex="4" checked>
+			<input type="checkbox" id="refractionCheckbox" name="refraction" tabindex="5" checked>
 			<label class="checkboxLabel" for="refractionCheckbox">Atmospheric Refraction</label>
 		</div>
 		<div class="field">
 			<label for="temperatureInput">Temperature:</label>
-			<input type="text" id="temperatureInput" name="temperature" inputmode="text" enterkeyhint="next" tabindex="5" value="26.5" aria-describedby="temperatureUnit">
+			<input type="text" id="temperatureInput" name="temperature" inputmode="text" enterkeyhint="next" tabindex="6" value="26.5" aria-describedby="temperatureUnit">
 			<span id="temperatureUnit">°C</span>
 		</div>
 		<div class="field">
 			<label for="pressureInput">Pressure:</label>
-			<input type="text" id="pressureInput" name="pressure" inputmode="text" enterkeyhint="next" tabindex="6" value="1,013" aria-describedby="pressureUnit">
+			<input type="text" id="pressureInput" name="pressure" inputmode="text" enterkeyhint="next" tabindex="7" value="1,013" aria-describedby="pressureUnit">
 			<span id="pressureUnit">hPa</span>
 		</div>
-		<div class="maxAltitudeDifferenceLabel" id="maxAltitudeDifferenceLabel">(Max. Altitude Diff.: 0.00°)</div>
 	</div>
 	</div>
 	<div class="controlGroup azimuthGroup" role="group" aria-label="Rising and setting azimuths">
 		<div class="azimuthControls">
 		<div class="azimuthAltitudeFields">
-			<div class="field">
+			<div class="field sunAltitudeField">
 				<label for="sunAltitudeInput">Sun's Altitude:</label>
-				<input type="text" id="sunAltitudeInput" name="sunAltitude" inputmode="text" enterkeyhint="next" tabindex="7" value="0.00" aria-describedby="sunAltitudeUnit">
+				<input type="text" id="sunAltitudeInput" name="sunAltitude" inputmode="text" enterkeyhint="next" tabindex="8" value="0.00" aria-describedby="sunAltitudeUnit">
 				<span id="sunAltitudeUnit">°</span>
+				<div class="zenithSunLabel" id="zenithSunLabel">(Zenith Sun: —)</div>
 			</div>
-			<div class="field">
+			<div class="field starAltitudeField">
 				<label for="horizonAltitudeInput">Star's Altitude:</label>
-				<input type="text" id="horizonAltitudeInput" name="horizonAltitude" inputmode="text" enterkeyhint="next" tabindex="8" value="+2.00" aria-describedby="horizonAltitudeUnit">
+				<input type="text" id="horizonAltitudeInput" name="horizonAltitude" inputmode="text" enterkeyhint="next" tabindex="9" value="+2.00" aria-describedby="horizonAltitudeUnit">
 				<span id="horizonAltitudeUnit">°</span>
+				<div class="starMaxAltitudeLabel" id="starMaxAltitudeLabel">(Star's Max. Altitude: +0.00°)</div>
 			</div>
 		</div>
 		<div class="field risingAzimuthField">
 			<label for="risingAzimuthInput">Star's Rising Azimuth:</label>
 			<div class="azimuthInputs">
-				<input type="text" id="risingAzimuthInput" name="risingAzimuth" inputmode="text" enterkeyhint="next" tabindex="9" value="97.50" aria-describedby="risingAzimuthUnit">
+				<input type="text" id="risingAzimuthInput" name="risingAzimuth" inputmode="text" enterkeyhint="next" tabindex="10" value="97.50" aria-describedby="risingAzimuthUnit">
 				<span>±</span>
-				<input type="text" id="risingUncertaintyInput" name="risingUncertainty" inputmode="text" enterkeyhint="next" tabindex="10" value="1.00" aria-label="Rising azimuth uncertainty" aria-describedby="risingAzimuthUnit">
+				<input type="text" id="risingUncertaintyInput" name="risingUncertainty" inputmode="text" enterkeyhint="next" tabindex="11" value="1.00" aria-label="Rising azimuth uncertainty" aria-describedby="risingAzimuthUnit">
 				<span id="risingAzimuthUnit">°</span>
 			</div>
 		</div>
-		<div class="starMaxAltitudeLabel" id="starMaxAltitudeLabel">(Star's Max. Altitude: +0.00°)</div>
 		<div class="field settingAzimuthField">
 			<label for="settingAzimuthInput">Star's Setting Azimuth:</label>
 			<div class="azimuthInputs">
-				<input type="text" id="settingAzimuthInput" name="settingAzimuth" inputmode="text" enterkeyhint="next" tabindex="11" value="262.50" aria-describedby="settingAzimuthUnit">
+				<input type="text" id="settingAzimuthInput" name="settingAzimuth" inputmode="text" enterkeyhint="next" tabindex="12" value="262.50" aria-describedby="settingAzimuthUnit">
 				<span>±</span>
-				<input type="text" id="settingUncertaintyInput" name="settingUncertainty" inputmode="text" enterkeyhint="done" tabindex="12" value="1.00" aria-label="Setting azimuth uncertainty" aria-describedby="settingAzimuthUnit">
+				<input type="text" id="settingUncertaintyInput" name="settingUncertainty" inputmode="text" enterkeyhint="done" tabindex="13" value="1.00" aria-label="Setting azimuth uncertainty" aria-describedby="settingAzimuthUnit">
 				<span id="settingAzimuthUnit">°</span>
 			</div>
 		</div>
 		<button class="hemisphereButton" id="hemisphereButton" type="button"></button>
 		</div>
 		<canvas class="skyPathCanvas" id="skyPathCanvas" width="300" height="300"
-			aria-label="Visible stellar path derived from the entered azimuth and altitude, with east at the top and north at the left"></canvas>
+			aria-label="Visible stellar path derived from the entered azimuth and altitude, with north at the top and east at the right"></canvas>
 	</div>
 	<div class="controlGroup intersectionGroup" role="group" aria-labelledby="intersectionTitle">
 		<div class="intersectionHeader" id="intersectionTitle">

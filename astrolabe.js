@@ -83,10 +83,9 @@ if(document.getElementById("hereButton")) UI.hereButton.onclick = () => getCurre
 		Object.assign(param, location)
 		pageUI.latitudeInput.value = param.latitude
 		pageUI.longitudeInput.value = param.longitude
+		pageUI.elevationInput.value = param.elevation
 		pageUI.latitudeInput.dispatchEvent(new Event("change"))
 		pageUI.longitudeInput.dispatchEvent(new Event("change"))
-		param.elevation = 0
-		pageUI.elevationInput.value = 0
 		pageUI.elevationInput.dispatchEvent(new Event("change"))})
 	.catch(error => alert(error.message))
 if(document.getElementById("nowButton")) {
@@ -309,6 +308,35 @@ const NAKSATRA_BY_INDEX = new Map(GRAPH_NAKSATRAS.map(star => [star.index, star]
 function graphNumber(input) {
 	return parseNumber(input.value.replace(/^±/, ""))}
 
+const zenithSunDateCache = new Map()
+function zenithSunDates(latitude, longitude, year = new Date().getUTCFullYear()) {
+	const key = [latitude.toFixed(6), longitude.toFixed(6), year].join("|")
+	if(zenithSunDateCache.has(key)) return zenithSunDateCache.get(key)
+	const start = getJulianDay(year, 1, 1, 0, 0)
+	const end = getJulianDay(year + 1, 1, 1, 0, 0)
+	const error = julianDay => {
+		const jc = (julianDay - 2451545) / 36525
+		return toTP(normalize(mdot(getEquatorialRotation(jc), GeoSun(jc))))[1] - latitude}
+	const roots = []
+	let previousDay = start, previousError = error(start)
+	for(let day = start + 1; day <= end; day++) {
+		const currentDay = Math.min(day, end), currentError = error(currentDay)
+		if(previousError === 0) roots.push(previousDay)
+		else if(previousError * currentError < 0) {
+			let low = previousDay, high = currentDay, lowError = previousError
+			for(let iteration = 0; iteration < 40; iteration++) {
+				const middle = (low + high) / 2, middleError = error(middle)
+				if(lowError * middleError <= 0) high = middle
+				else {low = middle; lowError = middleError}}
+			roots.push((low + high) / 2)}
+		previousDay = currentDay; previousError = currentError}
+	const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+	const dates = roots.filter((root, index) => index === 0 || root - roots[index - 1] > 1)
+		.map(root => {const [, month, day] = getGregorian(root, longitude); return months[month - 1] + " " + day})
+	zenithSunDateCache.set(key, dates)
+	return dates}
+
 function graphConditions() {
 	const conditions = {latitude: graphNumber(pageUI.latitudeInput), longitude: graphNumber(pageUI.longitudeInput),
 		elevation: graphNumber(pageUI.elevationInput),
@@ -327,11 +355,9 @@ function graphConditions() {
 	const horizonDip = getHorizonDip(conditions.latitude, conditions.elevation)
 	UI.geometricHorizonLabel.textContent = "(Horizon's Altitude: " +
 		(horizonDip > 0.00001 ? "−" : "") + horizonDip.toFixed(2) + "°)"
-	const maxAltitudeDifference = conditions.refraction ?
-		getGeometricAltitude(0, conditions.temperature, conditions.pressure) : 0
-	UI.maxAltitudeDifferenceLabel.textContent = "(Max. Altitude Diff.: " +
-		(maxAltitudeDifference < -0.00001 ? "−" : "") +
-		Math.abs(maxAltitudeDifference).toFixed(2) + "°)"
+	const zenithDates = zenithSunDates(conditions.latitude, conditions.longitude)
+	UI.zenithSunLabel.textContent = "(Zenith Sun: " +
+		(zenithDates.length ? zenithDates.join(" & ") : "None") + ")"
 	const phi = conditions.latitude * DEGREE
 	const starAltitude = geometricHorizon(conditions) * DEGREE
 	const risingAzimuth = conditions.rising * DEGREE
@@ -1370,7 +1396,7 @@ function drawSkyPath(selectedIntersection, conditions) {
 	function screenPoint(azimuth, altitude) {
 		const r = radius * (90 - altitude) / altitudeSpan
 		const az = azimuth * DEGREE
-		return [cx - r * Math.cos(az), cy - r * Math.sin(az)]}
+		return [cx + r * Math.sin(az), cy - r * Math.cos(az)]}
 	const solarEdgePaths = []
 	if(conditions) {
 		const latitude = conditions.latitude * DEGREE
@@ -1378,13 +1404,13 @@ function drawSkyPath(selectedIntersection, conditions) {
 		ctx.fillStyle = "rgba(255, 0, 0, 0.30)"
 		for(let y = Math.floor(cy - radius); y <= Math.ceil(cy + radius); y++) {
 			for(let x = Math.floor(cx - radius); x <= Math.ceil(cx + radius); x++) {
-				const dx = cx - (x + 0.5), dy = cy - (y + 0.5)
+				const dx = x + 0.5 - cx, dy = cy - (y + 0.5)
 				const distance = Math.hypot(dx, dy)
 				if(distance > radius) continue
 				const altitude = (90 - altitudeSpan * distance / radius) * DEGREE
 				const declination = Math.asin(clip(Math.sin(latitude) * Math.sin(altitude) +
 					Math.cos(latitude) * Math.cos(altitude) *
-					(distance < 1e-9 ? 0 : dx / distance), -1, 1)) / DEGREE
+					(distance < 1e-9 ? 0 : dy / distance), -1, 1)) / DEGREE
 				if(Math.abs(declination) <= solsticeDeclination) ctx.fillRect(x, y, 1, 1)}}
 		for(const dec of [-solsticeDeclination * DEGREE, 0, solsticeDeclination * DEGREE]) {
 			const edgePath = new Path2D()
@@ -1427,15 +1453,15 @@ function drawSkyPath(selectedIntersection, conditions) {
 	ctx.fillStyle = "white"
 	ctx.font = "12px sans-serif"
 	ctx.textAlign = "center"; ctx.textBaseline = "bottom"
-	ctx.fillText("East 90°", cx, cy - radius - 2)
-	ctx.textBaseline = "top"; ctx.fillText("West 270°", cx, cy + radius + 4)
+	ctx.fillText("North 0°", cx, cy - radius - 2)
+	ctx.textBaseline = "top"; ctx.fillText("South 180°", cx, cy + radius + 4)
 	ctx.textBaseline = "middle"
 	ctx.save(); ctx.translate(8, cy); ctx.rotate(-Math.PI / 2)
-	ctx.fillText("North 0°", 0, 0); ctx.restore()
+	ctx.fillText("West 270°", 0, 0); ctx.restore()
 	ctx.save(); ctx.translate(width - 8, cy); ctx.rotate(Math.PI / 2)
-	ctx.fillText("South 180°", 0, 0); ctx.restore()
+	ctx.fillText("East 90°", 0, 0); ctx.restore()
 	if(!conditions) {
-		canvas.setAttribute("aria-label", "Visible sky path plot, with east at the top and north at the left")
+		canvas.setAttribute("aria-label", "Visible sky path plot, with north at the top and east at the right")
 		return}
 	const starColor = selectedIntersection?.track.color || color.galactic
 	const altitudeRadius = radius * (90 - conditions.horizon) / altitudeSpan
@@ -1546,7 +1572,7 @@ function drawSkyPath(selectedIntersection, conditions) {
 	canvas.setAttribute("aria-label", "Visible stellar path derived from rising azimuth " +
 		conditions.rising + " degrees and star altitude " + conditions.horizon +
 		" degrees at latitude " + conditions.latitude +
-		" degrees, with east at the top and north at the left")}
+		" degrees, with north at the top and east at the right")}
 
 const graphResizeObserver = new ResizeObserver(requestGraphRender)
 for(const canvas of [UI.azimuthGraph, UI.naksatraGraph, UI.risingSettingGraph])
